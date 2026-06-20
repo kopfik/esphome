@@ -48,18 +48,18 @@ neumí vyhodnotit. Vyřeš je tedy lokálně (typicky v `substitutions:` přes
 
 ### Příklad device YAML
 
-Tohle žije v **tvé** konfiguraci, ne tady. Kompletní verzi viz
-[`examples/basic-device.yaml`](examples/basic-device.yaml):
+Tohle žije v **tvé** konfiguraci, ne tady. Příklad zařízení s více senzory viz
+[`examples/device-with-many-sensors.yaml`](examples/device-with-many-sensors.yaml):
 
 ```yaml
 substitutions:
   controller_name: "example-device"
   topic_prefix: "esphome/site/example-device"
-  # secrety se vyhodnotí lokálně a do balíčků jdou přes ${...}
+  # secrety se vyhodnotí lokálně a do balíčků jdou přes vars / ${...}
   encryption_key: !secret api_encryption_key
   wifi_ssid: !secret wifi_ssid
   wifi_password: !secret wifi_password
-  mqtt_broker: !secret mqtt_broker
+  i2c_bus_id: i2c_bus
 
 esphome:
 
@@ -67,18 +67,34 @@ logger:
   level: INFO
 
 packages:
-  shared:
+  # každá položka je vlastní git zdroj; vars jsou vnořené pod položkou souboru
+  base:
     url: https://github.com/kopfik/esphome
     ref: master            # při testování; pro stabilní buildy pinni tag/commit
     refresh: 1d
     files:
-      - path: packages/base.yaml
-      - path: packages/time.yaml
-        vars: { sntp_server: pool.ntp.org }
+      - packages/base.yaml
+  mqtt:
+    url: https://github.com/kopfik/esphome
+    ref: master
+    refresh: 1d
+    files:
       - path: packages/mqtt.yaml
-        vars: { id: mqtt_client, broker: "${mqtt_broker}", port: "1883" }
+        vars:
+          id: !secret mqtt_id
+          broker: !secret mqtt_broker
+          port: !secret mqtt_port
+  sht45:
+    url: https://github.com/kopfik/esphome
+    ref: master
+    refresh: 1d
+    files:
       - path: components/sensors/sht4x.yaml
-        vars: { id: sht40, address: "0x44", update_interval: "1", window_size: "60" }
+        vars:
+          id: sht45
+          address: 0x44
+          update_interval: 1
+          window_size: 60
 ```
 
 ### Struktura repozitáře
@@ -193,17 +209,18 @@ into packages as a var / substitution value (`${…}`).
 ### Example device YAML
 
 This lives in **your** configuration, not here. See
-[`examples/basic-device.yaml`](examples/basic-device.yaml) for the full version:
+[`examples/device-with-many-sensors.yaml`](examples/device-with-many-sensors.yaml)
+for an example device with multiple sensors:
 
 ```yaml
 substitutions:
   controller_name: "example-device"
   topic_prefix: "esphome/site/example-device"
-  # secrets resolved locally, consumed by packages via ${...}
+  # secrets resolved locally; passed into packages via vars / ${...}
   encryption_key: !secret api_encryption_key
   wifi_ssid: !secret wifi_ssid
   wifi_password: !secret wifi_password
-  mqtt_broker: !secret mqtt_broker
+  i2c_bus_id: i2c_bus
 
 esphome:
 
@@ -211,18 +228,34 @@ logger:
   level: INFO
 
 packages:
-  shared:
+  # each entry is its own git source; vars are nested under the file item
+  base:
     url: https://github.com/kopfik/esphome
     ref: master            # while testing; pin a tag/commit for stable builds
     refresh: 1d
     files:
-      - path: packages/base.yaml
-      - path: packages/time.yaml
-        vars: { sntp_server: pool.ntp.org }
+      - packages/base.yaml
+  mqtt:
+    url: https://github.com/kopfik/esphome
+    ref: master
+    refresh: 1d
+    files:
       - path: packages/mqtt.yaml
-        vars: { id: mqtt_client, broker: "${mqtt_broker}", port: "1883" }
+        vars:
+          id: !secret mqtt_id
+          broker: !secret mqtt_broker
+          port: !secret mqtt_port
+  sht45:
+    url: https://github.com/kopfik/esphome
+    ref: master
+    refresh: 1d
+    files:
       - path: components/sensors/sht4x.yaml
-        vars: { id: sht40, address: "0x44", update_interval: "1", window_size: "60" }
+        vars:
+          id: sht45
+          address: 0x44
+          update_interval: 1
+          window_size: 60
 ```
 
 ### Repository layout
