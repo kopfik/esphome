@@ -6,21 +6,82 @@
 
 ## Česky
 
-### Co to je
+### Co repo obsahuje
 
-Veřejné, znovupoužitelné úložiště ESPHome **balíčků** (packages / komponent /
-desek / šablon). Obsahuje **jen sdílené, parametrizované stavební bloky** — žádné
-konkrétní zařízení, žádné secrety.
+Veřejné, znovupoužitelné ESPHome **balíčky** — sdílené, parametrizované stavební
+bloky pro stavbu zařízení: jádrové balíčky, definice desek, komponenty (sběrnice,
+senzory, světla, výstupy, tlačítka), šablony a příklady.
 
-- **Tvoje zařízení a `secrets.yaml` sem nepatří.** Žijí v tvém privátním
-  HA / site repu. Tenké device YAMLy odsud jen **tahají balíčky přes ESPHome
-  remote (git) packages** (`url:` + `ref:` + `files:` + `vars:`).
-- Parametrizace jde přes substituce ve stylu `${var | default(...)}`.
-- Secrety se nikdy nedávají do balíčků — vyhodnotí se na straně device a předají
-  se jako hodnota varu / substituce.
-- Ukázku najdeš v [`examples/basic-device.yaml`](examples/basic-device.yaml).
+Repo **neobsahuje** konkrétní zařízení, `secrets.yaml`, reálná media ani vendor
+kód displejů. Ty zůstávají u tebe v lokální ESPHome / Home Assistant konfiguraci.
 
-### Struktura
+### Jak se používá
+
+V **lokálním** device YAML (ve své ESPHome konfiguraci) si poskládáš funkce přes
+ESPHome *remote (git) packages*, které ukazují na tohle repo, a předáš jim
+hodnoty přes `vars`. Stejný soubor můžeš uvést víckrát s jinými `vars` → víc
+instancí (např. dva senzory ze stejného souboru).
+
+Význam jednotlivých klíčů:
+
+- **`url`** — HTTPS adresa tohoto repozitáře.
+- **`ref`** — větev, tag nebo commit, který se natáhne (viz [Vývoj / aktualizace](#vývoj--aktualizace)).
+- **`refresh`** — jak často ESPHome kontroluje remote na změny (např. `1d`); u
+  pevného tagu/commitu prakticky nehraje roli.
+- **`files`** — seznam souborů z repa, které se do zařízení natáhnou.
+- **`path`** — cesta k souboru uvnitř repa.
+- **`vars`** — hodnoty předané do substitucí daného souboru. Jsou **vnořené pod
+  položkou souboru** (vedle `path`), ne přímo pod klíčem balíčku.
+
+### Lokální konfigurace a secrets
+
+U sebe (v ESPHome / HA), **mimo** tohle repo, si držíš:
+
+- **device YAMLy** — tenké, site-specific soubory, které tahají balíčky odsud;
+- **`secrets.yaml`** — Wi-Fi, API encryption key, MQTT broker apod.;
+- volitelně **`media.local/`** — lokální/privátní média (viz [Média a displeje](#média-a-displeje)).
+
+Secrety se vyhodnocují **v lokálním device YAML / lokální ESPHome konfiguraci**,
+nikdy ne uvnitř remote balíčků — ESPHome `!secret` uvnitř natažených souborů
+neumí vyhodnotit. Vyřeš je tedy lokálně (typicky v `substitutions:` přes
+`!secret …`) a do balíčků je předej jako hodnotu varu / substituce (`${…}`).
+
+### Příklad device YAML
+
+Tohle žije v **tvé** konfiguraci, ne tady. Kompletní verzi viz
+[`examples/basic-device.yaml`](examples/basic-device.yaml):
+
+```yaml
+substitutions:
+  controller_name: "example-device"
+  topic_prefix: "esphome/site/example-device"
+  # secrety se vyhodnotí lokálně a do balíčků jdou přes ${...}
+  encryption_key: !secret api_encryption_key
+  wifi_ssid: !secret wifi_ssid
+  wifi_password: !secret wifi_password
+  mqtt_broker: !secret mqtt_broker
+
+esphome:
+
+logger:
+  level: INFO
+
+packages:
+  shared:
+    url: https://github.com/kopfik/esphome
+    ref: master            # při testování; pro stabilní buildy pinni tag/commit
+    refresh: 1d
+    files:
+      - path: packages/base.yaml
+      - path: packages/time.yaml
+        vars: { sntp_server: pool.ntp.org }
+      - path: packages/mqtt.yaml
+        vars: { id: mqtt_client, broker: "${mqtt_broker}", port: "1883" }
+      - path: components/sensors/sht4x.yaml
+        vars: { id: sht40, address: "0x44", update_interval: "1", window_size: "60" }
+```
+
+### Struktura repozitáře
 
 | Cesta | Obsah |
 |---|---|
@@ -31,98 +92,140 @@ konkrétní zařízení, žádné secrety.
 | `components/lights/` | RGB/LED stripy, segmenty, monochromatická světla |
 | `components/outputs/` | GPIO výstupy, LEDC PWM, bzučák |
 | `components/buttons/` | Tlačítka (např. PC power button) |
-| `components/displays/` | Placeholder (`.gitkeep`) — displeje jsou budoucí práce |
-| `external_components/` | Placeholder (`.gitkeep`) — vendor/cizí kód se sem nepublikuje |
+| `components/displays/` | Placeholder — displeje jsou budoucí práce |
+| `external_components/` | Placeholder — vendor/cizí kód se sem nepublikuje |
 | `templates/` | Sdílené YAML kousky / kotvy |
-| `media/` | Placeholder pro budoucí veřejná / znovupoužitelná média |
-| `media.local/` | Lokální/privátní média per-site (gitignored, jen `.gitkeep`) |
 | `examples/` | Anonymizovaný vzorový device YAML |
-
-### Jak se to používá
-
-Privátní device YAML (v HA) skládá funkce přes remote packages a předává jim
-hodnoty přes `vars`. Stejný soubor jde uvést víckrát s jinými `vars` → víc
-instancí (např. dva senzory ze stejného souboru). Kompletní příklad viz
-[`examples/basic-device.yaml`](examples/basic-device.yaml):
-
-```yaml
-packages:
-  shared:
-    url: https://github.com/<your-user>/<your-public-repo>
-    ref: main
-    refresh: 1d
-    files:
-      - path: packages/base.yaml
-      - path: components/sensors/sht4x.yaml
-        vars: { id: sht40, address: "0x44", update_interval: "1", window_size: "60" }
-```
+| `media/` | Placeholder pro budoucí veřejná / znovupoužitelná média |
+| `media.local/` | Konvence pro lokální/privátní média (zde gitignored) |
 
 ### Konvence balíčků
 
-- Soubor balíčku obvykle začíná **hlavičkou** s příklady includu (`Inline:` i
-  `Block:`), aby bylo hned vidět, jak se volá a jaké bere vary.
-- Volitelné hodnoty: `${var | default(...)}` → když je device nepředá, spadne to
-  na rozumný default.
+- Soubor balíčku obvykle začíná **hlavičkou** s příklady includu, aby bylo hned
+  vidět, jak se volá a jaké bere `vars`.
+- Volitelné hodnoty se píšou jako `${var | default(...)}` → když je device
+  nepředá, spadne to na rozumný default.
 - Hardware-specifické věci (ID, I²C adresy, offsety, intervaly, piny, zapojení)
   se předávají jako `vars`, ne natvrdo v balíčku.
 - **Žádné secrety ani odkazy na ně v balíčcích** (remote packages je stejně
   neumí vyhodnotit).
 
-### Senzory
+### Senzory a hardware poznámky
 
-Senzorové balíčky jsou v `components/sensors/`, pojmenování drží oficiální
+Senzorové balíčky jsou v `components/sensors/`; pojmenování drží oficiální
 ESPHome platformy, kde to dává smysl.
 
-- **BMP58x split:** `bmp58x_custom.yaml` = custom/manual-init implementace
-  (nativní init byl nespolehlivý); `bmp581_i2c.yaml` = nativní ESPHome-style
-  balíček pro budoucí použití.
+- **BMP58x:** `bmp58x_custom.yaml` = custom/manuální-init implementace;
+  `bmp581_i2c.yaml` = nativní ESPHome-style balíček.
 - **Radar:** `ld2450.yaml` je kanonický LD2450 balíček.
 
-### Vývojový workflow
+### Média a displeje
 
-1. Uprav balíček v tomhle repu.
-2. Zkontroluj `git diff`.
-3. **Zkompiluj/otestuj v Home Assistant** (device si balíky vezme z gitu dle
-   `ref`).
-4. Commitni / otaguj teprve, až build/test projde.
+- `media/` je placeholder pro **budoucí veřejná / znovupoužitelná** média.
+- `media.local/` je konvence pro **lokální/privátní** média ve tvé ESPHome
+  konfiguraci; v tomhle repu je gitignored (obsah se necommituje).
+- Displeje jsou zatím **placeholder / budoucí práce**.
 
-Žádné OTA / upload / flash z tohohle repa. Pinuj `ref` na tag/commit kvůli
-reprodukovatelným buildům.
+### Vývoj / aktualizace
+
+`ref` určuje, co se natáhne:
+
+- **`master`** — nejnovější stav, OK na testování.
+- **tag / commit** — lepší pro stabilní, reprodukovatelné buildy (až budou
+  vydané), aby ti starý device nezačal tahat aktuální `master`.
+
+Z tohohle repa se neflashuje ani neuploaduje. Po úpravě balíčku zkompiluj/otestuj
+zařízení ve své ESPHome konfiguraci a teprve pak commitni / otaguj.
 
 ### Licence
 
-Repozitář je licencovaný pod **MIT** licencí (viz [`LICENSE`](LICENSE)).
+Repozitář je licencovaný pod **MIT** (viz [`LICENSE`](LICENSE)).
 
-ESPHome samotné má vlastní licenci. Tohle repo obsahuje znovupoužitelné ESPHome
-YAML balíčky, dokumentaci a příklady — **ne** vendorovaný ESPHome runtime kód.
-Budoucí externí/custom komponenty odvozené z ESPHome nebo jiného cizího kódu si
-musí ponechat původní licenci a atribuci (a do public repa patří jen s nimi).
-
-### Aktuální stav
-
-- Struktura balíčků a úklid senzorových balíčků **úspěšně zkompilovány v HA**.
-- Displeje, legacy d1mini a polish do veřejné šablony jsou budoucí práce.
+ESPHome samotné má vlastní licenci. Toto repo obsahuje znovupoužitelné ESPHome
+YAML balíčky, dokumentaci a příklady. Případné budoucí externí/custom komponenty
+si nesou vlastní licenci a atribuci.
 
 ---
 
 ## English
 
-### What this repo is
+### What this repository contains
 
-A public, reusable repository of ESPHome **packages** (packages / components /
-boards / templates). It contains **only shared, parameterized building blocks** —
-no concrete devices, no secrets.
+Public, reusable ESPHome **packages** — shared, parameterized building blocks for
+assembling devices: core packages, board definitions, components (buses, sensors,
+lights, outputs, buttons), templates, and examples.
 
-- **Your devices and `secrets.yaml` do not belong here.** They live in your
-  private HA / site repo. Thin device YAMLs there just **pull packages via
-  ESPHome remote (git) packages** (`url:` + `ref:` + `files:` + `vars:`).
-- Parameterization uses substitutions in the `${var | default(...)}` style.
-- Secrets are never placed in packages — they are resolved on the device side and
-  passed in as a var / substitution value.
-- See [`examples/basic-device.yaml`](examples/basic-device.yaml) for a worked
-  example.
+The repo does **not** contain concrete devices, `secrets.yaml`, real media, or
+vendor display code. Those stay in your own local ESPHome / Home Assistant
+configuration.
 
-### Layout
+### How to use it
+
+In your **local** device YAML (in your ESPHome configuration) you assemble
+features via ESPHome *remote (git) packages* pointing at this repository, and pass
+values through `vars`. The same file can be listed multiple times with different
+`vars` to create multiple instances (e.g. two sensors from one file).
+
+What each key means:
+
+- **`url`** — HTTPS address of this repository.
+- **`ref`** — branch, tag, or commit to pull (see [Development / updates](#development--updates)).
+- **`refresh`** — how often ESPHome re-checks the remote for changes (e.g. `1d`);
+  effectively irrelevant when pinned to a tag/commit.
+- **`files`** — list of files to pull from the repo into the device.
+- **`path`** — path of a file inside the repo.
+- **`vars`** — values passed into that file's substitutions. They are **nested
+  under the file item** (next to `path`), not directly under the package key.
+
+### Local configuration and secrets
+
+On your side (in ESPHome / HA), **outside** this repo, you keep:
+
+- **device YAMLs** — thin, site-specific files that pull packages from here;
+- **`secrets.yaml`** — Wi-Fi, API encryption key, MQTT broker, etc.;
+- optionally **`media.local/`** — local/private media (see [Media and displays](#media-and-displays)).
+
+Secrets are resolved **in your local device YAML / local ESPHome config**, never
+inside remote packages — ESPHome cannot resolve `!secret` inside the pulled files.
+Resolve them locally (typically in `substitutions:` via `!secret …`) and pass them
+into packages as a var / substitution value (`${…}`).
+
+### Example device YAML
+
+This lives in **your** configuration, not here. See
+[`examples/basic-device.yaml`](examples/basic-device.yaml) for the full version:
+
+```yaml
+substitutions:
+  controller_name: "example-device"
+  topic_prefix: "esphome/site/example-device"
+  # secrets resolved locally, consumed by packages via ${...}
+  encryption_key: !secret api_encryption_key
+  wifi_ssid: !secret wifi_ssid
+  wifi_password: !secret wifi_password
+  mqtt_broker: !secret mqtt_broker
+
+esphome:
+
+logger:
+  level: INFO
+
+packages:
+  shared:
+    url: https://github.com/kopfik/esphome
+    ref: master            # while testing; pin a tag/commit for stable builds
+    refresh: 1d
+    files:
+      - path: packages/base.yaml
+      - path: packages/time.yaml
+        vars: { sntp_server: pool.ntp.org }
+      - path: packages/mqtt.yaml
+        vars: { id: mqtt_client, broker: "${mqtt_broker}", port: "1883" }
+      - path: components/sensors/sht4x.yaml
+        vars: { id: sht40, address: "0x44", update_interval: "1", window_size: "60" }
+```
+
+### Repository layout
 
 | Path | Contents |
 |---|---|
@@ -133,37 +236,17 @@ no concrete devices, no secrets.
 | `components/lights/` | RGB/LED strips, segments, monochromatic lights |
 | `components/outputs/` | GPIO outputs, LEDC PWM, buzzer |
 | `components/buttons/` | Buttons (e.g. PC power button) |
-| `components/displays/` | Placeholder (`.gitkeep`) — displays are future work |
-| `external_components/` | Placeholder (`.gitkeep`) — vendor/3rd-party code is not published here |
+| `components/displays/` | Placeholder — displays are future work |
+| `external_components/` | Placeholder — vendor/3rd-party code is not published here |
 | `templates/` | Shared YAML snippets / anchors |
-| `media/` | Placeholder for future public / reusable media |
-| `media.local/` | Local/private per-site media (gitignored, `.gitkeep` only) |
 | `examples/` | Anonymized example device YAML |
-
-### Usage pattern
-
-A private device YAML (in HA) assembles features via remote packages and passes
-values through `vars`. The same file can be listed multiple times with different
-`vars` to create multiple instances (e.g. two sensors from one file). See
-[`examples/basic-device.yaml`](examples/basic-device.yaml) for the full example:
-
-```yaml
-packages:
-  shared:
-    url: https://github.com/<your-user>/<your-public-repo>
-    ref: main
-    refresh: 1d
-    files:
-      - path: packages/base.yaml
-      - path: components/sensors/sht4x.yaml
-        vars: { id: sht40, address: "0x44", update_interval: "1", window_size: "60" }
-```
+| `media/` | Placeholder for future public / reusable media |
+| `media.local/` | Convention for local/private media (gitignored here) |
 
 ### Package conventions
 
-- A package file usually starts with a **header** showing both `Inline:` and
-  `Block:` include examples, so it is obvious how to call it and which vars it
-  takes.
+- A package file usually starts with a **header** showing include examples, so it
+  is obvious how to call it and which `vars` it takes.
 - Optional values use `${var | default(...)}`, so devices that do not pass them
   fall back to a sane default.
 - Hardware-specific things (IDs, I²C addresses, offsets, intervals, pins, wiring)
@@ -171,37 +254,37 @@ packages:
 - **No secrets or secret lookups in packages** (remote packages cannot resolve
   them anyway).
 
-### Sensors
+### Sensors and hardware notes
 
 Sensor packages live under `components/sensors/`; naming follows official ESPHome
 platforms where it makes sense.
 
-- **BMP58x split:** `bmp58x_custom.yaml` = custom/manual-init implementation
-  (native init was unreliable); `bmp581_i2c.yaml` = native ESPHome-style package
-  for future use.
+- **BMP58x:** `bmp58x_custom.yaml` = custom/manual-init implementation;
+  `bmp581_i2c.yaml` = native ESPHome-style package.
 - **Radar:** `ld2450.yaml` is the canonical LD2450 package.
 
-### Development workflow
+### Media and displays
 
-1. Edit a package in this repo.
-2. Review the `git diff`.
-3. **Compile/test in Home Assistant** (devices pull packages from git per `ref`).
-4. Commit / tag only after the compile/test passes.
+- `media/` is a placeholder for **future public / reusable** media.
+- `media.local/` is a convention for **local/private** media in your ESPHome
+  config; it is gitignored in this repo (contents are not committed).
+- Displays are currently a **placeholder / future work**.
 
-No OTA / upload / flash from this repo. Pin `ref` to a tag/commit for
-reproducible builds.
+### Development / updates
+
+`ref` controls what gets pulled:
+
+- **`master`** — latest state, fine for testing.
+- **tag / commit** — better for stable, reproducible builds (once published), so
+  an old device does not start pulling the current `master`.
+
+Nothing is flashed or uploaded from this repo. After editing a package, compile/
+test the device in your ESPHome configuration, and only then commit / tag.
 
 ### License
 
 This repository is licensed under the **MIT** License (see [`LICENSE`](LICENSE)).
 
 ESPHome itself is licensed separately. This repository contains reusable ESPHome
-YAML packages, documentation, and examples — **not** vendored ESPHome runtime
-code. Future external/custom components derived from ESPHome or third-party code
-must keep their original license and attribution (and only belong in this public
-repo together with them).
-
-### Current status
-
-- Package layout and sensor package cleanup **compiled successfully in HA**.
-- Displays, legacy d1mini, and public-template polish are future work.
+YAML packages, documentation, and examples. Any future external/custom components
+carry their own license and attribution.
