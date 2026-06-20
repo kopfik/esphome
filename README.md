@@ -89,6 +89,15 @@ ESPHome platformy, kde to dává smysl.
 Žádné OTA / upload / flash z tohohle repa. Pinuj `ref` na tag/commit kvůli
 reprodukovatelným buildům.
 
+### Licence
+
+Repozitář je licencovaný pod **MIT** licencí (viz [`LICENSE`](LICENSE)).
+
+ESPHome samotné má vlastní licenci. Tohle repo obsahuje znovupoužitelné ESPHome
+YAML balíčky, dokumentaci a příklady — **ne** vendorovaný ESPHome runtime kód.
+Budoucí externí/custom komponenty odvozené z ESPHome nebo jiného cizího kódu si
+musí ponechat původní licenci a atribuci (a do public repa patří jen s nimi).
+
 ### Aktuální stav
 
 - Struktura balíčků a úklid senzorových balíčků **úspěšně zkompilovány v HA**.
@@ -181,6 +190,16 @@ platforms where it makes sense.
 
 No OTA / upload / flash from this repo. Pin `ref` to a tag/commit for
 reproducible builds.
+
+### License
+
+This repository is licensed under the **MIT** License (see [`LICENSE`](LICENSE)).
+
+ESPHome itself is licensed separately. This repository contains reusable ESPHome
+YAML packages, documentation, and examples — **not** vendored ESPHome runtime
+code. Future external/custom components derived from ESPHome or third-party code
+must keep their original license and attribution (and only belong in this public
+repo together with them).
 
 ### Current status
 
