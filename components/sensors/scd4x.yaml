@@ -1,0 +1,87 @@
+## components/sensors/scd4x.yaml
+#
+# Inline:
+#   scd41: !include { file: components/sensors/scd4x.yaml, vars: { id: scd41, address: 0x62, measurement_mode: low_power_periodic, update_interval: 30, press_compensation_src: bmp585_press_raw, window_size: 2 } }
+#
+# Block:
+#   scd41: !include
+#     file: components/sensors/scd4x.yaml
+#     vars:
+#       id: scd41
+#       address: 0x62
+#       measurement_mode: low_power_periodic
+#       update_interval: 30
+#       press_compensation_src: bmp585_press_raw
+#       window_size: 2
+#
+# Optional vars: automatic_self_calibration (default true), temperature_offset (default 4 °C).
+
+sensor:
+
+  # ==========================================================
+  # --- 1. RAW SENZORY (Odesílají JSON s TS do MQTT) ---
+  # ==========================================================
+
+  - platform: scd4x
+    id: ${id}
+    address: ${address}
+    measurement_mode: ${measurement_mode}
+    update_interval: ${update_interval}s
+    ambient_pressure_compensation_source: ${press_compensation_src}
+    automatic_self_calibration: ${automatic_self_calibration | default("true")}
+    temperature_offset: ${temperature_offset | default(4)}
+    co2:
+      id: ${id}_co2_raw
+      internal: true
+      on_value:
+        then:
+          - script.execute: { id: mqtt_publish_json, sub_topic: "co2_${id}", value: !lambda 'return x;', decimals: 0 }
+    temperature:
+      id: ${id}_temp_raw
+      internal: true
+      on_value:
+        then:          
+          - script.execute: { id: mqtt_publish_json, sub_topic: "temperature_${id}", value: !lambda 'return x;', decimals: 2 }
+    humidity:
+      id: ${id}_hum_raw
+      internal: true
+      on_value:
+        then:
+          - script.execute: { id: mqtt_publish_json, sub_topic: "humidity_${id}", value: !lambda 'return x;', decimals: 1 }
+
+  # ==========================================================
+  # --- 2. PRŮMĚROVANÉ SENZORY PRO HA (Stávající logika) ---
+  # ==========================================================
+
+  - platform: copy
+    source_id: ${id}_co2_raw
+    name: "co2_${id}"
+    filters:
+      - sliding_window_moving_average:
+          window_size: ${window_size}
+          send_every: ${window_size}
+
+  - platform: copy
+    source_id: ${id}_temp_raw
+    name: "temperature_${id}"
+    filters:
+      - sliding_window_moving_average:
+          window_size: ${window_size}
+          send_every: ${window_size}
+
+  - platform: copy
+    source_id: ${id}_hum_raw
+    name: "humidity_${id}"
+    filters:
+      - sliding_window_moving_average:
+          window_size: ${window_size}
+          send_every: ${window_size}
+          
+button:
+  - platform: template
+    name: "calibration_button_${id}"
+    icon: "mdi:molecule-co2"
+    on_press:
+      then:
+        - lambda: 'id(${id}).perform_forced_calibration(435);'
+        - logger.log: "Calibration to 435 ppm started for ${id}."

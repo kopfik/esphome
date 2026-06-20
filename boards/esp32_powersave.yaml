@@ -1,0 +1,20 @@
+## boards/esp32_powersave.yaml
+#
+# Inline:
+#   pwr_mgmt: !include boards/esp32_powersave.yaml
+#
+# Block:
+#   pwr_mgmt: !include boards/esp32_powersave.yaml
+#
+# Merges esp32 framework power-management options; include alongside a board file.
+
+esp32:
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      # 1. Zapne Power Management jako takový
+      CONFIG_PM_ENABLE: y
+      # 2. Umožní automatické měnění frekvence (Dynamic Frequency Scaling)
+      CONFIG_PM_DFS_INIT_AUTO: y
+      # 3. KLÍČOVÁ VOLBA: Umožní procesoru usnout mezi "ticky" operačního systému
+      CONFIG_FREERTOS_USE_TICKLESS_IDLE: y

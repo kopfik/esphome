@@ -1,0 +1,15 @@
+## boards/esp32-s3_psram.yaml
+#
+# Inline:
+#   psram: !include { file: boards/esp32-s3_psram.yaml, vars: { mode: quad, speed: 80 } }
+#
+# Block:
+#   psram: !include
+#     file: boards/esp32-s3_psram.yaml
+#     vars:
+#       mode: quad
+#       speed: 80
+
+psram:
+  mode: ${mode}
+  speed: ${speed}Mhz

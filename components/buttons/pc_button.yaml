@@ -1,0 +1,22 @@
+## components/buttons/pc_button.yaml
+#
+# Inline:
+#   pwr_button: !include { file: components/buttons/pc_button.yaml, vars: { name: "Power", btn_id: btn_power, out_id: fone_pwr_out, duration: 200ms } }
+#
+# Block:
+#   pwr_button: !include
+#     file: components/buttons/pc_button.yaml
+#     vars:
+#       name: "Power"
+#       btn_id: btn_power
+#       out_id: fone_pwr_out
+#       duration: 200ms
+
+button:
+  - platform: template
+    name: "${name}"
+    id: ${btn_id}
+    on_press:
+      - output.turn_on: ${out_id}
+      - delay: ${duration}
+      - output.turn_off: ${out_id}

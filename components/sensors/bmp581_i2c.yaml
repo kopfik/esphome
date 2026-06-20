@@ -1,0 +1,78 @@
+## components/sensors/bmp581_i2c.yaml
+#
+# Inline:
+#   bmp581: !include { file: components/sensors/bmp581_i2c.yaml, vars: { id: bmp581, address: 0x47, press_update_interval: 1, press_offset: 0, press_window_size: 60, temp_window_size: 60 } }
+#
+# Block:
+#   bmp581: !include
+#     file: components/sensors/bmp581_i2c.yaml
+#     vars:
+#       id: bmp581
+#       address: 0x47
+#       press_update_interval: 1
+#       press_offset: 0
+#       press_window_size: 60
+#       temp_window_size: 60
+#
+# ESPHome-native bmp581_i2c platform implementation.
+
+sensor:
+
+  # ==========================================================
+  # --- 1. RAW SENZORY (Odesílají JSON s TS do MQTT) ---
+  # ==========================================================
+
+  - platform: bmp581_i2c
+    address: ${address}
+#    i2c_id: ${i2c_bus_id}
+    update_interval: ${press_update_interval}s
+
+    pressure:
+      id: ${id}_press_raw
+      internal: true
+      unit_of_measurement: "hPa"
+      device_class: pressure
+      state_class: measurement
+      accuracy_decimals: 4
+      filters:
+        - multiply: 0.01
+        - offset: ${press_offset}
+        - lambda: |-
+            if (isnan(x)) return NAN;
+            if (x > 1250.0) return NAN;
+            if (x < 300.0) return NAN;
+            return x;
+
+    temperature:
+      id: ${id}_temp_raw
+      internal: true
+      accuracy_decimals: 1
+      on_value:
+        then:
+          - script.execute:
+              id: mqtt_publish_json
+              sub_topic: "temperature_${id}"
+              value: !lambda 'return x;'
+              decimals: 2
+
+  # ==========================================================
+  # --- 2. PRŮMĚROVANÉ SENZORY PRO HA (Stávající logika) ---
+  # ==========================================================
+
+  - platform: copy
+    source_id: ${id}_press_raw
+    name: "pressure_${id}"
+    accuracy_decimals: 2
+    filters:
+      - sliding_window_moving_average:
+          window_size: ${press_window_size}
+          send_every: ${press_window_size}
+
+  - platform: copy
+    source_id: ${id}_temp_raw
+    name: "temperature_${id}"
+    accuracy_decimals: 1
+    filters:
+      - sliding_window_moving_average:
+          window_size: ${temp_window_size}
+          send_every: ${temp_window_size}

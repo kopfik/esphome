@@ -1,0 +1,49 @@
+## components/sensors/paj7620.yaml
+#
+# Inline:
+#   paj7620: !include { file: components/sensors/paj7620.yaml, vars: { id: gy_paj7620, internal: false } }
+#
+# Block:
+#   paj7620: !include
+#     file: components/sensors/paj7620.yaml
+#     vars:
+#       id: gy_paj7620
+#       internal: false
+#
+# Pulls an external_component (github) and uses the topic_prefix substitution + sntp_time in its lambda.
+
+external_components:
+  - source: github://AdamM68/paj7620-esphome
+    components: [paj7620]
+
+text_sensor:
+  - platform: paj7620
+    id: ${id}
+    name: "gesture_${id}"
+    icon: "mdi:gesture-swipe"
+    internal: ${internal}
+
+    on_value:
+      then:
+        - lambda: |-
+            auto now = id(sntp_time).now();
+            if (!now.is_valid()) return;
+
+            std::string full_topic = std::string("${topic_prefix}/gesture_${id}");
+
+            int64_t ts_ms = (int64_t)now.timestamp * 1000LL + (int64_t)(millis() % 1000);
+
+            char payload[128];
+            snprintf(
+              payload,
+              sizeof(payload),
+              "{\"value\":\"%s\",\"ts\":%lld}",
+              x.c_str(),
+              ts_ms
+            );
+
+            if (mqtt::global_mqtt_client != nullptr) {
+              mqtt::global_mqtt_client->publish(full_topic, payload);
+            } else {
+              ESP_LOGE("custom_mqtt", "MQTT client not initialized!");
+            }

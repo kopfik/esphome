@@ -1,0 +1,33 @@
+## boards/esp32-s3-zero-arduino.yaml
+#
+# Inline:
+#   board: !include boards/esp32-s3-zero-arduino.yaml
+#
+# Block:
+#   board: !include boards/esp32-s3-zero-arduino.yaml
+#
+# Requires device substitutions: cpu_freq
+#
+# Uses the arduino framework variant (vs esp-idf on the other s3 boards).
+
+esp32:
+  board: esp32-s3-devkitc-1
+#  variant: esp32s3
+  flash_size: 4MB
+  framework:
+    type: arduino
+    sdkconfig_options:
+      CONFIG_ESP32_S3_DATA_CACHE_64KB: y
+  cpu_frequency: ${cpu_freq}Mhz
+
+#light:  
+#  - platform: esp32_rmt_led_strip
+#    id: rgb_led
+#    name: onboard_rgb_led
+#    pin: GPIO21
+#    num_leds: 1
+#    rgb_order: grb
+#    chipset: WS2812
+#    rmt_symbols: 48
+#    internal: false
+

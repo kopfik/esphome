@@ -1,0 +1,78 @@
+## components/sensors/ld2410.yaml
+#
+# Inline:
+#   ld2410: !include { file: components/sensors/ld2410.yaml, vars: { id: ld2410, uart_id: uart_bus, window_size: 10 } }
+#
+# Block:
+#   ld2410: !include
+#     file: components/sensors/ld2410.yaml
+#     vars:
+#       id: ld2410
+#       uart_id: uart_bus
+#       window_size: 10
+
+ld2410:
+  id: ${id}_hub
+  uart_id: ${uart_id}
+
+binary_sensor:
+  - platform: ld2410
+    ld2410_id: ${id}_hub
+    has_target:
+      name: "${id}_presence"
+      id: ${id}_has_target
+      device_class: occupancy
+    has_moving_target:
+      name: "${id}_moving"
+      device_class: motion
+    has_still_target:
+      name: "${id}_still"
+      device_class: occupancy
+
+number:
+  - platform: ld2410
+    ld2410_id: ${id}_hub
+    timeout: { name: "${id}_timeout" }
+    light_threshold: { name: "${id}_light_threshold" }
+    max_move_distance_gate: { name: "${id}_max_move_distance_gate" }
+    max_still_distance_gate: { name: "${id}_max_still_distance_gate" }
+
+button:
+  - platform: ld2410
+    ld2410_id: ${id}_hub
+    restart: { name: "${id}_restart" }
+    factory_reset: { name: "${id}_factory_reset" }
+
+sensor:
+
+  # ==========================================================
+  # --- 1. RAW SENZORY (Internal, sypou data s TS do MQTT) ---
+  # ==========================================================
+
+  - platform: ld2410
+    ld2410_id: ${id}_hub
+    detection_distance:
+      id: ${id}_dist_raw
+      internal: true
+      on_value:
+        then:
+          - script.execute: 
+              id: mqtt_publish_json
+              sub_topic: "distance_${id}"
+              value: !lambda 'return x;'
+              decimals: 0
+
+  # ==========================================================
+  # --- 2. PRŮMĚROVANÉ SENZORY PRO HA (60s PRŮMĚRY) ---
+  # ==========================================================
+
+  - platform: copy
+    source_id: ${id}_dist_raw
+    name: "distance_${id}"
+    unit_of_measurement: "cm"
+    device_class: "distance"
+    icon: "mdi:signal-distance-variant"
+    filters:
+      - sliding_window_moving_average:
+          window_size: ${window_size}
+          send_every: ${window_size}

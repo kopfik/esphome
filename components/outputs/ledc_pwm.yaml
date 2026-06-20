@@ -1,0 +1,20 @@
+## components/outputs/ledc_pwm.yaml
+#
+# Inline:
+#   led_pwm: !include { file: components/outputs/ledc_pwm.yaml, vars: { pin: GPIO5, id: led_pwm, frequency: 500 } }
+#
+# Block:
+#   led_pwm: !include
+#     file: components/outputs/ledc_pwm.yaml
+#     vars:
+#       pin: GPIO5
+#       id: led_pwm
+#       frequency: 500
+#
+# 'frequency' optional (default 500).
+
+output:
+  - platform: ledc
+    pin: ${pin} # Tvůj IRLZ44N (Hlavní LED)
+    id: ${id}
+    frequency: ${frequency | default (500)} Hz

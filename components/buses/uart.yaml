@@ -1,0 +1,25 @@
+## components/buses/uart.yaml
+#
+# Inline:
+#   uart_bus: !include { file: components/buses/uart.yaml, vars: { id: uart_bus, tx_pin: GPIO4, rx_pin: GPIO5, baud_rate: 256000, rx_buffer_size: 2048, parity: none, stop_bits: 1 } }
+#
+# Block:
+#   uart_bus: !include
+#     file: components/buses/uart.yaml
+#     vars:
+#       id: uart_bus
+#       tx_pin: GPIO4
+#       rx_pin: GPIO5
+#       baud_rate: 256000
+#       rx_buffer_size: 2048
+#       parity: none
+#       stop_bits: 1
+
+uart:
+  - id: ${id}
+    tx_pin: ${tx_pin}
+    rx_pin: ${rx_pin}
+    baud_rate: ${baud_rate}
+    rx_buffer_size: ${rx_buffer_size}
+    parity: ${parity}
+    stop_bits: ${stop_bits}

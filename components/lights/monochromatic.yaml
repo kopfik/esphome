@@ -1,0 +1,21 @@
+## components/lights/monochromatic.yaml
+#
+# Inline:
+#   light1: !include { file: components/lights/monochromatic.yaml, vars: { name: "Light", output: led_pwm, id: light1 } }
+#
+# Block:
+#   light1: !include
+#     file: components/lights/monochromatic.yaml
+#     vars:
+#       name: "Light"
+#       output: led_pwm
+#       id: light1
+#
+# 'default_transition_length' optional (default 0.3s).
+
+light:
+  - platform: monochromatic
+    name: ${name}
+    output: ${output}
+    id: ${id}
+    default_transition_length: ${default_transition_length | default(0.3)}s

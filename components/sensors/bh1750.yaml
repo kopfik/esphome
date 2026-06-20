@@ -1,0 +1,39 @@
+## components/sensors/bh1750.yaml
+#
+# Inline:
+#   bh1750: !include { file: components/sensors/bh1750.yaml, vars: { id: bh1750, address: 0x23, update_interval: 2, window_size: 30 } }
+#
+# Block:
+#   bh1750: !include
+#     file: components/sensors/bh1750.yaml
+#     vars:
+#       id: bh1750
+#       address: 0x23
+#       update_interval: 2
+#       window_size: 30
+
+sensor:
+  # ==========================================================
+  # --- 1. RAW SENZORY (Internal, sypou data s TS do MQTT) ---
+  # ==========================================================
+
+  - platform: bh1750
+    id: ${id}_lux_raw
+    address: ${address}
+    internal: true
+    update_interval: ${update_interval}s
+    on_value:
+      then:
+        - script.execute: { id: mqtt_publish_json, sub_topic: "lux_${id}", value: !lambda 'return x;', decimals: 0 }
+
+  # ==========================================================
+  # --- 2. PRŮMĚROVANÉ SENZORY PRO HA (60s PRŮMĚRY) ---
+  # ==========================================================
+
+  - platform: copy
+    source_id: ${id}_lux_raw
+    name: "lux_${id}"
+    filters:
+      - sliding_window_moving_average:
+          window_size: ${window_size}
+          send_every: ${window_size}

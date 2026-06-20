@@ -1,0 +1,24 @@
+## boards/esp32-s3-supermini-esp-idf.yaml
+#
+# Inline:
+#   board: !include boards/esp32-s3-supermini-esp-idf.yaml
+#
+# Block:
+#   board: !include boards/esp32-s3-supermini-esp-idf.yaml
+#
+# Requires device substitutions: cpu_freq
+
+esp32:
+  board: esp32-s3-devkitc-1
+#  variant: esp32s3
+  flash_size: 4MB
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      CONFIG_ESP32_S3_DATA_CACHE_64KB: y
+  cpu_frequency: ${cpu_freq}Mhz
+
+#light:
+#  - platform: status_led
+#    name: "status_led"
+#    pin: GPIO48

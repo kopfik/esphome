@@ -1,0 +1,91 @@
+## components/sensors/ld2420.yaml
+#
+# Inline:
+#   ld2420: !include { file: components/sensors/ld2420.yaml, vars: { id: ld2420, uart_id: uart_bus, window_size: 5 } }
+#
+# Block:
+#   ld2420: !include
+#     file: components/sensors/ld2420.yaml
+#     vars:
+#       id: ld2420
+#       uart_id: uart_bus
+#       window_size: 5
+
+ld2420:
+  id: ${id}_hub
+  uart_id: ${uart_id}
+
+# 1. TEXTOVÝ SENZOR (Verze FW)
+text_sensor:
+  - platform: ld2420
+    fw_version:
+      name: "${id} Firmware Version"
+
+# 2. BINÁRNÍ SENZOR (Přítomnost)
+binary_sensor:
+  - platform: ld2420
+    has_target:
+      name: "${id} Presence"
+      id: ${id}_presence
+
+# 3. SENZORY (Pouze Moving Distance)
+sensor:
+
+  # ==========================================================
+  # --- 1. RAW SENZORY ---
+  # ==========================================================
+  - platform: ld2420
+    moving_distance:
+      id: ${id}_moving_dist_raw
+      internal: true
+      on_value:
+        then:
+          - script.execute: { id: mqtt_publish_json, sub_topic: "distance_${id}", value: !lambda 'return x;', decimals: 0 }
+
+  # ==========================================================
+  # --- 2. PRŮMĚROVANÉ SENZORY PRO HOME ASSISTANT ---
+  # ==========================================================
+  - platform: copy
+    source_id: ${id}_moving_dist_raw
+    name: "${id} Distance"
+    unit_of_measurement: "cm"
+    device_class: "distance"
+    icon: "mdi:signal-distance-variant"
+    filters:
+      - sliding_window_moving_average:
+          window_size: ${window_size}
+          send_every: ${window_size}
+
+# 4. NASTAVENÍ (MÓDY)
+select:
+  - platform: ld2420
+    operating_mode:
+      name: "${id} Operating Mode"
+
+# 5. ČÍSELNÉ NASTAVENÍ (Gates a Timeout)
+number:
+  - platform: ld2420
+    presence_timeout:
+      name: "${id} Presence Timeout"
+    min_gate_distance:
+      name: "${id} Min Gate Distance"
+    max_gate_distance:
+      name: "${id} Max Gate Distance"
+    gate_select:
+      name: "${id} Select Gate to Set"
+    still_threshold:
+      name: "${id} Set Still Threshold"
+    move_threshold:
+      name: "${id} Set Move Threshold"
+
+# 6. OVLÁDACÍ TLAČÍTKA
+button:
+  - platform: ld2420
+    apply_config:
+      name: "${id} Apply Config"
+    factory_reset:
+      name: "${id} Factory Reset"
+    restart_module:
+      name: "${id} Restart Radar"
+    revert_config:
+      name: "${id} Undo Edits"

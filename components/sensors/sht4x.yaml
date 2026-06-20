@@ -1,0 +1,57 @@
+## components/sensors/sht4x.yaml
+#
+# Inline:
+#   sht45: !include { file: components/sensors/sht4x.yaml, vars: { id: sht45, address: 0x44, update_interval: 1, window_size: 60 } }
+#
+# Block:
+#   sht45: !include
+#     file: components/sensors/sht4x.yaml
+#     vars:
+#       id: sht45
+#       address: 0x44
+#       update_interval: 1
+#       window_size: 60
+
+sensor:
+  
+  # ==========================================================
+  # --- 1. RAW SENZORY (Odesílají JSON s TS do MQTT) ---
+  # ==========================================================
+
+  - platform: sht4x
+    id: ${id}
+    address: ${address}
+    update_interval: ${update_interval}s
+    temperature:
+      id: ${id}_temp_raw
+      internal: true
+      on_value:
+        then:
+          - script.execute: { id: mqtt_publish_json, sub_topic: "temperature_${id}", value: !lambda 'return x;', decimals: 2 }
+        
+    humidity:
+      id: ${id}_hum_raw
+      internal: true
+      on_value:
+        then:
+          - script.execute: { id: mqtt_publish_json, sub_topic: "humidity_${id}", value: !lambda 'return x;', decimals: 1 }
+
+  # ==========================================================
+  # --- 2. PRŮMĚROVANÉ SENZORY PRO HA (Stávající logika) ---
+  # ==========================================================
+
+  - platform: copy
+    source_id: ${id}_temp_raw
+    name: "temperature_${id}"
+    filters:
+      - sliding_window_moving_average:
+          window_size: ${window_size}
+          send_every: ${window_size}
+
+  - platform: copy
+    source_id: ${id}_hum_raw
+    name: "humidity_${id}"
+    filters:
+      - sliding_window_moving_average:
+          window_size: ${window_size}
+          send_every: ${window_size}

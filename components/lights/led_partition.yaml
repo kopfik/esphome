@@ -1,0 +1,32 @@
+## components/lights/led_partition.yaml
+#
+# Inline:
+#   segment1: !include { file: components/lights/led_partition.yaml, vars: { id: stul_usek1, name: "Stul - Usek 1", parent_id: led_strip, from: 0, to: 16 } }
+#
+# Block:
+#   segment1: !include
+#     file: components/lights/led_partition.yaml
+#     vars:
+#       id: stul_usek1
+#       name: "Stul - Usek 1"
+#       parent_id: led_strip
+#       from: 0
+#       to: 16
+
+light:
+  - platform: partition
+    id: ${id}
+    name: ${name}
+    color_correct: [0.9, 0.9, 0.9]
+    default_transition_length: 0.25s
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      - light.turn_on:
+          id: $id
+          red: 100%
+          green: 76%
+          blue: 55%
+    segments:
+      - id: ${parent_id}
+        from: ${from}
+        to: ${to}

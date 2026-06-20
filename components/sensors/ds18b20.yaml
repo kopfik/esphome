@@ -1,0 +1,43 @@
+## components/sensors/ds18b20.yaml
+#
+# Inline:
+#   ds18b20: !include { file: components/sensors/ds18b20.yaml, vars: { id: ds18b20, address: 0x... (per-probe OneWire addr), update_interval: 15, window_size: 4 } }
+#
+# Block:
+#   ds18b20: !include
+#     file: components/sensors/ds18b20.yaml
+#     vars:
+#       id: ds18b20
+#       address: 0x... (per-probe OneWire addr)
+#       update_interval: 15
+#       window_size: 4
+#
+# Optional var: resolution (9-12 bits, default 12).
+
+sensor:
+  # ==========================================================
+  # --- 1. RAW SENZORY (Odesílají JSON s TS do MQTT) ---
+  # ==========================================================
+
+  - platform: dallas_temp
+    id: ${id}_raw
+    address: ${address}
+    resolution: ${resolution | default(12)}
+    internal: true
+    force_update: True
+    update_interval: ${update_interval}s
+    on_value:
+      then:
+        - script.execute: { id: mqtt_publish_json, sub_topic: "temperature_${id}", value: !lambda 'return x;', decimals: 2 }
+
+  # ==========================================================
+  # --- 2. PRŮMĚROVANÉ SENZORY PRO HA (Stávající logika) ---
+  # ==========================================================
+
+  - platform: copy
+    source_id: ${id}_raw
+    name: "temperature_${id}"
+    filters:
+      - sliding_window_moving_average:
+          window_size: ${window_size}
+          send_every: ${window_size}

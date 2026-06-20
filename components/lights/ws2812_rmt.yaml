@@ -1,0 +1,24 @@
+## components/lights/ws2812_rmt.yaml
+#
+# Inline:
+#   led_strip: !include { file: components/lights/ws2812_rmt.yaml, vars: { id: led_strip, pin: GPIO7, num_leds: 102 } }
+#
+# Block:
+#   led_strip: !include
+#     file: components/lights/ws2812_rmt.yaml
+#     vars:
+#       id: led_strip
+#       pin: GPIO7
+#       num_leds: 102
+#
+# Optional vars (defaults): rgb_order (GRB), chipset (WS2812), rmt_symbols (48), internal (true).
+
+light:
+  - platform: esp32_rmt_led_strip
+    id: ${id}
+    pin: ${pin}
+    num_leds: ${num_leds}
+    rgb_order: ${rgb_order | default("GRB")}
+    chipset: ${chipset | default("WS2812")}
+    rmt_symbols: ${rmt_symbols | default(48)}
+    internal: ${internal | default("true")}

@@ -1,0 +1,26 @@
+## components/lights/esp32_rmt_rgb_led.yaml
+#
+# Inline:
+#   rgb_led: !include { file: components/lights/esp32_rmt_rgb_led.yaml, vars: { name: "RGB led", pin: GPIO48, rgb_order: grb } }
+#
+# Block:
+#   rgb_led: !include
+#     file: components/lights/esp32_rmt_rgb_led.yaml
+#     vars:
+#       name: "RGB led"
+#       pin: GPIO48
+#       rgb_order: grb
+#
+# Single onboard WS2812; light id is fixed to rgb_led.
+
+light:  
+  - platform: esp32_rmt_led_strip
+    id: rgb_led
+    name: ${name}
+    pin: ${pin}
+    num_leds: 1
+    rgb_order: ${rgb_order}
+    chipset: WS2812
+    rmt_symbols: 48
+    internal: false
+

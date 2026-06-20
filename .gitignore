@@ -1,0 +1,40 @@
+# Public ESPHome packages repository.
+#
+# Goal: ignore ONLY private, runtime, generated, and build files.
+# Reusable public dirs stay tracked: packages/, boards/, components/,
+# templates/, examples/, media/, external_components/.
+
+# --- Secrets (never commit) ---
+secrets.yaml
+
+# --- ESPHome runtime / cache ---
+.esphome/
+
+# --- ESPHome Device Builder private/runtime state ---
+.device-builder*
+.receiver_peers.json
+.offloader_pairings.json
+
+# --- Build / firmware artifacts ---
+*.bin
+*.elf
+*.map
+*.factory.bin
+
+# --- Local / private per-site media (keep the dir, ignore contents) ---
+media.local/*
+!media.local/.gitkeep
+
+# --- Local backups ---
+*.bak
+*.orig
+*~
+
+# --- Python cache ---
+__pycache__/
+*.pyc
+
+# --- OS / editor cruft ---
+.DS_Store
+.idea/
+.vscode/

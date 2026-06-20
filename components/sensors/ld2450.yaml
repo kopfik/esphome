@@ -1,0 +1,246 @@
+## components/sensors/ld2450.yaml
+#
+# Inline:
+#   ld2450: !include { file: components/sensors/ld2450.yaml, vars: { id: ld2450, uart_id: uart_bus, window_size: 10 } }
+#
+# Block:
+#   ld2450: !include
+#     file: components/sensors/ld2450.yaml
+#     vars:
+#       id: ld2450
+#       uart_id: uart_bus
+#       window_size: 10
+#
+# Canonical LD2450 package.
+
+#external_components:
+#  - source:
+#      type: git
+#      url: https://github.com/swoboda1337/esphome
+#      ref: 6a6c429d933dc648039653e8d0f560e6c2715533
+#    components: [ ld2450 ]
+
+ld2450:
+  id: ${id}_hub
+  uart_id: ${uart_id}
+
+# 1. BINÁRNÍ SENZORY - Základní detekce
+binary_sensor:
+  - platform: ld2450
+    ld2450_id: ${id}_hub
+    has_target:
+      name: "${id} Presence"
+    has_moving_target:
+      name: "${id} Moving Target"
+    has_still_target:
+      name: "${id} Still Target"
+
+# 2. SENSORY - Všechny číselné údaje
+sensor:
+  - platform: ld2450
+    ld2450_id: ${id}_hub
+    target_count:
+      name: "${id} Target Count"
+    still_target_count:
+      name: "${id} Still Target Count"
+    moving_target_count:
+      name: "${id} Moving Target Count"
+
+    # --- OSOBA 1 (Full data do MQTT) ---
+    target_1:
+      x:
+        id: ${id}_t1_x_raw
+        internal: true
+        filters: []
+        on_value:
+          then: 
+            - script.execute: { id: mqtt_publish_json, sub_topic: "t1_x_${id}", value: !lambda 'return x;', decimals: 0 }
+      y:
+        id: ${id}_t1_y_raw
+        internal: true
+        filters: []
+        on_value:
+          then: 
+            - script.execute: { id: mqtt_publish_json, sub_topic: "t1_y_${id}", value: !lambda 'return x;', decimals: 0 }
+      speed:
+        id: ${id}_t1_speed_raw
+        internal: true
+        filters: []
+        on_value:
+          then: 
+            - script.execute: { id: mqtt_publish_json, sub_topic: "t1_speed_${id}", value: !lambda 'return x;', decimals: 1 }
+      angle:
+        id: ${id}_t1_angle_raw
+        internal: true
+        on_value:
+          then: 
+            - script.execute: { id: mqtt_publish_json, sub_topic: "t1_angle_${id}", value: !lambda 'return x;', decimals: 1 }
+      distance:
+        id: ${id}_t1_dist_raw
+        internal: true
+        on_value:
+          then: 
+            - script.execute: { id: mqtt_publish_json, sub_topic: "t1_dist_${id}", value: !lambda 'return x;', decimals: 0 }
+
+    # --- OSOBA 2 (MQTT) ---
+    target_2:
+      x:
+        id: ${id}_t2_x_raw
+        internal: true
+        filters: []
+        on_value:
+          then: 
+            - script.execute: { id: mqtt_publish_json, sub_topic: "t2_x_${id}", value: !lambda 'return x;', decimals: 0 }
+      y:
+        id: ${id}_t2_y_raw
+        internal: true
+        filters: []
+        on_value:
+          then: 
+            - script.execute: { id: mqtt_publish_json, sub_topic: "t2_y_${id}", value: !lambda 'return x;', decimals: 0 }
+
+    # --- OSOBA 3 (MQTT) ---
+    target_3:
+      x:
+        id: ${id}_t3_x_raw
+        internal: true
+        filters: []
+        on_value:
+          then: 
+            - script.execute: { id: mqtt_publish_json, sub_topic: "t3_x_${id}", value: !lambda 'return x;', decimals: 0 }
+      y:
+        id: ${id}_t3_y_raw
+        internal: true
+        filters: []
+        on_value:
+          then: 
+            - script.execute: { id: mqtt_publish_json, sub_topic: "t3_y_${id}", value: !lambda 'return x;', decimals: 0 }
+
+    # ZÓNY - Počty osob
+    zone_1:
+      target_count:
+        name: "${id} Zone-1 Count"
+    zone_2:
+      target_count:
+        name: "${id} Zone-2 Count"
+    zone_3:
+      target_count:
+        name: "${id} Zone-3 Count"
+
+# ==========================================================
+  # --- 2. PRŮMĚROVANÉ SENZORY PRO HOME ASSISTANT ---
+  # ==========================================================
+  - platform: copy
+    source_id: ${id}_t1_x_raw
+    name: "Target 1 X ${id}"
+    unit_of_measurement: "mm"
+    icon: "mdi:axis-x-arrow"
+    filters: 
+      - sliding_window_moving_average: 
+          window_size: ${window_size}
+          send_every: ${window_size}
+
+  - platform: copy
+    source_id: ${id}_t1_y_raw
+    name: "Target 1 Y ${id}"
+    unit_of_measurement: "mm"
+    icon: "mdi:axis-y-arrow"
+    filters: 
+      - sliding_window_moving_average: 
+          window_size: ${window_size}
+          send_every: ${window_size}
+            
+  - platform: copy
+    source_id: ${id}_t1_speed_raw
+    name: "Target 1 Speed ${id}"
+    unit_of_measurement: "mm/s"
+    icon: "mdi:speedometer"
+    filters: 
+      - sliding_window_moving_average: 
+          window_size: ${window_size}
+          send_every: ${window_size}
+            
+  - platform: copy
+    source_id: ${id}_t1_angle_raw
+    name: "Target 1 Angle ${id}"
+    unit_of_measurement: "°"
+    icon: "mdi:angle-deg"
+    filters: 
+      - sliding_window_moving_average: 
+          window_size: ${window_size}
+          send_every: ${window_size}
+            
+  - platform: copy
+    source_id: ${id}_t1_dist_raw
+    name: "Target 1 Distance ${id}"
+    unit_of_measurement: "mm"
+    icon: "mdi:ruler"
+    filters: 
+      - sliding_window_moving_average: 
+          window_size: ${window_size}
+          send_every: ${window_size}
+          
+# 3. TEXTOVÉ SENZORY
+text_sensor:
+  - platform: ld2450
+    ld2450_id: ${id}_hub
+    version:
+      name: "${id} Firmware Version"
+    mac_address:
+      name: "${id} Bluetooth MAC"
+    target_1:
+      direction:
+        name: "Target-1 Direction ${id}"
+    target_2:
+      direction:
+        name: "Target-2 Direction ${id}"
+    target_3:
+      direction:
+        name: "Target-3 Direction ${id}"
+
+# 4. ČÍSLA (NUMBER)
+number:
+  - platform: ld2450
+    ld2450_id: ${id}_hub
+    presence_timeout:
+      name: "${id} Presence Timeout"
+    zone_1:
+      x1: { name: "${id} Z1 X-Start" }
+      y1: { name: "${id} Z1 Y-Start" }
+      x2: { name: "${id} Z1 X-End" }
+      y2: { name: "${id} Z1 Y-End" }
+    zone_2:
+      x1: { name: "${id} Z2 X-Start" }
+      y1: { name: "${id} Z2 Y-Start" }
+      x2: { name: "${id} Z2 X-End" }
+      y2: { name: "${id} Z2 Y-End" }
+    zone_3:
+      x1: { name: "${id} Z3 X-Start" }
+      y1: { name: "${id} Z3 Y-Start" }
+      x2: { name: "${id} Z3 X-End" }
+      y2: { name: "${id} Z3 Y-End" }
+
+# 5. PŘEPÍNAČE (SWITCH)
+switch:
+  - platform: ld2450
+    ld2450_id: ${id}_hub
+    bluetooth:
+      name: "${id} Bluetooth Enable"
+    multi_target:
+      name: "${id} Multi Target Tracking"
+
+# 6. VÝBĚRY (SELECT)
+select:
+  - platform: ld2450
+    ld2450_id: ${id}_hub
+    zone_type:
+      name: "${id} Zone Mode"
+
+# 7. TLAČÍTKA (BUTTON)
+button:
+  - platform: ld2450
+    ld2450_id: ${id}_hub
+    factory_reset:
+      name: "${id} Factory Reset"
+    restart:
+      name: "${id} Restart Radar"

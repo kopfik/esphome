@@ -1,0 +1,59 @@
+## components/sensors/sgp4x.yaml
+#
+# Inline:
+#   sgp41: !include { file: components/sensors/sgp4x.yaml, vars: { id: sgp41, update_interval: 2, window_size: 30, temp_compensation_src: sht45_temp_raw, hum_compensation_src: sht45_hum_raw } }
+#
+# Block:
+#   sgp41: !include
+#     file: components/sensors/sgp4x.yaml
+#     vars:
+#       id: sgp41
+#       update_interval: 2
+#       window_size: 30
+#       temp_compensation_src: sht45_temp_raw
+#       hum_compensation_src: sht45_hum_raw
+
+sensor:
+
+  # ==========================================================
+  # --- 1. RAW SENZORY (Odesílají JSON s TS do MQTT) ---
+  # ==========================================================
+
+  - platform: sgp4x
+    id: ${id}
+    compensation:
+      temperature_source: ${temp_compensation_src}
+      humidity_source: ${hum_compensation_src}
+    update_interval: ${update_interval}s
+    voc:
+      id: ${id}_voc_raw
+      internal: true
+      on_value:
+        then:
+          - script.execute: { id: mqtt_publish_json, sub_topic: "voc_${id}", value: !lambda 'return x;', decimals: 0 }
+    nox:
+      id: ${id}_nox_raw
+      internal: true
+      on_value:
+        then:
+          - script.execute: { id: mqtt_publish_json, sub_topic: "nox_${id}", value: !lambda 'return x;', decimals: 0 }
+
+  # ==========================================================
+  # --- 2. PRŮMĚROVANÉ SENZORY PRO HA (Stávající logika) ---
+  # ==========================================================
+
+  - platform: copy
+    source_id: ${id}_voc_raw
+    name: "voc_${id}"
+    filters:
+      - sliding_window_moving_average:
+          window_size: ${window_size}
+          send_every: ${window_size}
+
+  - platform: copy
+    source_id: ${id}_nox_raw
+    name: "nox_${id}"
+    filters:
+      - sliding_window_moving_average:
+          window_size: ${window_size}
+          send_every: ${window_size}

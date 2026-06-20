@@ -1,0 +1,75 @@
+## components/sensors/battery_stats.yaml
+#
+# Inline:
+#   battery_stats: !include { file: components/sensors/battery_stats.yaml, vars: { id: battery, adc_pin: GPIO1, attenuation: 12, update_interval: 30, window_size: 2 } }
+#
+# Block:
+#   battery_stats: !include
+#     file: components/sensors/battery_stats.yaml
+#     vars:
+#       id: battery
+#       adc_pin: GPIO1
+#       attenuation: 12
+#       update_interval: 30
+#       window_size: 2
+#
+# Optional var: voltage_divider (ADC multiplier for the divider ratio, default 2.00).
+
+sensor:
+
+  # ==========================================================
+  # --- 1. RAW SENZORY (Internal, sypou vteřinová data do MQTT) ---
+  # ==========================================================
+
+  - platform: adc
+    pin: ${adc_pin}
+    id: ${id}_voltage_raw
+    internal: true
+    update_interval: ${update_interval}s
+    attenuation: ${attenuation}db
+    filters:
+      - multiply: ${voltage_divider | default(2.00)}
+    on_value:
+      then:
+        - script.execute: { id: mqtt_publish_json, sub_topic: "${id}_voltage", value: !lambda 'return x;', decimals: 2 }
+
+  - platform: template
+    id: ${id}_capacity_raw
+    unit_of_measurement: "%"
+    device_class: "battery"
+    update_interval: ${update_interval}s
+    lambda: |-
+      float v = id(${id}_voltage_raw).state;
+      return (v - 3.05) * 100.0 / (4.15 - 3.05);
+#    lambda: |-
+#      float v = id(${id}_voltage_raw).state;
+#      if (v >= 4.15) return 100.0;
+#      if (v <= 3.3) return 0.0;
+#      return (v - 3.3) * 100.0 / (4.15 - 3.3);
+    on_value:
+      then:
+        - script.execute: { id: mqtt_publish_json, sub_topic: "${id}_capacity", value: !lambda 'return x;', decimals: 2 }
+
+  # ==========================================================
+  # --- 2. PRŮMĚROVANÉ SENZORY PRO HA (60s PRŮMĚRY) ---
+  # ==========================================================
+
+  - platform: copy
+    source_id: ${id}_voltage_raw
+    name: "${id} voltage"
+    unit_of_measurement: "V"
+    device_class: "voltage"
+    filters:
+      - sliding_window_moving_average:
+          window_size: ${window_size}
+          send_every: ${window_size}
+          
+  - platform: copy
+    source_id: ${id}_capacity_raw
+    name: "${id} capacity"
+    unit_of_measurement: "%"
+    device_class: "battery"
+    filters:
+      - sliding_window_moving_average:
+          window_size: ${window_size}
+          send_every: ${window_size}

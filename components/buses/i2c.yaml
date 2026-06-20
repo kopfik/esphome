@@ -1,0 +1,21 @@
+## components/buses/i2c.yaml
+#
+# Inline:
+#   i2c_bus: !include { file: components/buses/i2c.yaml, vars: { id: i2c_bus, sda: GPIO8, scl: GPIO9, scan: true, frequency: 400 } }
+#
+# Block:
+#   i2c_bus: !include
+#     file: components/buses/i2c.yaml
+#     vars:
+#       id: i2c_bus
+#       sda: GPIO8
+#       scl: GPIO9
+#       scan: true
+#       frequency: 400
+
+i2c:
+  id: ${id}
+  sda: ${sda}
+  scl: ${scl}
+  scan: ${scan}
+  frequency: ${frequency}kHz

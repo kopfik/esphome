@@ -1,0 +1,19 @@
+## boards/esp32-s3-devkit-c1-esp-idf.yaml
+#
+# Inline:
+#   board: !include boards/esp32-s3-devkit-c1-esp-idf.yaml
+#
+# Block:
+#   board: !include boards/esp32-s3-devkit-c1-esp-idf.yaml
+#
+# Requires device substitutions: cpu_freq
+
+esp32:
+  board: esp32-s3-devkitc-1
+  flash_size: 8MB
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      CONFIG_ESP32_S3_DATA_CACHE_64KB: y
+  cpu_frequency: ${cpu_freq}Mhz
+

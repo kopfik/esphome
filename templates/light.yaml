@@ -1,0 +1,22 @@
+# templates/light.yaml
+
+# Base konfigurace pro RMT
+.base_rmt: &base_rmt
+  platform: esp32_rmt_led_strip
+  rgb_order: GRB
+  chipset: WS2812
+  rmt_symbols: 32
+  internal: true
+
+# Base konfigurace pro Partition
+.base_part: &base_part
+  platform: partition
+  color_correct: [0.9, 0.9, 0.9]
+  default_transition_length: 0.25s
+  restore_mode: ALWAYS_OFF
+  on_turn_on:
+    - light.turn_on:
+        id: this
+        red: 100%
+        green: 76%
+        blue: 55%

@@ -1,0 +1,32 @@
+## components/outputs/buzzer.yaml
+#
+# Inline:
+#   buzzer: !include { file: components/outputs/buzzer.yaml, vars: { pin: GPIO4 } }
+#
+# Block:
+#   buzzer: !include
+#     file: components/outputs/buzzer.yaml
+#     vars:
+#       pin: GPIO4
+#
+# Also exposes the HA service play_rtttl and an rtttl id: buzzer (output id buzzer_pwm_output is fixed).
+
+api:
+  # Tímto se v HA zpřístupní služba pro vlastní vyzvánění
+  services:
+    - service: play_rtttl
+      variables:
+        song: string
+      then:
+        - rtttl.play: !lambda 'return song;'
+
+# --- VÝSTUPY (PWM) ---
+output:
+  - platform: ledc
+    pin: ${pin} # Tvůj BC337 pro Buzzer
+    id: buzzer_pwm_output
+
+# --- DEFINICE BZUČÁKU ---
+rtttl:
+  output: buzzer_pwm_output
+  id: buzzer

@@ -1,0 +1,23 @@
+## packages/ble_proxy.yaml
+#
+# Inline:
+#   ble_proxy: !include { file: packages/ble_proxy.yaml, vars: { window: 300 } }
+#
+# Block:
+#   ble_proxy: !include
+#     file: packages/ble_proxy.yaml
+#     vars:
+#       window: 300
+#
+# All vars are optional (have defaults): interval, window, ble_scan_active, bt_proxy_active.
+
+# Aktivuje Bluetooth skenování
+esp32_ble_tracker:
+  scan_parameters:
+    interval: ${interval | default(1200)}ms
+    window: ${window | default(1100)}ms         # default 91% of time
+    active: ${ble_scan_active | default(true)}
+
+# Vytvoří z ESP32 Bluetooth bránu pro Home Assistant
+bluetooth_proxy:
+  active: ${bt_proxy_active | default(true)}

@@ -1,0 +1,20 @@
+## packages/time.yaml
+#
+# Inline:
+#   time: !include { file: packages/time.yaml, vars: { sntp_server: pool.ntp.org } }
+#
+# Block:
+#   time: !include
+#     file: packages/time.yaml
+#     vars:
+#       sntp_server: pool.ntp.org
+#
+# Provides time id: sntp_time (used by other packages' timestamps).
+# 'sntp_server' is optional + personalized: pass your NTP server (LAN IP or
+# hostname) from the device YAML; defaults to pool.ntp.org when omitted.
+
+time:
+  - platform: sntp
+    id: "sntp_time"
+    servers: ${sntp_server | default("pool.ntp.org")}
+    timezone: "Europe/Prague"

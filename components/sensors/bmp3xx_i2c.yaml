@@ -1,0 +1,69 @@
+## components/sensors/bmp3xx_i2c.yaml
+#
+# Inline:
+#   bmp390l: !include { file: components/sensors/bmp3xx_i2c.yaml, vars: { id: bmp390l, address: 0x77, update_interval: 1, window_size: 60, press_offset: 0.14 } }
+#
+# Block:
+#   bmp390l: !include
+#     file: components/sensors/bmp3xx_i2c.yaml
+#     vars:
+#       id: bmp390l
+#       address: 0x77
+#       update_interval: 1
+#       window_size: 60
+#       press_offset: 0.14
+#
+# 'press_oversampling' optional (default 16x).
+# Optional vars: temp_oversampling (default 2x), iir_filter (default OFF).
+
+sensor:
+
+  # ==========================================================
+  # --- 1. RAW SENZORY (Odesílají JSON s TS do MQTT) ---
+  # ==========================================================
+
+  - platform: bmp3xx_i2c
+    id: ${id}
+    address: ${address}
+    update_interval: ${update_interval}s
+    iir_filter: ${iir_filter | default("OFF")}
+    pressure:
+      id: ${id}_press_raw
+      oversampling: ${press_oversampling | default("16x")}
+      internal: true
+      accuracy_decimals: 4
+      filters:
+        - offset: ${press_offset}
+      on_value:
+        then:
+          - script.execute: { id: mqtt_publish_json, sub_topic: "pressure_${id}l", value: !lambda 'return x;', decimals: 4 }
+    temperature:
+      id: ${id}_temp_raw
+      oversampling: ${temp_oversampling | default("2x")}
+      internal: true
+      accuracy_decimals: 1
+      on_value:
+        then:
+          - script.execute: { id: mqtt_publish_json, sub_topic: "temperature_${id}l", value: !lambda 'return x;', decimals: 2 }
+
+  # ==========================================================
+  # --- 2. PRŮMĚROVANÉ SENZORY PRO HA (Stávající logika) ---
+  # ==========================================================
+
+  - platform: copy
+    source_id: ${id}_press_raw
+    name: "pressure_${id}"
+    accuracy_decimals: 2
+    filters:
+      - sliding_window_moving_average:
+          window_size: ${window_size}
+          send_every: ${window_size}
+
+  - platform: copy
+    source_id: ${id}_temp_raw
+    name: "temperature_${id}"
+    accuracy_decimals: 1
+    filters:
+      - sliding_window_moving_average:
+          window_size: ${window_size}
+          send_every: ${window_size}

@@ -1,0 +1,17 @@
+## boards/esp32-c6-supermini-esp-idf.yaml
+#
+# Inline:
+#   board: !include boards/esp32-c6-supermini-esp-idf.yaml
+#
+# Block:
+#   board: !include boards/esp32-c6-supermini-esp-idf.yaml
+#
+# Requires device substitutions: cpu_freq
+
+esp32:
+  board: esp32-c6-devkitc-1
+  variant: esp32c6
+  flash_size: 4MB
+  framework:
+    type: esp-idf
+  cpu_frequency: ${cpu_freq}Mhz

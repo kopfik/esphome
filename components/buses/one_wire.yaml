@@ -1,0 +1,14 @@
+## components/buses/one_wire.yaml
+#
+# Inline:
+#   one_wire_bus: !include { file: components/buses/one_wire.yaml, vars: { pin: GPIO5 } }
+#
+# Block:
+#   one_wire_bus: !include
+#     file: components/buses/one_wire.yaml
+#     vars:
+#       pin: GPIO5
+
+one_wire:
+  - platform: gpio
+    pin: ${pin}

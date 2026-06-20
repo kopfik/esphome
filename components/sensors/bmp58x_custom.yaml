@@ -1,0 +1,114 @@
+## components/sensors/bmp58x_custom.yaml
+#
+# Inline:
+#   bmp585: !include { file: components/sensors/bmp58x_custom.yaml, vars: { id: bmp585, i2c_bus_id: i2c_bus, address: 0x46, press_offset: 0.292, press_update_interval: 1, temp_update_interval: 1, press_window_size: 60, temp_window_size: 60 } }
+#
+# Block:
+#   bmp585: !include
+#     file: components/sensors/bmp58x_custom.yaml
+#     vars:
+#       id: bmp585
+#       i2c_bus_id: i2c_bus
+#       address: 0x46
+#       press_offset: 0.292
+#       press_update_interval: 1
+#       temp_update_interval: 1
+#       press_window_size: 60
+#       temp_window_size: 60
+#
+# Custom/manual-init implementation (native bmp58x init was unreliable). Do not change its behavior.
+# For the ESPHome-native variant see components/sensors/bmp581_i2c.yaml.
+# 'i2c_bus_id' is optional (default: i2c_bus) -> pass it only if your i2c bus uses a different id.
+
+esphome:
+  on_boot:
+    priority: 200
+    then:
+      - delay: 2s
+      - lambda: |-
+          uint8_t addr = ${address};
+
+          uint8_t cmd_reset[] = {0x7E, 0xB6};
+          id(${i2c_bus_id | default("i2c_bus")}).write(addr, cmd_reset, 2);
+          delay(150);
+
+          uint8_t id_reg = 0x01;
+          uint8_t chip_id = 0;
+          if (id(${i2c_bus_id | default("i2c_bus")}).write(addr, &id_reg, 1) == esphome::i2c::ERROR_OK) {
+             delay(15);
+             id(${i2c_bus_id | default("i2c_bus")}).read(addr, &chip_id, 1);
+             ESP_LOGI("bmp_custom", "Starting BMP58x at address 0x%02X. ID: 0x%02X", addr, chip_id);
+          }
+
+          uint8_t cmd_osr[] = {0x36, 0x56};
+          id(${i2c_bus_id | default("i2c_bus")}).write(addr, cmd_osr, 2);
+          delay(50);
+
+          uint8_t cmd_power[] = {0x37, 0x71};
+          id(${i2c_bus_id | default("i2c_bus")}).write(addr, cmd_power, 2);
+          delay(100);
+
+          ESP_LOGI("bmp_custom", "Initialization on address 0x%02X done.", addr);
+
+sensor:
+
+  # ==========================================================
+  # --- 1. RAW SENZORY (Odesílají JSON s TS do MQTT) ---
+  # ==========================================================
+
+  - platform: template
+    id: ${id}_press_raw
+    internal: true
+    update_interval: ${press_update_interval}s
+    filters:
+      - offset: ${press_offset}
+    lambda: |-
+      uint8_t reg = 0x20; uint8_t data[3];
+      uint8_t addr = ${address};
+      if (id(${i2c_bus_id | default("i2c_bus")}).write(addr, &reg, 1) != esphome::i2c::ERROR_OK) return NAN;
+      if (id(${i2c_bus_id | default("i2c_bus")}).read(addr, data, 3) != esphome::i2c::ERROR_OK) return NAN;
+      uint32_t raw_press = (uint32_t)data[2] << 16 | (uint32_t)data[1] << 8 | data[0];
+      if (raw_press == 0x800000 || raw_press == 0) return NAN; 
+      float pressure = raw_press / 6400.0f;
+      if (pressure > 1250.0) return NAN; 
+      return pressure;
+    on_value:
+      then:
+        - script.execute: { id: mqtt_publish_json, sub_topic: "pressure_${id}", value: !lambda 'return x;', decimals: 4 }
+
+  - platform: template
+    id: ${id}_temp_raw
+    internal: true
+    update_interval: ${temp_update_interval}s
+    lambda: |-
+      uint8_t reg = 0x1D; uint8_t data[3];
+      uint8_t addr = ${address};
+      if (id(${i2c_bus_id | default("i2c_bus")}).write(addr, &reg, 1) != esphome::i2c::ERROR_OK) return NAN;
+      if (id(${i2c_bus_id | default("i2c_bus")}).read(addr, data, 3) != esphome::i2c::ERROR_OK) return NAN;
+      uint32_t raw_temp = (uint32_t)data[2] << 16 | (uint32_t)data[1] << 8 | data[0];
+      return raw_temp / 65536.0f;
+    on_value:
+      then:
+        - script.execute: { id: mqtt_publish_json, sub_topic: "temperature_${id}", value: !lambda 'return x;', decimals: 2 }
+
+  # ==========================================================
+  # --- 2. PRŮMĚROVANÉ SENZORY PRO HA (Stávající logika) ---
+  # ==========================================================
+
+  - platform: copy
+    source_id: ${id}_press_raw
+    name: "pressure_${id}"
+    accuracy_decimals: 1
+    filters:
+      - sliding_window_moving_average:
+          window_size: ${press_window_size}
+          send_every: ${press_window_size}
+
+  - platform: copy
+    source_id: ${id}_temp_raw
+    name: "temperature_${id}"
+    accuracy_decimals: 1
+    filters:
+      - sliding_window_moving_average:
+          window_size: ${temp_window_size}
+          send_every: ${temp_window_size}
