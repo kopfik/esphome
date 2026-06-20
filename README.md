@@ -67,17 +67,16 @@ logger:
   level: INFO
 
 packages:
-  # každá položka je vlastní git zdroj; vars jsou vnořené pod položkou souboru
-  base:
+  # sdílený remote zdroj (url/ref/refresh) se nadefinuje jednou jako YAML kotva
+  # a ostatní balíčky ho přebírají přes `<<: *kopfik_esphome_remote`
+  base: &kopfik_esphome_remote
     url: https://github.com/kopfik/esphome
     ref: master            # při testování; pro stabilní buildy pinni tag/commit
     refresh: 1d
     files:
       - packages/base.yaml
   mqtt:
-    url: https://github.com/kopfik/esphome
-    ref: master
-    refresh: 1d
+    <<: *kopfik_esphome_remote
     files:
       - path: packages/mqtt.yaml
         vars:
@@ -85,9 +84,7 @@ packages:
           broker: !secret mqtt_broker
           port: !secret mqtt_port
   sht45:
-    url: https://github.com/kopfik/esphome
-    ref: master
-    refresh: 1d
+    <<: *kopfik_esphome_remote
     files:
       - path: components/sensors/sht4x.yaml
         vars:
@@ -96,6 +93,9 @@ packages:
           update_interval: 1
           window_size: 60
 ```
+
+`<<: *kopfik_esphome_remote` jen znovupoužije sdílený `url/ref/refresh` blok
+definovaný u prvního balíčku — je to běžný YAML, čistě kvůli čitelnosti.
 
 ### Struktura repozitáře
 
@@ -228,17 +228,16 @@ logger:
   level: INFO
 
 packages:
-  # each entry is its own git source; vars are nested under the file item
-  base:
+  # the shared remote source (url/ref/refresh) is defined once as a YAML anchor
+  # and reused by the other packages via `<<: *kopfik_esphome_remote`
+  base: &kopfik_esphome_remote
     url: https://github.com/kopfik/esphome
     ref: master            # while testing; pin a tag/commit for stable builds
     refresh: 1d
     files:
       - packages/base.yaml
   mqtt:
-    url: https://github.com/kopfik/esphome
-    ref: master
-    refresh: 1d
+    <<: *kopfik_esphome_remote
     files:
       - path: packages/mqtt.yaml
         vars:
@@ -246,9 +245,7 @@ packages:
           broker: !secret mqtt_broker
           port: !secret mqtt_port
   sht45:
-    url: https://github.com/kopfik/esphome
-    ref: master
-    refresh: 1d
+    <<: *kopfik_esphome_remote
     files:
       - path: components/sensors/sht4x.yaml
         vars:
@@ -257,6 +254,9 @@ packages:
           update_interval: 1
           window_size: 60
 ```
+
+`<<: *kopfik_esphome_remote` simply reuses the shared `url/ref/refresh` block
+defined on the first package — it is plain YAML, purely for readability.
 
 ### Repository layout
 

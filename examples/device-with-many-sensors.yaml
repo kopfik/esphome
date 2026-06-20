@@ -11,9 +11,12 @@
 #   3. While testing, `ref: master` is fine; pin a tag/commit for stable builds.
 #
 # Notes on the structure (this is what actually works):
-#   - Each package entry is its own git source with url / ref / refresh / files.
-#   - `vars:` MUST be nested under the file item (next to `path:`), NOT directly
-#     under the package key.
+#   - The shared remote source (url / ref / refresh) is defined ONCE as a YAML
+#     anchor (&kopfik_esphome_remote) on the first package and reused on the
+#     others via `<<: *kopfik_esphome_remote`. This is plain YAML syntax, purely
+#     for readability — each package still resolves to its own remote source.
+#   - `files:` stays per package; `vars:` MUST be nested under the file item
+#     (next to `path:`), NOT directly under the package key.
 #   - The same file can be pulled under different keys with different vars to get
 #     multiple instances (see bmp581 / bmp585 below, both from bmp58x_custom).
 #   - Secrets are resolved HERE (device level). ESPHome cannot resolve `!secret`
@@ -40,36 +43,29 @@ logger:
 
 packages:
   ## --- base
-  base:
+  # First entry defines the shared remote source as an anchor; the rest reuse it.
+  base: &kopfik_esphome_remote
     url: https://github.com/kopfik/esphome
-    ref: master
+    ref: master            # while testing; pin a tag/commit for stable builds
     refresh: 1d
     files:
       - packages/base.yaml
   board:
-    url: https://github.com/kopfik/esphome
-    ref: master
-    refresh: 1d
+    <<: *kopfik_esphome_remote
     files:
       - boards/esp32-s3-supermini-esp-idf.yaml
   pwr_mgmt:
-    url: https://github.com/kopfik/esphome
-    ref: master
-    refresh: 1d
+    <<: *kopfik_esphome_remote
     files:
       - boards/esp32_powersave.yaml
   time:
-    url: https://github.com/kopfik/esphome
-    ref: master
-    refresh: 1d
+    <<: *kopfik_esphome_remote
     files:
       - path: packages/time.yaml
         vars:
           sntp_server: pool.ntp.org
   mqtt:
-    url: https://github.com/kopfik/esphome
-    ref: master
-    refresh: 1d
+    <<: *kopfik_esphome_remote
     files:
       - path: packages/mqtt.yaml
         vars:
@@ -79,15 +75,11 @@ packages:
 
   ## --- onboard HW + buses
   sensors:
-    url: https://github.com/kopfik/esphome
-    ref: master
-    refresh: 1d
+    <<: *kopfik_esphome_remote
     files:
       - packages/sensors.yaml
   i2c_bus:
-    url: https://github.com/kopfik/esphome
-    ref: master
-    refresh: 1d
+    <<: *kopfik_esphome_remote
     files:
       - path: components/buses/i2c.yaml
         vars:
@@ -97,9 +89,7 @@ packages:
           scan: true
           frequency: 400
   rgb_led:
-    url: https://github.com/kopfik/esphome
-    ref: master
-    refresh: 1d
+    <<: *kopfik_esphome_remote
     files:
       - path: components/lights/esp32_rmt_rgb_led.yaml
         vars:
@@ -109,9 +99,7 @@ packages:
 
   ## --- connected external sensors
   sht45:
-    url: https://github.com/kopfik/esphome
-    ref: master
-    refresh: 1d
+    <<: *kopfik_esphome_remote
     files:
       - path: components/sensors/sht4x.yaml
         vars:
@@ -120,9 +108,7 @@ packages:
           update_interval: 1
           window_size: 60
   bmp390l:
-    url: https://github.com/kopfik/esphome
-    ref: master
-    refresh: 1d
+    <<: *kopfik_esphome_remote
     files:
       - path: components/sensors/bmp3xx_i2c.yaml
         vars:
@@ -133,9 +119,7 @@ packages:
           press_offset: 0
   # same file, different key + vars -> a second BMP58x instance
   bmp581:
-    url: https://github.com/kopfik/esphome
-    ref: master
-    refresh: 1d
+    <<: *kopfik_esphome_remote
     files:
       - path: components/sensors/bmp58x_custom.yaml
         vars:
@@ -147,9 +131,7 @@ packages:
           temp_window_size: 60
           press_offset: 0
   bmp585:
-    url: https://github.com/kopfik/esphome
-    ref: master
-    refresh: 1d
+    <<: *kopfik_esphome_remote
     files:
       - path: components/sensors/bmp58x_custom.yaml
         vars:
@@ -162,9 +144,7 @@ packages:
           press_offset: 0
   # cross-reference: pressure compensation source from another sensor's raw id
   scd41:
-    url: https://github.com/kopfik/esphome
-    ref: master
-    refresh: 1d
+    <<: *kopfik_esphome_remote
     files:
       - path: components/sensors/scd4x.yaml
         vars:
@@ -175,9 +155,7 @@ packages:
           measurement_mode: LOW_POWER_PERIODIC
           press_compensation_src: bmp585_press_raw
   sgp41:
-    url: https://github.com/kopfik/esphome
-    ref: master
-    refresh: 1d
+    <<: *kopfik_esphome_remote
     files:
       - path: components/sensors/sgp4x.yaml
         vars:
