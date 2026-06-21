@@ -98,6 +98,9 @@ sensor:
   - platform: copy
     source_id: ${id}_press_raw
     name: "pressure_${id}"
+    unit_of_measurement: "hPa"
+    device_class: pressure
+    state_class: measurement
     accuracy_decimals: 1
     filters:
       - sliding_window_moving_average:
@@ -107,6 +110,9 @@ sensor:
   - platform: copy
     source_id: ${id}_temp_raw
     name: "temperature_${id}"
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
     accuracy_decimals: 1
     filters:
       - sliding_window_moving_average:
