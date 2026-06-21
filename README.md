@@ -153,6 +153,12 @@ ESPHome platformy, kde to dává smysl.
 Z tohohle repa se neflashuje ani neuploaduje. Po úpravě balíčku zkompiluj/otestuj
 zařízení ve své ESPHome konfiguraci a teprve pak commitni / otaguj.
 
+### Transparentnost / AI
+
+Značná část tohoto repozitáře (balíčky i dokumentace) vznikla s pomocí AI
+asistentů a poté byla ručně zkontrolována a otestována na reálných zařízeních.
+Kód je záměrně malý a čitelný, aby šel snadno číst.
+
 ### Licence
 
 Repozitář je licencovaný pod **MIT** (viz [`LICENSE`](LICENSE)).
@@ -313,6 +319,13 @@ platforms where it makes sense.
 
 Nothing is flashed or uploaded from this repo. After editing a package, compile/
 test the device in your ESPHome configuration, and only then commit / tag.
+
+### Transparency / AI
+
+A substantial part of this repository (packages and documentation) was produced
+with the help of AI coding assistants, then reviewed and tested on real devices
+by the maintainer. The code is kept intentionally small and readable so it can be
+inspected directly.
 
 ### License
 
