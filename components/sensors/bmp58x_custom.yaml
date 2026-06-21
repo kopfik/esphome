@@ -101,11 +101,13 @@ sensor:
     unit_of_measurement: "hPa"
     device_class: pressure
     state_class: measurement
-    accuracy_decimals: 1
+    icon: mdi:gauge
+    accuracy_decimals: 2
     filters:
       - sliding_window_moving_average:
           window_size: ${press_window_size}
           send_every: ${press_window_size}
+      - round: 2
 
   - platform: copy
     source_id: ${id}_temp_raw
@@ -113,8 +115,10 @@ sensor:
     unit_of_measurement: "°C"
     device_class: temperature
     state_class: measurement
-    accuracy_decimals: 1
+    icon: mdi:thermometer
+    accuracy_decimals: 2
     filters:
       - sliding_window_moving_average:
           window_size: ${temp_window_size}
           send_every: ${temp_window_size}
+      - round: 2

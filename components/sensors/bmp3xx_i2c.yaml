@@ -53,17 +53,27 @@ sensor:
   - platform: copy
     source_id: ${id}_press_raw
     name: "pressure_${id}"
+    unit_of_measurement: "hPa"
+    device_class: pressure
+    state_class: measurement
+    icon: mdi:gauge
     accuracy_decimals: 2
     filters:
       - sliding_window_moving_average:
           window_size: ${window_size}
           send_every: ${window_size}
+      - round: 2
 
   - platform: copy
     source_id: ${id}_temp_raw
     name: "temperature_${id}"
-    accuracy_decimals: 1
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    icon: mdi:thermometer
+    accuracy_decimals: 2
     filters:
       - sliding_window_moving_average:
           window_size: ${window_size}
           send_every: ${window_size}
+      - round: 2
