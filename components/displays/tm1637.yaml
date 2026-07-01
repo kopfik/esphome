@@ -1,0 +1,33 @@
+## components/displays/tm1637.yaml
+#
+# 4x sedmisegmentovka s dvojtečkou uprostřed (TM1637). Zobrazuje čas HH:MM
+# s blikající dvojtečkou — lambda je součástí bricku, protože je stejná pro
+# všechny meteo devicy. Vyžaduje time id `sntp_time` (viz packages/time.yaml).
+#
+# Inline:
+#   segment: !include { file: components/displays/tm1637.yaml, vars: { id: segment, clk_pin: GPIO6, dio_pin: GPIO7 } }
+#
+# Block:
+#   segment: !include
+#     file: components/displays/tm1637.yaml
+#     vars:
+#       id: segment
+#       clk_pin: GPIO6
+#       dio_pin: GPIO7
+#       intensity: "0"      # optional (default 0; 0-7)
+
+display:
+  - platform: tm1637
+    id: ${id}
+    clk_pin: ${clk_pin}
+    dio_pin: ${dio_pin}
+    intensity: ${intensity | default(0)}
+    lambda: |-
+      auto time = id(sntp_time).now();
+      if (time.is_valid()) {
+        if (time.second % 2 == 0) {
+          it.strftime("%H.%M", time);
+        } else {
+          it.strftime("%H%M", time);
+        }
+      }

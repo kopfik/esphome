@@ -1,0 +1,58 @@
+## components/displays/ili9xxx/st7796.yaml
+#
+# HW definition only (ST7796 SPI panel, e.g. 3.5" 480x320). Piny/rozměry jsou
+# parametry. Kreslení (pages / lambda) NENÍ součástí tohoto souboru — je
+# per-device. Bez lambdy i bez pages se displej jen inicializuje (prázdný),
+# což stačí pro ověření zapojení.
+#
+# Pages/lambdu přidáš na devicu přes `!extend` na `id` z tohoto bricku:
+#
+#   display:
+#     - id: !extend displej35
+#       pages:
+#         - id: page_dashboard
+#           lambda: |-
+#             ...
+#
+# Až budou pages u všech meteo identické, přesunou se sem do gitu jako další
+# var / package, aby nebyly zbytečně klonované per-device.
+#
+# Inline:
+#   disp35: !include { file: components/displays/ili9xxx/st7796.yaml, vars: { id: disp35, spi_id: spi_bus, cs_pin: GPIO13, dc_pin: GPIO12, reset_pin: GPIO11 } }
+#
+# Block:
+#   disp35: !include
+#     file: components/displays/ili9xxx/st7796.yaml
+#     vars:
+#       id: disp35
+#       spi_id: spi_bus
+#       cs_pin: GPIO13
+#       dc_pin: GPIO12
+#       reset_pin: GPIO11
+#       height: 480          # optional (default 480)
+#       width: 320           # optional (default 320)
+#       swap_xy: "false"     # optional (default false)
+#       mirror_x: "true"     # optional (default false)
+#       mirror_y: "false"    # optional (default false)
+#       invert_colors: "false"   # optional (default false)
+#       data_rate: 40MHz     # optional (default 40MHz; panel běžně zvládne 80MHz)
+#       update_interval: never   # optional (default never; kresli si řídíš sám)
+
+display:
+  - platform: ili9xxx
+    model: ST7796
+    id: ${id}
+    spi_id: ${spi_id}
+    cs_pin: ${cs_pin}
+    dc_pin: ${dc_pin}
+    reset_pin: ${reset_pin}
+    dimensions:
+      height: ${height | default(480)}
+      width: ${width | default(320)}
+    invert_colors: ${invert_colors | default("false")}
+    transform:
+      swap_xy: ${swap_xy | default("false")}
+      mirror_x: ${mirror_x | default("false")}
+      mirror_y: ${mirror_y | default("false")}
+    data_rate: ${data_rate | default("40MHz")}
+    update_interval: ${update_interval | default("never")}
