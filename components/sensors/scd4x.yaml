@@ -14,7 +14,8 @@
 #       press_compensation_src: bmp585_press_raw
 #       window_size: 2
 #
-# Optional vars: automatic_self_calibration (default true), temperature_offset (default 4 °C).
+# Optional vars: automatic_self_calibration (default true), temperature_offset (default 4 °C),
+#                calibration_ppm (default 435 ppm — target CO2 for the forced calibration button).
 
 sensor:
 
@@ -83,5 +84,5 @@ button:
     icon: "mdi:molecule-co2"
     on_press:
       then:
-        - lambda: 'id(${id}).perform_forced_calibration(435);'
-        - logger.log: "Calibration to 435 ppm started for ${id}."
+        - lambda: 'id(${id}).perform_forced_calibration(${calibration_ppm | default(435)});'
+        - logger.log: "Calibration to ${calibration_ppm | default(435)} ppm started for ${id}."
