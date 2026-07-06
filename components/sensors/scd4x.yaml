@@ -15,7 +15,9 @@
 #       window_size: 2
 #
 # Optional vars: automatic_self_calibration (default true), temperature_offset (default 4 °C),
-#                calibration_ppm (default 435 ppm — target CO2 for the forced calibration button).
+#                calibration_ppm (default 435 ppm — initial target CO2 for the forced calibration
+#                button; the actual value is adjustable at runtime from HA via the
+#                "calibration_ppm_${id}" number entity and survives reboots).
 
 sensor:
 
@@ -78,11 +80,28 @@ sensor:
           window_size: ${window_size}
           send_every: ${window_size}
           
+number:
+  - platform: template
+    id: ${id}_calibration_ppm
+    name: "calibration_ppm_${id}"
+    icon: "mdi:molecule-co2"
+    unit_of_measurement: "ppm"
+    entity_category: config
+    mode: box
+    optimistic: true
+    restore_value: true
+    initial_value: ${calibration_ppm | default(435)}
+    min_value: 380
+    max_value: 2000
+    step: 1
+
 button:
   - platform: template
     name: "calibration_button_${id}"
     icon: "mdi:molecule-co2"
     on_press:
       then:
-        - lambda: 'id(${id}).perform_forced_calibration(${calibration_ppm | default(435)});'
-        - logger.log: "Calibration to ${calibration_ppm | default(435)} ppm started for ${id}."
+        - lambda: 'id(${id}).perform_forced_calibration((uint16_t) id(${id}_calibration_ppm).state);'
+        - logger.log:
+            format: "Calibration to %.0f ppm started for ${id}."
+            args: [ 'id(${id}_calibration_ppm).state' ]

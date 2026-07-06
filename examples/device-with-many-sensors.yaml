@@ -154,7 +154,7 @@ packages:
           window_size: 2
           measurement_mode: LOW_POWER_PERIODIC
           press_compensation_src: bmp585_press_raw
-          calibration_ppm: 435  # optional (default 435) — target CO2 for the forced calibration button
+          calibration_ppm: 435  # optional (default 435) — initial calibration target; adjustable later from HA
   sgp41:
     <<: *kopfik_esphome_remote
     files:

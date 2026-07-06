@@ -14,6 +14,7 @@
 ### Changed
 
 * Made the SCD4x forced-calibration target configurable via a new optional `calibration_ppm` var (default 435 ppm), so each device can pass its own value for the calibration button.
+* Exposed the SCD4x forced-calibration target as a HA-adjustable `number` entity (`calibration_ppm_<id>`), so the value can be changed at runtime without recompiling; `calibration_ppm` now only sets the initial value and the setting survives reboots.
 * Imported shared ESPHome project files into Git.
 * Moved board packages under `boards/`.
 * Restructured reusable packages into `packages/`, `components/`, `boards/`, `templates/`, `external_components/`, and `media/`.
