@@ -1,0 +1,78 @@
+## components/sensors/bmp280.yaml
+#
+# Inline:
+#   bmp280: !include { file: components/sensors/bmp280.yaml, vars: { id: bmp280, address: 0x77, update_interval: 15, window_size: 4, press_offset: 0.0 } }
+#
+# Block:
+#   bmp280: !include
+#     file: components/sensors/bmp280.yaml
+#     vars:
+#       id: bmp280
+#       address: 0x77
+#       update_interval: 15
+#       window_size: 4
+#       press_offset: 0.0
+#
+# Optional vars: press_oversampling (default 16x), temp_oversampling (default 2x), iir_filter (default OFF).
+
+sensor:
+
+  # ==========================================================
+  # --- 1. RAW SENZORY (Odesílají JSON s TS do MQTT) ---
+  # ==========================================================
+
+  - platform: bmp280_i2c
+    id: ${id}
+    address: ${address}
+    update_interval: ${update_interval}s
+    iir_filter: ${iir_filter | default("OFF")}
+    pressure:
+      id: ${id}_press_raw
+      oversampling: ${press_oversampling | default("16x")}
+      internal: true
+      accuracy_decimals: 4
+      filters:
+        - offset: ${press_offset}
+      on_value:
+        then:
+          - script.execute: { id: mqtt_publish_json, sub_topic: "pressure_${id}", value: !lambda 'return x;', decimals: 4 }
+    temperature:
+      id: ${id}_temp_raw
+      oversampling: ${temp_oversampling | default("2x")}
+      internal: true
+      accuracy_decimals: 1
+      on_value:
+        then:
+          - script.execute: { id: mqtt_publish_json, sub_topic: "temperature_${id}", value: !lambda 'return x;', decimals: 2 }
+
+  # ==========================================================
+  # --- 2. PRŮMĚROVANÉ SENZORY PRO HA (Stávající logika) ---
+  # ==========================================================
+
+  - platform: copy
+    source_id: ${id}_press_raw
+    name: "pressure_${id}"
+    unit_of_measurement: "hPa"
+    device_class: pressure
+    state_class: measurement
+    icon: mdi:gauge
+    accuracy_decimals: 2
+    filters:
+      - sliding_window_moving_average:
+          window_size: ${window_size}
+          send_every: ${window_size}
+      - round: 2
+
+  - platform: copy
+    source_id: ${id}_temp_raw
+    name: "temperature_${id}"
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    icon: mdi:thermometer
+    accuracy_decimals: 2
+    filters:
+      - sliding_window_moving_average:
+          window_size: ${window_size}
+          send_every: ${window_size}
+      - round: 2

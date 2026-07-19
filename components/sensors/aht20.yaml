@@ -1,0 +1,59 @@
+## components/sensors/aht20.yaml
+#
+# Inline:
+#   aht20: !include { file: components/sensors/aht20.yaml, vars: { id: aht20, update_interval: 15, window_size: 4 } }
+#
+# Block:
+#   aht20: !include
+#     file: components/sensors/aht20.yaml
+#     vars:
+#       id: aht20
+#       update_interval: 15
+#       window_size: 4
+#
+# 'address' optional (default 0x38).
+
+sensor:
+
+  # ==========================================================
+  # --- 1. RAW SENZORY (Odesílají JSON s TS do MQTT) ---
+  # ==========================================================
+
+  - platform: aht10
+    variant: AHT20
+    id: ${id}
+    address: ${address | default(0x38)}
+    update_interval: ${update_interval}s
+    temperature:
+      id: ${id}_temp_raw
+      internal: true
+      on_value:
+        then:
+          - script.execute: { id: mqtt_publish_json, sub_topic: "temperature_${id}", value: !lambda 'return x;', decimals: 2 }
+
+    humidity:
+      id: ${id}_hum_raw
+      internal: true
+      on_value:
+        then:
+          - script.execute: { id: mqtt_publish_json, sub_topic: "humidity_${id}", value: !lambda 'return x;', decimals: 1 }
+
+  # ==========================================================
+  # --- 2. PRŮMĚROVANÉ SENZORY PRO HA (Stávající logika) ---
+  # ==========================================================
+
+  - platform: copy
+    source_id: ${id}_temp_raw
+    name: "temperature_${id}"
+    filters:
+      - sliding_window_moving_average:
+          window_size: ${window_size}
+          send_every: ${window_size}
+
+  - platform: copy
+    source_id: ${id}_hum_raw
+    name: "humidity_${id}"
+    filters:
+      - sliding_window_moving_average:
+          window_size: ${window_size}
+          send_every: ${window_size}
