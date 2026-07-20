@@ -1,0 +1,89 @@
+## components/displays/ili9xxx/ili9488_yellow_board.yaml
+#
+# Stock `model: ILI9488` (same as ili9488.yaml, same MADCTL/DFUNCTR rotation
+# handling built into that model class — that part is NOT reimplemented here,
+# it comes for free from ESPHome upstream) PLUS an extra calibration
+# `init_sequence:` layered on top for a specific bad panel batch: cheap
+# "yellow board" BOE IPS 4.0" 480x320 modules from AliExpress that come out of
+# the box with washed-out/milky whites and wrong color fidelity.
+#
+# The extra sequence (VCOM tweak + positive/negative gamma + 18-bit pixel
+# format) is a straight translation of bytes derived from the panel's
+# datasheet into ESPHome's declarative `init_sequence:` format. It is NOT a
+# copy of any ESPHome source file — no forked/vendored component involved, no
+# GPLv3 question, just raw controller register values, same as any other
+# init_sequence in ESPHome's own docs.
+#
+# Known gaps vs. the original hand-tuned sequence (kept only as local scratch,
+# never committed here):
+#   - The trailing SLPOUT/DISPON commands from that scratch sequence are left
+#     out on purpose: `model: ILI9488` already issues both with the correct
+#     ~150ms settle delay as part of its own stock init, before this extra
+#     sequence runs. Re-issuing them here would just be redundant.
+#   - `pixel_mode: 18bit` is set explicitly below to match the 18-bit pixel
+#     format byte in the sequence. ESPHome tracks the SPI wire format
+#     separately from whatever byte you write to the panel's own PIXFMT
+#     register — without this, ESPHome keeps packing pixel data as 16-bit
+#     while the panel expects 18-bit, which likely explains why the fix
+#     "helped but was still meh". This combination has NOT been flashed/tested
+#     yet — verify on real hardware before trusting it.
+#
+# Pages/lambdu přidáš na devicu přes `!extend` na `id` z tohoto bricku:
+#
+#   display:
+#     - id: !extend display_4_0
+#       lambda: |-
+#         ...
+#
+# Inline:
+#   display_4_0: !include { file: components/displays/ili9xxx/ili9488_yellow_board.yaml, vars: { id: display_4_0, spi_id: spi_bus, cs_pin: GPIO7, dc_pin: GPIO6, reset_pin: GPIO5 } }
+#
+# Block:
+#   display_4_0: !include
+#     file: components/displays/ili9xxx/ili9488_yellow_board.yaml
+#     vars:
+#       id: display_4_0
+#       spi_id: spi_bus
+#       cs_pin: GPIO7
+#       dc_pin: GPIO6
+#       reset_pin: GPIO5
+#       height: 320                # optional (default 320)
+#       width: 480                 # optional (default 480)
+#       swap_xy: "true"            # optional (default false; true = landscape 480x320)
+#       mirror_x: "false"          # optional (default false)
+#       mirror_y: "true"           # optional (default false)
+#       invert_colors: "true"      # optional (default false)
+#       color_order: BGR           # optional (default BGR; these panels are wired BGR)
+#       data_rate: 40MHz           # optional (default 40MHz)
+#       update_interval: never     # optional (default never; kresli si řídíš sám)
+
+display:
+  - platform: ili9xxx
+    model: ILI9488
+    id: ${id}
+    spi_id: ${spi_id}
+    cs_pin: ${cs_pin}
+    dc_pin: ${dc_pin}
+    reset_pin: ${reset_pin}
+    dimensions:
+      height: ${height | default(320)}
+      width: ${width | default(480)}
+    invert_colors: ${invert_colors | default("false")}
+    color_order: ${color_order | default("BGR")}
+    transform:
+      swap_xy: ${swap_xy | default("false")}
+      mirror_x: ${mirror_x | default("false")}
+      mirror_y: ${mirror_y | default("false")}
+    data_rate: ${data_rate | default("40MHz")}
+    update_interval: ${update_interval | default("never")}
+    pixel_mode: 18bit
+    init_sequence:
+      - [0xF7, 0xA9, 0x51, 0x2C, 0x82]                                                       # Adjust Control 3
+      - [0xC0, 0x0F, 0x0F]                                                                   # Power Control 1
+      - [0xC1, 0x47]                                                                         # Power Control 2
+      - [0xC5, 0x00, 0x4D, 0x80]                                                             # VCOM (fixes the "milky" white / burnout)
+      - [0xB1, 0xB0, 0x11]                                                                   # Frame Rate Control (60Hz)
+      - [0xE9, 0x00]                                                                         # Set Image Function
+      - [0xE0, 0x00, 0x07, 0x0B, 0x03, 0x0F, 0x05, 0x30, 0x56, 0x47, 0x04, 0x0B, 0x0A, 0x2D, 0x37, 0x0F]  # Positive Gamma Control
+      - [0xE1, 0x00, 0x0E, 0x13, 0x04, 0x11, 0x07, 0x39, 0x45, 0x50, 0x07, 0x10, 0x0D, 0x32, 0x36, 0x0F]  # Negative Gamma Control
+      - [0x3A, 0x66]                                                                         # Interface Pixel Format: 18-bit over SPI

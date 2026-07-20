@@ -1,0 +1,59 @@
+## components/displays/ili9xxx/ili9488.yaml
+#
+# HW definition only (stock ILI9488 SPI panel, e.g. 4.0" 480x320 IPS). Plain
+# upstream ESPHome `model: ILI9488` — no calibration hacks. If your panel came
+# from a batch with washed-out/milky colors or a "tripled" image, see the
+# ili9488_yellow_board.yaml sibling instead.
+#
+# Piny/rozměry jsou parametry. Kreslení (pages / lambda) NENÍ součástí tohoto
+# souboru — je per-device. Bez lambdy i bez pages se displej jen inicializuje
+# (prázdný), což stačí pro ověření zapojení.
+#
+# Pages/lambdu přidáš na devicu přes `!extend` na `id` z tohoto bricku:
+#
+#   display:
+#     - id: !extend display_4_0
+#       lambda: |-
+#         ...
+#
+# Inline:
+#   display_4_0: !include { file: components/displays/ili9xxx/ili9488.yaml, vars: { id: display_4_0, spi_id: spi_bus, cs_pin: GPIO7, dc_pin: GPIO6, reset_pin: GPIO5 } }
+#
+# Block:
+#   display_4_0: !include
+#     file: components/displays/ili9xxx/ili9488.yaml
+#     vars:
+#       id: display_4_0
+#       spi_id: spi_bus
+#       cs_pin: GPIO7
+#       dc_pin: GPIO6
+#       reset_pin: GPIO5
+#       height: 320                # optional (default 320)
+#       width: 480                 # optional (default 480)
+#       swap_xy: "true"            # optional (default false; true = landscape 480x320)
+#       mirror_x: "false"          # optional (default false)
+#       mirror_y: "true"           # optional (default false)
+#       invert_colors: "true"      # optional (default false)
+#       color_order: BGR           # optional (default RGB; most cheap ILI9488 panels are wired BGR)
+#       data_rate: 40MHz           # optional (default 40MHz)
+#       update_interval: never     # optional (default never; kresli si řídíš sám)
+
+display:
+  - platform: ili9xxx
+    model: ILI9488
+    id: ${id}
+    spi_id: ${spi_id}
+    cs_pin: ${cs_pin}
+    dc_pin: ${dc_pin}
+    reset_pin: ${reset_pin}
+    dimensions:
+      height: ${height | default(320)}
+      width: ${width | default(480)}
+    invert_colors: ${invert_colors | default("false")}
+    color_order: ${color_order | default("RGB")}
+    transform:
+      swap_xy: ${swap_xy | default("false")}
+      mirror_x: ${mirror_x | default("false")}
+      mirror_y: ${mirror_y | default("false")}
+    data_rate: ${data_rate | default("40MHz")}
+    update_interval: ${update_interval | default("never")}
