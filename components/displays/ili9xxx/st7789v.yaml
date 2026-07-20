@@ -1,0 +1,57 @@
+## components/displays/ili9xxx/st7789v.yaml
+#
+# HW definition only (ST7789V SPI panel, e.g. 1.54" 240x240 or 1.69" 240x280).
+# Piny/rozměry jsou parametry. Kreslení (pages / lambda) NENÍ součástí tohoto
+# souboru — je per-device. Bez lambdy i bez pages se displej jen inicializuje
+# (prázdný), což stačí pro ověření zapojení.
+#
+# Pages/lambdu přidáš na devicu přes `!extend` na `id` z tohoto bricku:
+#
+#   display:
+#     - id: !extend display_1_54
+#       lambda: |-
+#         ...
+#
+# Inline:
+#   display_1_54: !include { file: components/displays/ili9xxx/st7789v.yaml, vars: { id: display_1_54, spi_id: spi_bus, cs_pin: GPIO16, dc_pin: GPIO18, reset_pin: GPIO17 } }
+#
+# Block:
+#   display_1_54: !include
+#     file: components/displays/ili9xxx/st7789v.yaml
+#     vars:
+#       id: display_1_54
+#       spi_id: spi_bus
+#       cs_pin: GPIO16
+#       dc_pin: GPIO18
+#       reset_pin: GPIO17
+#       height: 240              # optional (default 240)
+#       width: 240                # optional (default 240)
+#       offset_height: 0           # optional (default 0; 1.69" 240x280 panely bývají 20)
+#       offset_width: 0            # optional (default 0)
+#       swap_xy: "false"           # optional (default false)
+#       mirror_x: "false"          # optional (default false)
+#       mirror_y: "false"          # optional (default false)
+#       invert_colors: "false"     # optional (default false; tyhle panely obvykle chtějí true)
+#       data_rate: 80MHz           # optional (default 80MHz)
+#       update_interval: never     # optional (default never; kresli si řídíš sám)
+
+display:
+  - platform: ili9xxx
+    model: ST7789V
+    id: ${id}
+    spi_id: ${spi_id}
+    cs_pin: ${cs_pin}
+    dc_pin: ${dc_pin}
+    reset_pin: ${reset_pin}
+    dimensions:
+      height: ${height | default(240)}
+      width: ${width | default(240)}
+      offset_height: ${offset_height | default(0)}
+      offset_width: ${offset_width | default(0)}
+    invert_colors: ${invert_colors | default("false")}
+    transform:
+      swap_xy: ${swap_xy | default("false")}
+      mirror_x: ${mirror_x | default("false")}
+      mirror_y: ${mirror_y | default("false")}
+    data_rate: ${data_rate | default("80MHz")}
+    update_interval: ${update_interval | default("never")}
