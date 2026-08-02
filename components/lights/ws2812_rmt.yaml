@@ -11,7 +11,8 @@
 #       pin: GPIO7
 #       num_leds: 102
 #
-# Optional vars (defaults): rgb_order (GRB), chipset (WS2812), rmt_symbols (48), internal (true).
+# Optional vars (defaults): rgb_order (GRB), chipset (WS2812), rmt_symbols (48), internal (true),
+# is_rgbw (false).
 
 light:
   - platform: esp32_rmt_led_strip
@@ -22,3 +23,4 @@ light:
     chipset: ${chipset | default("WS2812")}
     rmt_symbols: ${rmt_symbols | default(48)}
     internal: ${internal | default("true")}
+    is_rgbw: ${is_rgbw | default("false")}
