@@ -1,0 +1,45 @@
+## packages/mqtt_publish_json.yaml
+#
+# Inline:
+#   mqtt_publish_json: !include packages/mqtt_publish_json.yaml
+#
+# Block:
+#   mqtt_publish_json: !include packages/mqtt_publish_json.yaml
+#
+# Requires device substitutions: topic_prefix
+#
+# Provides script mqtt_publish_json (JSON payload with ms timestamp).
+# Depends on packages/time.yaml (id sntp_time) and an mqtt client.
+#
+# Split out of packages/sensors.yaml so platform-independent consumers (e.g.
+# ESP8266 devices) don't have to pull in the ESP32-only internal_temperature
+# sensor that used to live in the same file.
+
+script:
+  - id: mqtt_publish_json
+    mode: parallel
+    parameters:
+      sub_topic: string
+      value: float
+      decimals: int
+    then:
+      - lambda: |-
+          auto now = id(sntp_time).now();
+          if (!now.is_valid() || std::isnan(value)) return;
+
+          // AUTOMATICKÉ SLOŽENÍ TOPICU: prefix + to co pošle senzor
+          std::string full_topic = std::string("${topic_prefix}/") + sub_topic;
+
+          char val_buf[20];
+          sprintf(val_buf, "%.*f", decimals, value);
+          int64_t ts_ms = (int64_t)now.timestamp * 1000LL + (int64_t)(millis() % 1000);
+
+          char payload[128];
+          sprintf(payload, "{\"value\":%s,\"ts\":%lld}", val_buf, ts_ms);
+
+          // Publikujeme na složený topic
+          if (mqtt::global_mqtt_client != nullptr) {
+            mqtt::global_mqtt_client->publish(full_topic, payload);
+          } else {
+            ESP_LOGE("custom_mqtt", "MQTT client not initialized!");
+          }
