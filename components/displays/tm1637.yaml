@@ -15,6 +15,17 @@
 #       clk_pin: GPIO6
 #       dio_pin: GPIO7
 #       intensity: "0"      # optional (default 0; 0-7)
+#
+# Vytvari i select entitu (0-7) pro rucni ovladani jasu z HA. tm1637 nema
+# nativni YAML akci pro jas, jen C++ setter set_intensity(), proto lambda.
+# restore_value: hodnota se po bootu obnovi a znovu aplikuje, takze select
+# po prvnim pouziti drzi spravnou hodnotu i pres restart.
+#
+# POZOR: initial_option je napevno "0", NE odvozeny od 'intensity' -- ESPHome
+# substituce sdili typovany uzel mezi cislenym (display.intensity) a textovym
+# (initial_option) pouzitim stejne promenne, takze by to typ prevzalo jako
+# int a config by spadl na "Must be string". Neni to bug v tomto souboru,
+# je to quirk ESPHome vars substituce -- nezkouset to znovu propojit.
 
 display:
   - platform: tm1637
@@ -31,3 +42,16 @@ display:
           it.strftime("%H%M", time);
         }
       }
+
+select:
+  - platform: template
+    name: "jas_displeje_${id}"
+    id: ${id}_intensity
+    optimistic: true
+    restore_value: true
+    initial_option: "0"
+    options: ["0", "1", "2", "3", "4", "5", "6", "7"]
+    set_action:
+      - lambda: |-
+          id(${id}).set_intensity(atoi(x.c_str()));
+          id(${id}).update();
