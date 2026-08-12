@@ -15,11 +15,25 @@
 #       clk_pin: GPIO6
 #       dio_pin: GPIO7
 #       intensity: "0"      # optional (default 0; 0-7)
+#       restore_mode: RESTORE_DEFAULT_OFF   # optional (default RESTORE_DEFAULT_ON)
 #
 # Vytvari i select entitu (0-7) pro rucni ovladani jasu z HA. tm1637 nema
 # nativni YAML akci pro jas, jen C++ setter set_intensity(), proto lambda.
 # restore_value: hodnota se po bootu obnovi a znovu aplikuje, takze select
 # po prvnim pouziti drzi spravnou hodnotu i pres restart.
+#
+# Switch `${id}_power` zhasina cely displej. TM1637 ma v ridicim bytu bit
+# "display on" oddeleny od jasu, takze intensity: 0 sviti dal -- na uplne
+# zhasnuti je potreba shodit ten bit pres set_on(false). Ovladat se da z HA
+# nebo z devicu (napr. radarem):
+#
+#   - switch.turn_off: segmentovy_displej_power
+#
+# POZOR: v akcich switche se schvalne NEVOLA update(). Template switch se
+# s restore_mode spousti uz behem setup() fáze, driv nez je displej
+# inicializovany (stejny problem jako select on_value u c6sm-rddwrf).
+# set_on() je cisty setter na membru, takze je to bezpecne -- projevi se
+# pri nejblizsim prekresleni (update_interval, default 1s).
 #
 # POZOR: initial_option je napevno "0", NE odvozeny od 'intensity' -- ESPHome
 # substituce sdili typovany uzel mezi cislenym (display.intensity) a textovym
@@ -55,3 +69,14 @@ select:
       - lambda: |-
           id(${id}).set_intensity(atoi(x.c_str()));
           id(${id}).update();
+
+switch:
+  - platform: template
+    name: "displej_${id}"
+    id: ${id}_power
+    optimistic: true
+    restore_mode: ${restore_mode | default("RESTORE_DEFAULT_ON")}
+    turn_on_action:
+      - lambda: 'id(${id}).set_on(true);'
+    turn_off_action:
+      - lambda: 'id(${id}).set_on(false);'
