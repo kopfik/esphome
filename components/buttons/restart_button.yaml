@@ -15,5 +15,5 @@
 
 button:
   - platform: restart
-    name: "${name | default("Restart device")}"
+    name: '${name | default("Restart device")}'
     id: ${btn_id | default("restart_button")}
