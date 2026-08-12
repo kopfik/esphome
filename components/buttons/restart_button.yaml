@@ -1,0 +1,19 @@
+## components/buttons/restart_button.yaml
+#
+# Inline:
+#   restart_btn: !include { file: components/buttons/restart_button.yaml, vars: { name: "Restart device", btn_id: restart_button } }
+#
+# Block:
+#   restart_btn: !include
+#     file: components/buttons/restart_button.yaml
+#     vars:
+#       name: "Restart device"
+#       btn_id: restart_button
+#
+# Both vars are optional. Exposes a restart button to HA; usable on its own,
+# or as the target of packages/auto_restart.yaml (which presses it on schedule).
+
+button:
+  - platform: restart
+    name: "${name | default("Restart device")}"
+    id: ${btn_id | default("restart_button")}
