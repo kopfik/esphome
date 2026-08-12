@@ -5,7 +5,7 @@
 ### Added
 
 * `components/buttons/restart_button.yaml`: HA-visible restart button with optional `name` / `btn_id` vars.
-* `packages/auto_restart.yaml`: optional scheduled daily restart at a configurable hour/minute, pressing the restart button via an `on_time` trigger merged into the `packages/time.yaml` SNTP entry.
+* `packages/auto_restart.yaml`: optional scheduled daily restart at a configurable hour/minute, pressing the restart button from an `interval` that checks the wall clock of the existing `packages/time.yaml` time component.
 * Initial bilingual `README.md` documentation, Czech first and English second.
 * Initial `CHANGELOG.md`.
 * Repository documentation for the reusable ESPHome package/device configuration layout.

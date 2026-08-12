@@ -16,11 +16,15 @@
 # All vars are optional: restart_hour (5), restart_minute (0),
 # time_id (sntp_time), restart_btn_id (restart_button).
 #
-# 'on_time' is a trigger *inside* a time platform, it cannot stand alone -- so
-# this package re-declares the same platform + id as packages/time.yaml and
-# relies on ESPHome merging list entries that share an 'id'. Platform and
-# time_id must stay in sync with packages/time.yaml, otherwise the build fails
-# on a duplicate ID (loudly, not silently).
+# Why 'interval' + lambda instead of the obvious 'on_time' trigger: 'on_time'
+# only exists inside a time platform entry, so using it here would mean
+# declaring a second 'time:' entry -- and ESPHome concatenates lists when
+# merging packages (merge_config: 'old + new'), it does not merge entries
+# sharing an 'id'. That fails with 'ID sntp_time redefined'. Referencing the
+# existing time component by id sidesteps package merging entirely.
+#
+# 30s interval so every minute gets checked at least once even if the scheduler
+# drifts; a second press in the same minute is harmless, the first one reboots.
 #
 # Stagger 'restart_minute' across devices, so they don't all drop off WiFi/HA
 # in the same second.
@@ -29,12 +33,15 @@
 # 15 min default). Use this only for devices that degrade with uptime --
 # memory leaks, stuck sensor/display drivers.
 
-time:
-  - platform: sntp
-    id: ${time_id | default("sntp_time")}
-    on_time:
-      - seconds: 0
-        minutes: ${restart_minute | default("0")}
-        hours: ${restart_hour | default("5")}
-        then:
-          - button.press: ${restart_btn_id | default("restart_button")}
+interval:
+  - interval: 30s
+    then:
+      - if:
+          condition:
+            lambda: |-
+              auto t = id(${time_id | default("sntp_time")}).now();
+              return t.is_valid()
+                     && t.hour == ${restart_hour | default("5")}
+                     && t.minute == ${restart_minute | default("0")};
+          then:
+            - button.press: ${restart_btn_id | default("restart_button")}
