@@ -16,6 +16,14 @@
 #       dio_pin: GPIO7
 #       intensity: "0"      # optional (default 0; 0-7)
 #       restore_mode: RESTORE_DEFAULT_OFF   # optional (default RESTORE_DEFAULT_ON)
+#       colon_blink: "false"        # optional (default true)
+#       update_interval: 60s        # optional (default 1s)
+#
+# colon_blink: false necha dvojtecku trvale svitit misto blikani po sekunde.
+# update_interval: jak casto se displej prekresluje. Pri colon_blink: false
+# staci minutova kadence -- POZOR, displej si jede vlastni casovac od bootu,
+# takze s 60s se novy cas objevi az o 0-59 s pozdeji nez skutecny prelom
+# minuty. Kdo chce presny prelom, nechá 1s.
 #
 # Vytvari i select entitu (0-7) pro rucni ovladani jasu z HA. tm1637 nema
 # nativni YAML akci pro jas, jen C++ setter set_intensity(), proto lambda.
@@ -47,13 +55,14 @@ display:
     clk_pin: ${clk_pin}
     dio_pin: ${dio_pin}
     intensity: ${intensity | default(0)}
+    update_interval: ${update_interval | default("1s")}
     lambda: |-
       auto time = id(sntp_time).now();
       if (time.is_valid()) {
-        if (time.second % 2 == 0) {
-          it.strftime("%H.%M", time);
-        } else {
+        if (${colon_blink | default("true")} && time.second % 2 != 0) {
           it.strftime("%H%M", time);
+        } else {
+          it.strftime("%H.%M", time);
         }
       }
 
