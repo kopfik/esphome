@@ -24,9 +24,17 @@ esphome:
 ota:
   - platform: esphome
 
+# api reboot_timeout defaults to 15min, meaning "reboot if NO API client has
+# connected for 15 minutes". A device that is not added to Home Assistant as an
+# ESPHome integration (i.e. runs over MQTT only) therefore reboots over and over
+# -- log shows [E][api:152]: No clients; rebooting. Neither MQTT nor WiFi resets
+# that timer, only API connections do. On a clock device it looks like a display
+# fault: after the reboot the clock is back at 1970, time.is_valid() is false and
+# the lambda draws nothing until SNTP answers.
 api:
   encryption:
     key: ${encryption_key}
+  reboot_timeout: 0s
 
 wifi:
   networks:
