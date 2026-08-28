@@ -1,0 +1,36 @@
+## packages/base_eth.yaml
+#
+# Inline:
+#   base: !include packages/base_eth.yaml
+#
+# Block:
+#   base: !include packages/base_eth.yaml
+#
+# Requires device substitutions: controller_name, encryption_key
+#
+# Ethernet-only twin of packages/base.yaml: same esphome/ota/api core, but no
+# 'wifi:' block, so it needs no wifi_ssid / wifi_password / wifi_power_saver
+# substitutions. Meant for boards with no WiFi radio at all (e.g. ESP32-P4),
+# where ethernet is the only link.
+#
+# This package deliberately does NOT define 'ethernet:'. The PHY type and pins
+# are board hardware, so they live in the board file (see
+# boards/esp32-p4-eth-esp-idf.yaml). Always include an ethernet-capable board
+# file next to this package -- on its own it leaves the device with no network.
+#
+# api reboot_timeout: same reasoning as in packages/base.yaml -- 0s disables
+# the "no API client connected for 15 min -> reboot" loop, which otherwise
+# reboots MQTT-only devices (not added to Home Assistant) over and over.
+# Neither MQTT nor the link resets that timer, only API connections do.
+
+esphome:
+  name: ${controller_name}
+  friendly_name: ${controller_name}
+
+ota:
+  - platform: esphome
+
+api:
+  encryption:
+    key: ${encryption_key}
+  reboot_timeout: 0s
