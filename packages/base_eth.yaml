@@ -34,3 +34,11 @@ api:
   encryption:
     key: ${encryption_key}
   reboot_timeout: 0s
+  # Default je 5 a to dojde driv, nez by clovek cekal: HA drzi jedno
+  # spojeni trvale, kazde 'esphome logs' pres API si vezme dalsi a
+  # nekorektne ukoncena relace slot chvili drzi. Kdyz je limit vycerpany,
+  # deska odmita i HA ("Max connections (5), rejecting ...") a vsechno,
+  # co jede pres API -- vcetne voice_assistant -- tise prestane fungovat.
+  # 10 je pohodlna rezerva; vic nema smysl, sockety jsou sdileny pool
+  # s MQTT/OTA/mDNS a kazde spojeni si drzi vlastni buffery.
+  max_connections: 10
