@@ -4,6 +4,8 @@
 
 ### Added
 
+* `components/sensors/max17048.yaml`: LiPo fuel gauge (voltage + SOC) on I2C 0x36, using the ESPHome `max17043` platform whose VCELL conversion is numerically identical for the MAX17048; raw values to MQTT plus averaged copies for HA, sharing the naming convention of `battery_stats.yaml`.
+* `components/switches/gpio_switch.yaml`: generic GPIO switch with optional `inverted` and `restore_mode` vars (default `ALWAYS_OFF`, safe for switching power).
 * `components/buttons/restart_button.yaml`: HA-visible restart button with optional `name` / `btn_id` vars.
 * `packages/auto_restart.yaml`: optional scheduled daily restart at a configurable hour/minute, pressing the restart button from an `interval` that checks the wall clock of the existing `packages/time.yaml` time component.
 * Initial bilingual `README.md` documentation, Czech first and English second.

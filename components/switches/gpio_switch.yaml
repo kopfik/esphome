@@ -1,0 +1,30 @@
+## components/switches/gpio_switch.yaml
+#
+# Inline:
+#   charger_sw: !include { file: components/switches/gpio_switch.yaml, vars: { switch_id: charger_enable, name: "Nabíjení", pin: GPIO20, inverted: false, restore_mode: ALWAYS_OFF } }
+#
+# Block:
+#   charger_sw: !include
+#     file: components/switches/gpio_switch.yaml
+#     vars:
+#       switch_id: charger_enable
+#       name: "Nabíjení"
+#       pin: GPIO20
+#       inverted: false
+#       restore_mode: ALWAYS_OFF
+#
+# Optional vars: inverted (default false), restore_mode (default ALWAYS_OFF).
+#
+# 'inverted' patří do pin schema, ne do switche -- použij ho, když hardware
+# spíná při LOW. restore_mode ALWAYS_OFF je bezpečný default pro cokoli, co
+# spíná výkon (nabíječ, relé): po bootu je to vždy vypnuté a o zapnutí
+# rozhodne až logika v device YAML.
+
+switch:
+  - platform: gpio
+    id: ${switch_id}
+    name: '${name}'
+    pin:
+      number: ${pin}
+      inverted: ${inverted | default("false")}
+    restore_mode: ${restore_mode | default("ALWAYS_OFF")}
