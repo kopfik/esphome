@@ -54,6 +54,11 @@ sensor:
     name: "${id} voltage"
     unit_of_measurement: "V"
     device_class: "voltage"
+    # Prazdna kategorie = entita patri mezi bezne senzory. ESPHome ma u
+    # platformy max17043 natvrdo entity_category: diagnostic a 'copy' ji ze
+    # zdroje dedi (inherit_property_from), takze bez tohohle radku by hlavni
+    # udaje o baterii skoncily schovane v sekci Diagnostic.
+    entity_category: ""
     filters:
       - sliding_window_moving_average:
           window_size: ${window_size}
@@ -64,6 +69,7 @@ sensor:
     name: "${id} capacity"
     unit_of_measurement: "%"
     device_class: "battery"
+    entity_category: ""
     filters:
       - sliding_window_moving_average:
           window_size: ${window_size}
