@@ -11,10 +11,14 @@
 #       id: led_pwm
 #       frequency: 500
 #
-# 'frequency' optional (default 500).
+# 'frequency' optional (default 500), 'inverted' optional (default false).
+#
+# inverted: true se hodí, když výstup budí PNP tranzistor nebo P-MOSFET --
+# tam znamená nula plný jas a bez inverze by šla stupnice obráceně.
 
 output:
   - platform: ledc
     pin: ${pin} # Tvůj IRLZ44N (Hlavní LED)
     id: ${id}
     frequency: ${frequency | default (500)} Hz
+    inverted: ${inverted | default("false")}

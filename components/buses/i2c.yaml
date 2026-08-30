@@ -12,10 +12,22 @@
 #       scl: GPIO9
 #       scan: true
 #       frequency: 400
+#
+# Zapsáno jako SEZNAM (ne mapping) schválně: i2c má v ESPHome MULTI_CONF, takže
+# device muze mit vic nezavislych sbernic, a seznamy se pri slucovani packages
+# spoji misto aby se prepsaly. Pro dve sbernice includni tenhle soubor dvakrat
+# pod ruznymi klici a dej kazde jine id + piny:
+#
+#   i2c_a: !include { file: components/buses/i2c.yaml, vars: { id: i2c_bus_a, sda: GPIO1, scl: GPIO0, scan: true, frequency: 100 } }
+#   i2c_b: !include { file: components/buses/i2c.yaml, vars: { id: i2c_bus_b, sda: GPIO3, scl: GPIO2, scan: true, frequency: 100 } }
+#
+# To je jedina cesta, jak provozovat dva cipy se stejnou pevnou adresou
+# (napr. dva MAX17048, oba natvrdo 0x36). Komponenta pak vybira sbernici
+# pres i2c_id.
 
 i2c:
-  id: ${id}
-  sda: ${sda}
-  scl: ${scl}
-  scan: ${scan}
-  frequency: ${frequency}kHz
+  - id: ${id}
+    sda: ${sda}
+    scl: ${scl}
+    scan: ${scan}
+    frequency: ${frequency}kHz
