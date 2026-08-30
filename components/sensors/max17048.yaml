@@ -24,10 +24,18 @@
 # Rozdíl je jen ve ztrátě spodních 4 bitů, tj. rozlišení 1.25 mV místo 78 uV.
 # SOC má obě čipové řady ve stejném formátu (high byte %, low byte 1/256 %).
 #
-# Modul má VIN (napájení logiky, 3-5 V) oddělené od CELL (měřená baterie na
-# JST). Napájej VIN z 3V3 MCU -- I2C pull-upy na desce jsou pak na 3.3 V a
-# gauge měří i baterii, která patří jinému obvodu. Pozor: s odpojenou baterií
-# modul dál odpovídá po I2C a hlásí napětí blízko nuly, nikoli NaN.
+# POZOR: cip nema samostatny napajeci pin -- napaji se z tehoz vyvodu, kterym
+# meri clanek. Klony maji na rubu propojku VS (VDD / Bat), ktera vybira zdroj:
+#   VS = Bat  -> cip zije z baterie na JST a meri ji (tohle chces)
+#   VS = VDD  -> cip zije z VIN a meri VIN, tedy 3.3 V misto clanku
+#
+# Dusledek: s VS na Bat a ODPOJENOU baterii cip NEODPOVIDA po I2C a scan ho
+# vubec nenajde -- senzory zustanou NaN. Zelena LED na modulu pritom sviti dal,
+# protoze visi na VIN pres vlastni odpor, takze podle ni se poznat neda.
+# (Overeno 30.8.2026: dva ruzne moduly, oba "neviditelne", dokud nebyl
+# pripojen clanek; SHT45 na tychz vodicich se hlasil normalne.)
+#
+# VIN napajej z 3V3 MCU -- I2C pull-upy na desce jsou pak na 3.3 V.
 
 sensor:
 
