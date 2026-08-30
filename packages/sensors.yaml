@@ -8,14 +8,14 @@
 #
 # Requires device substitutions: topic_prefix
 #
-# Optional substitution: update_interval (default 15s) -- jak casto se cte a
-# posila internal_temperature. Na bateriovych devicech se vyplati zvednout,
-# kazdy publish znamena probuzeni radia.
+# Poskytuje script mqtt_publish_json -- spolecny zapis hodnoty s timestampem
+# do MQTT, ktery pouzivaji vsechny senzorove komponenty v tomhle repu.
+# Zavisi na packages/time.yaml (id sntp_time) a na mqtt klientovi.
 #
-#   sensors: !include { file: packages/sensors.yaml, vars: { update_interval: 60s } }
-#
-# Provides script mqtt_publish_json + an internal_temperature sensor.
-# Depends on packages/time.yaml (id sntp_time) and an mqtt client.
+# Samotna teplota MCU uz tady NENI -- presunuta do
+# components/sensors/internal_temperature.yaml, aby byla v device YAML videt
+# a sla vypnout. Tenhle soubor je ciste infrastruktura, i kdyz mu nazev
+# "sensors" zustal (prejmenovani by rozbilo vsechny existujici device YAML).
 
 script:
   - id: mqtt_publish_json
@@ -45,26 +45,3 @@ script:
           } else {
             ESP_LOGE("custom_mqtt", "MQTT client not initialized!");
           }
-sensor:
-  # ==========================================================
-  # --- 1. RAW SENZORY (Internal, sypou vteřinová data do MQTT) ---
-  # ==========================================================
-
-  - platform: internal_temperature
-    id: raw_internal_temp
-    internal: true
-    force_update: True
-    update_interval: ${update_interval | default("15s")}
-    on_value:
-      then: 
-        - script.execute: { id: mqtt_publish_json, sub_topic: "internal_temperature", value: !lambda 'return x;', decimals: 1 }
-
-  # ==========================================================
-  # --- 2. PRŮMĚROVANÉ SENZORY PRO HA (Stávající logika) ---
-  # ==========================================================
-
-  - platform: copy
-    source_id: raw_internal_temp
-    name: "internal_temperature"
-    filters:
-      - sliding_window_moving_average: {window_size: 4, send_every: 4}

@@ -1,0 +1,52 @@
+## components/sensors/internal_temperature.yaml
+#
+# Inline:
+#   internal_temp: !include { file: components/sensors/internal_temperature.yaml, vars: { update_interval: 60, window_size: 4 } }
+#
+# Block:
+#   internal_temp: !include
+#     file: components/sensors/internal_temperature.yaml
+#     vars:
+#       update_interval: 60
+#       window_size: 4
+#
+# Teplota jádra MCU. Oba vars jsou volitelné (default 15 s / okno 4).
+# Na bateriovych devicech se vyplati interval zvednout, kazdy publish
+# znamena probuzeni radia.
+#
+# Jen pro ESP32 (S3/C6/P4/...) -- ESP8266 interni teplotni cidlo nema,
+# na d1mini tenhle package nepridavat.
+#
+# Vyzaduje script mqtt_publish_json z packages/sensors.yaml.
+#
+# entity_category: "" -- ESPHome ma u platformy internal_temperature natvrdo
+# diagnostic a 'copy' ji ze zdroje dedi (inherit_property_from), takze bez
+# toho radku by teplota skoncila schovana v sekci Diagnostic.
+
+sensor:
+
+  # ==========================================================
+  # --- 1. RAW SENZOR (Internal, sype data s TS do MQTT) ---
+  # ==========================================================
+
+  - platform: internal_temperature
+    id: raw_internal_temp
+    internal: true
+    force_update: True
+    update_interval: ${update_interval | default(15)}s
+    on_value:
+      then:
+        - script.execute: { id: mqtt_publish_json, sub_topic: "internal_temperature", value: !lambda 'return x;', decimals: 1 }
+
+  # ==========================================================
+  # --- 2. PRŮMĚROVANÝ SENZOR PRO HA ---
+  # ==========================================================
+
+  - platform: copy
+    source_id: raw_internal_temp
+    name: "internal_temperature"
+    entity_category: ""
+    filters:
+      - sliding_window_moving_average:
+          window_size: ${window_size | default(4)}
+          send_every: ${window_size | default(4)}
