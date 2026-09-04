@@ -233,8 +233,6 @@ graph:
     height: 176
     x_grid: 25min
     y_grid: 1.0
-    min_value: 20
-    max_value: 27
     border: true
     traces:
       - sensor: ha_temperature
@@ -248,8 +246,6 @@ graph:
     height: 176
     x_grid: 25min
     y_grid: 10.0
-    min_value: 20
-    max_value: 65
     border: true
     traces:
       - sensor: ha_humidity
@@ -263,8 +259,6 @@ graph:
     height: 176
     x_grid: 25min
     y_grid: 300.0
-    min_value: 500
-    max_value: 2000
     border: true
     traces:
       - sensor: ha_co2
@@ -318,8 +312,6 @@ graph:
     height: 176
     x_grid: 5h
     y_grid: 1.0
-    min_value: 20
-    max_value: 27
     border: true
     traces:
       - sensor: ha_temperature
@@ -333,8 +325,6 @@ graph:
     height: 176
     x_grid: 5h
     y_grid: 10.0
-    min_value: 20
-    max_value: 65
     border: true
     traces:
       - sensor: ha_humidity
@@ -348,8 +338,6 @@ graph:
     height: 176
     x_grid: 5h
     y_grid: 300.0
-    min_value: 500
-    max_value: 2000
     border: true
     traces:
       - sensor: ha_co2
@@ -595,16 +583,9 @@ display:
           };
 
           // ---- Horni lista ----
+          // Datum tu bylo, ale je i na karte Svatek, takze zbyva jen nadpis na stred.
           it.filled_rectangle(0, 0, 320, 34, id(color_card));
-          it.print(10, 4, id(font_label), id(color_arch), TextAlign::TOP_LEFT, "${nadpis}");
-          {
-            auto t0 = id(${time_id | default("sntp_time")}).now();
-            if (t0.is_valid()) {
-              it.strftime(310, 9, id(font_small), id(color_white), TextAlign::TOP_RIGHT, "%d.%m.%Y", t0);
-            } else {
-              it.print(310, 9, id(font_small), id(color_muted), TextAlign::TOP_RIGHT, "cekam na cas...");
-            }
-          }
+          it.print(160, 4, id(font_label), id(color_arch), TextAlign::TOP_CENTER, "${nadpis}");
 
           // ---- Karta s ciselnou hodnotou ----
           // 4 rady bez dolni listy: Y0 40 + 4*102 + 3*8 = 472, dole zbyva 8 px.
@@ -661,7 +642,7 @@ display:
           it.fill(id(color_bg));
           it.rectangle(0, 0, 319, 479, id(color_card));
 
-          it.print(160, 16, id(font_title), id(color_arch), TextAlign::TOP_CENTER, "Teplota");
+          it.print(160, 16, id(font_title), id(color_arch), TextAlign::TOP_CENTER, "TEPLOTA");
           it.line(16, 62, 304, 62, id(color_card));
 
           // 100 min
@@ -691,7 +672,7 @@ display:
           it.fill(id(color_bg));
           it.rectangle(0, 0, 319, 479, id(color_card));
 
-          it.print(160, 16, id(font_title), id(color_arch), TextAlign::TOP_CENTER, "Vlhkost");
+          it.print(160, 16, id(font_title), id(color_arch), TextAlign::TOP_CENTER, "VLHKOST");
           it.line(16, 62, 304, 62, id(color_card));
 
           // 100 min
@@ -781,7 +762,7 @@ display:
           it.fill(id(color_bg));
           it.rectangle(0, 0, 319, 479, id(color_card));
 
-          it.print(160, 16, id(font_title), id(color_arch), TextAlign::TOP_CENTER, "NOx");
+          it.print(160, 16, id(font_title), id(color_arch), TextAlign::TOP_CENTER, "NOX");
           it.line(16, 62, 304, 62, id(color_card));
 
           // 100 min
@@ -811,7 +792,7 @@ display:
           it.fill(id(color_bg));
           it.rectangle(0, 0, 319, 479, id(color_card));
 
-          it.print(160, 16, id(font_title), id(color_arch), TextAlign::TOP_CENTER, "Svetlo");
+          it.print(160, 16, id(font_title), id(color_arch), TextAlign::TOP_CENTER, "SVĚTLO");
           it.line(16, 62, 304, 62, id(color_card));
 
           // 100 min
@@ -841,14 +822,69 @@ display:
           it.fill(id(color_bg));
           it.rectangle(0, 0, 319, 479, id(color_card));
 
-          it.print(160, 16, id(font_title), id(color_arch), TextAlign::TOP_CENTER, "Svátky");
+          it.print(160, 16, id(font_title), id(color_arch), TextAlign::TOP_CENTER, "SVÁTKY");
           it.line(16, 62, 304, 62, id(color_card));
 
-          // strftime("%A") by dal anglicke dny (locale C), takze mala tabulka.
+          // toupper() umi jen ASCII a dvoubajtove znaky by rozsekal. Cestina ma
+          // velka o 32 niz v bloku C3 (á é í ó ú ý) a o 1 niz v C4/C5
+          // (č ď ě ň ř š ť ů ž). Jina pismena nechavam byt.
+          auto velka = [](const std::string &in) -> std::string {
+            std::string out;
+            const unsigned char *q = (const unsigned char *) in.c_str();
+            for (; *q; q++) {
+              if (*q >= 'a' && *q <= 'z') { out += (char) (*q - 32); continue; }
+              unsigned char b = q[1];
+              int d = 0;
+              if (*q == 0xC3 && (b==0xA1||b==0xA9||b==0xAD||b==0xB3||b==0xBA||b==0xBD)) d = 32;
+              else if (*q == 0xC4 && (b==0x8D||b==0x8F||b==0x9B)) d = 1;
+              else if (*q == 0xC5 && (b==0x88||b==0x99||b==0xA1||b==0xA5||b==0xAF||b==0xBE)) d = 1;
+              if (d) { out += (char) *q; out += (char) (b - d); q++; continue; }
+              out += (char) *q;
+            }
+            return out;
+          };
+
+          auto sirka = [&](font::Font *f, const std::string &t) -> int {
+            if (t.empty()) return 0;
+            int w = 0, x = 0;
+            f->measure(t.c_str(), &w, &x, &x, &x);
+            return w;
+          };
+
+          // Orez po celych UTF-8 znacich, at nezustane pulka vicebajtoveho znaku.
+          auto orez = [&](font::Font *f, std::string t, int max_w) -> std::string {
+            while (sirka(f, t) > max_w && t.size() > 4) {
+              size_t n = t.size() - 4;
+              while (n > 0 && ((unsigned char) t[n] & 0xC0) == 0x80) n--;
+              t = t.substr(0, n) + "...";
+            }
+            return t;
+          };
+
+          // Rozdeli na mezere na dva radky: prvni do max1, zbytek do max2.
+          auto zalom = [&](font::Font *f, const std::string &t, int max1, int max2,
+                           std::string &r1, std::string &r2) -> bool {
+            size_t kde = std::string::npos;
+            for (size_t i = t.find(' '); i != std::string::npos; i = t.find(' ', i + 1)) {
+              if (sirka(f, t.substr(0, i)) > max1) break;
+              kde = i;
+            }
+            // I kdyz se zbytek nevejde, deleni si necham -- volajici pak orizne
+            // jen druhy radek misto toho, aby zahodil cele zalomeni.
+            if (kde == std::string::npos) { r1 = t; r2.clear(); return false; }
+            r1 = t.substr(0, kde);
+            r2 = t.substr(kde + 1);
+            return sirka(f, r2) <= max2;
+          };
+
           // ESPTime.day_of_week je 1 = nedele.
-          static const char *const DNY[8] = {"", "neděle", "pondělí", "úterý",
-                                              "středa", "čtvrtek", "pátek", "sobota"};
-          const int Y[7] = {88, 142, 196, 250, 310, 364, 418};
+          static const char *const DNY[8] = {"", "NE", "PO", "ÚT", "ST", "ČT", "PÁ", "SO"};
+          // Dnesek ma napevno rezervovane DVA radky (Y_DNES a Y_DNES + 34), i kdyz
+          // se jmeno vejde na jeden -- jinak by radky kolem poskakovaly podle toho,
+          // jak dlouhy je zrovna dnesni svatek.
+          const int Y[7] = {82, 130, 178, 228, 322, 370, 418};
+          const int Y_DNES_2 = 262;
+          const int SIRKA = 292, MEZERA = 10;   // x od 14 do 306
           text_sensor::TextSensor *JMENA[7] = {
             id(ha_svatek_m3), id(ha_svatek_m2), id(ha_svatek_m1), id(ha_svatek_dnes),
             id(ha_svatek_p1), id(ha_svatek_p2), id(ha_svatek_p3),
@@ -865,33 +901,75 @@ display:
 
           for (int i = 0; i < 7; i++) {
             bool dnes = (i == 3);
-            const char *jmeno = JMENA[i]->has_state() ? JMENA[i]->state.c_str() : "--";
-            Color c_jmeno = JMENA[i]->has_state()
-                              ? (dnes ? id(color_arch) : id(color_white))
-                              : id(color_muted);
-            auto *f_jmeno = dnes ? id(font_label) : id(font_small);
+            bool ma_stav = JMENA[i]->has_state();
+            // Dnesek se odlisuje velikosti, barvou i kapitalkami.
+            std::string jmeno = ma_stav ? (dnes ? velka(JMENA[i]->state) : JMENA[i]->state)
+                                        : "--";
+            Color c_jmeno = ma_stav ? (dnes ? id(color_arch) : id(color_white))
+                                    : id(color_muted);
 
+            std::string dat_plne, dat_kratke;
             if (ted.is_valid()) {
               auto d = ESPTime::from_epoch_local((time_t) (poledne + (i - 3) * 86400));
-              char datum[32];
-              snprintf(datum, sizeof(datum), "%s %d. %d.",
-                       DNY[d.day_of_week], d.day_of_month, d.month);
-              // Dnesek ma jmeno ve font_label, takze nejdelsi kombinace
-              // ("pondělí 22. 12." + "Cyril a Metoděj") by presahla o ~25 px.
-              // V tom pripade se u prostredniho radku nazev dne vypusti.
-              if (dnes) {
-                int w_jm = 0, w_dat = 0, dummy = 0;
-                f_jmeno->measure(jmeno, &w_jm, &dummy, &dummy, &dummy);
-                id(font_small)->measure(datum, &w_dat, &dummy, &dummy, &dummy);
-                if (w_dat + w_jm + 12 > 292) {
-                  snprintf(datum, sizeof(datum), "%d. %d.", d.day_of_month, d.month);
-                }
-              }
-              it.print(14, Y[i] + (dnes ? 5 : 0), id(font_small),
-                       dnes ? id(color_white) : id(color_muted), TextAlign::TOP_LEFT, datum);
+              char buf[24];
+              snprintf(buf, sizeof(buf), "%s %d. %d.", DNY[d.day_of_week],
+                       d.day_of_month, d.month);
+              dat_plne = buf;
+              snprintf(buf, sizeof(buf), "%d. %d.", d.day_of_month, d.month);
+              dat_kratke = buf;
             }
 
-            it.print(306, Y[i], f_jmeno, c_jmeno, TextAlign::TOP_RIGHT, jmeno);
+            // API dava do 'name' i svatky bez jmenin -- 6. 7. je "Den upálení
+            // mistra Jana Husa", 28. 10. dokonce "Den vzniku samostatného
+            // československého státu". Proto se ustupuje po poradi: zkratka dne,
+            // cele datum, mensi font, druhy radek, a az uplne nakonec orez.
+            font::Font *f = dnes ? id(font_label) : id(font_small);
+            std::string datum = dat_plne, r1 = jmeno, r2;
+
+            if (dnes) {
+              font::Font *fonty[2] = {id(font_label), id(font_small)};
+              std::string data[2] = {dat_plne, dat_kratke};
+              bool hotovo = false;
+              for (int fi = 0; fi < 2 && !hotovo; fi++) {
+                for (int di = 0; di < 2 && !hotovo; di++) {
+                  f = fonty[fi];
+                  datum = data[di];
+                  int max1 = SIRKA - sirka(id(font_small), datum)
+                             - (datum.empty() ? 0 : MEZERA);
+                  if (sirka(f, jmeno) <= max1) {
+                    r1 = jmeno; r2.clear(); hotovo = true;
+                  } else if (zalom(f, jmeno, max1, SIRKA, r1, r2)) {
+                    hotovo = true;
+                  }
+                }
+              }
+              if (!hotovo) {
+                f = id(font_small);
+                datum = dat_kratke;
+                int max1 = SIRKA - sirka(id(font_small), datum) - MEZERA;
+                zalom(f, jmeno, max1, SIRKA, r1, r2);
+                r1 = orez(f, r1, max1);
+                r2 = orez(f, r2, SIRKA);
+              }
+            } else {
+              auto vejde = [&]() {
+                return sirka(id(font_small), datum) + (datum.empty() ? 0 : MEZERA)
+                       + sirka(f, r1) <= SIRKA;
+              };
+              if (!vejde()) datum = dat_kratke;
+              if (!vejde()) datum.clear();
+              if (!vejde()) r1 = orez(f, r1, SIRKA);
+            }
+
+            if (!datum.empty()) {
+              it.print(14, Y[i] + (dnes && f == id(font_label) ? 5 : 0), id(font_small),
+                       dnes ? id(color_white) : id(color_muted), TextAlign::TOP_LEFT,
+                       datum.c_str());
+            }
+            it.print(306, Y[i], f, c_jmeno, TextAlign::TOP_RIGHT, r1.c_str());
+            if (!r2.empty()) {
+              it.print(306, Y_DNES_2, f, c_jmeno, TextAlign::TOP_RIGHT, r2.c_str());
+            }
           }
 
       - id: page_photos
