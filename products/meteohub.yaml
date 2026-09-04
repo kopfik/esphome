@@ -231,7 +231,7 @@ graph:
   # Grafy 100 minut
   - id: graph_temp_100m
     duration: 100min
-    width: 284
+    width: 282
     height: 164
     x_grid: 25min
     y_grid: 1.0
@@ -244,7 +244,7 @@ graph:
 
   - id: graph_humidity_100m
     duration: 100min
-    width: 284
+    width: 282
     height: 164
     x_grid: 25min
     y_grid: 10.0
@@ -257,7 +257,7 @@ graph:
 
   - id: graph_co2_100m
     duration: 100min
-    width: 284
+    width: 282
     height: 164
     x_grid: 25min
     y_grid: 300.0
@@ -270,7 +270,7 @@ graph:
 
   - id: graph_voc_100m
     duration: 100min
-    width: 284
+    width: 282
     height: 164
     x_grid: 25min
     y_grid: 50.0
@@ -283,7 +283,7 @@ graph:
 
   - id: graph_nox_100m
     duration: 100min
-    width: 284
+    width: 282
     height: 164
     x_grid: 25min
     y_grid: 50.0
@@ -296,7 +296,7 @@ graph:
 
   - id: graph_lux_100m
     duration: 100min
-    width: 284
+    width: 282
     height: 164
     x_grid: 25min
     y_grid: 100.0
@@ -310,7 +310,7 @@ graph:
   # Grafy 25 hodin
   - id: graph_temp_25h
     duration: 25h
-    width: 284
+    width: 282
     height: 164
     x_grid: 5h
     y_grid: 1.0
@@ -323,7 +323,7 @@ graph:
 
   - id: graph_humidity_25h
     duration: 25h
-    width: 284
+    width: 282
     height: 164
     x_grid: 5h
     y_grid: 10.0
@@ -336,7 +336,7 @@ graph:
 
   - id: graph_co2_25h
     duration: 25h
-    width: 284
+    width: 282
     height: 164
     x_grid: 5h
     y_grid: 300.0
@@ -349,7 +349,7 @@ graph:
 
   - id: graph_voc_25h
     duration: 25h
-    width: 284
+    width: 282
     height: 164
     x_grid: 5h
     y_grid: 50.0
@@ -362,7 +362,7 @@ graph:
 
   - id: graph_nox_25h
     duration: 25h
-    width: 284
+    width: 282
     height: 164
     x_grid: 5h
     y_grid: 50.0
@@ -375,7 +375,7 @@ graph:
 
   - id: graph_lux_25h
     duration: 25h
-    width: 284
+    width: 282
     height: 164
     x_grid: 5h
     y_grid: 100.0
@@ -585,18 +585,20 @@ display:
           };
 
           // ---- Spolecne zahlavi (identicke na vsech strankach) ----
-          // Lista 0..44, nadpis na jejim svislem stredu (TextAlign::CENTER, aby
-          // nesedel jinak podle vysky pisma). Obsah stranky zacina na 50 a konci
-          // na 474 -- dashboard tam ma karty, grafove stranky dva grafy.
+          // Vsechny cerne mezery na strance jsou 6 px: pod ramecek, pod listu,
+          // mezi karty i panely. Z toho vychazi zbytek geometrie -- lista 0..42,
+          // obsah 49..470, karta 148x101, panel grafu 302x208.
+          // Nadpis je na svislem stredu listy (TextAlign::CENTER, aby nesedel
+          // jinak podle vysky pisma).
           it.rectangle(0, 0, 320, 480, id(color_card));
           it.rectangle(1, 1, 318, 478, id(color_card));
           it.rectangle(2, 2, 316, 476, id(color_card));
-          it.filled_rectangle(0, 0, 320, 44, id(color_card));
-          it.print(160, 22, id(font_title), id(color_arch), TextAlign::CENTER, "${nadpis}");
+          it.filled_rectangle(0, 0, 320, 43, id(color_card));
+          it.print(160, 21, id(font_title), id(color_arch), TextAlign::CENTER, "${nadpis}");
 
           // ---- Karta s ciselnou hodnotou ----
-          // 4 rady v obsahovem pasu: Y0 50 + 4*100 + 3*8 = 474.
-          const int CW = 148, CH = 100, GAP = 8, X0 = 8, Y0 = 50;
+          // 4 rady v obsahovem pasu: Y0 49 + 4*101 + 3*6 = 471 (posledni pixel 470).
+          const int CW = 148, CH = 101, GAP = 6, X0 = 9, Y0 = 49;
           auto card = [&](int col, int row, const char *icon, const char *label, float value, const char *unit, int decimals, Color vcolor) {
             int x = X0 + col * (CW + GAP);
             int y = Y0 + row * (CH + GAP);
@@ -648,242 +650,256 @@ display:
         lambda: |-
           it.fill(id(color_bg));
           // ---- Spolecne zahlavi (identicke na vsech strankach) ----
-          // Lista 0..44, nadpis na jejim svislem stredu (TextAlign::CENTER, aby
-          // nesedel jinak podle vysky pisma). Obsah stranky zacina na 50 a konci
-          // na 474 -- dashboard tam ma karty, grafove stranky dva grafy.
+          // Vsechny cerne mezery na strance jsou 6 px: pod ramecek, pod listu,
+          // mezi karty i panely. Z toho vychazi zbytek geometrie -- lista 0..42,
+          // obsah 49..470, karta 148x101, panel grafu 302x208.
+          // Nadpis je na svislem stredu listy (TextAlign::CENTER, aby nesedel
+          // jinak podle vysky pisma).
           it.rectangle(0, 0, 320, 480, id(color_card));
           it.rectangle(1, 1, 318, 478, id(color_card));
           it.rectangle(2, 2, 316, 476, id(color_card));
-          it.filled_rectangle(0, 0, 320, 44, id(color_card));
-          it.print(160, 22, id(font_title), id(color_arch), TextAlign::CENTER, "TEPLOTA");
+          it.filled_rectangle(0, 0, 320, 43, id(color_card));
+          it.print(160, 21, id(font_title), id(color_arch), TextAlign::CENTER, "TEPLOTA");
 
           // Panel 100 min -- stejna karta jako na dashboardu: cerna mezera 8 px
           // kolem dokola, podklad color_card, graf uvnitr s vnitrnim okrajem.
-          it.filled_rectangle(8, 50, 304, 208, id(color_card));
-          it.print(18, 58, id(font_small), id(color_arch), TextAlign::TOP_LEFT, "100 min");
+          it.filled_rectangle(9, 49, 302, 208, id(color_card));
+          it.print(19, 57, id(font_small), id(color_arch), TextAlign::TOP_LEFT, "100 min");
           if (!isnan(id(ha_temperature).state)) {
-            it.printf(302, 58, id(font_small), id(color_arch), TextAlign::TOP_RIGHT, "%.1f °C", id(ha_temperature).state);
+            it.printf(301, 57, id(font_small), id(color_arch), TextAlign::TOP_RIGHT, "%.1f °C", id(ha_temperature).state);
           }
-          it.graph(18, 84, id(graph_temp_100m), id(color_grid));
+          it.graph(19, 83, id(graph_temp_100m), id(color_grid));
           if (!isnan(id(graph_temp_100m).get_graph_limit_max())) {
-            it.printf(22, 87, id(font_small), id(color_muted), TextAlign::TOP_LEFT, "%.0f", id(graph_temp_100m).get_graph_limit_max());
-            it.printf(22, 248, id(font_small), id(color_muted), TextAlign::BOTTOM_LEFT, "%.0f", id(graph_temp_100m).get_graph_limit_min());
+            it.printf(23, 86, id(font_small), id(color_muted), TextAlign::TOP_LEFT, "%.0f", id(graph_temp_100m).get_graph_limit_max());
+            it.printf(23, 247, id(font_small), id(color_muted), TextAlign::BOTTOM_LEFT, "%.0f", id(graph_temp_100m).get_graph_limit_min());
           }
 
           // Panel 25 h
-          it.filled_rectangle(8, 266, 304, 208, id(color_card));
-          it.print(18, 274, id(font_small), id(color_arch), TextAlign::TOP_LEFT, "25 h");
+          it.filled_rectangle(9, 263, 302, 208, id(color_card));
+          it.print(19, 271, id(font_small), id(color_arch), TextAlign::TOP_LEFT, "25 h");
           if (!isnan(id(ha_temperature).state)) {
-            it.printf(302, 274, id(font_small), id(color_arch), TextAlign::TOP_RIGHT, "%.1f °C", id(ha_temperature).state);
+            it.printf(301, 271, id(font_small), id(color_arch), TextAlign::TOP_RIGHT, "%.1f °C", id(ha_temperature).state);
           }
-          it.graph(18, 300, id(graph_temp_25h), id(color_grid));
+          it.graph(19, 297, id(graph_temp_25h), id(color_grid));
           if (!isnan(id(graph_temp_25h).get_graph_limit_max())) {
-            it.printf(22, 303, id(font_small), id(color_muted), TextAlign::TOP_LEFT, "%.0f", id(graph_temp_25h).get_graph_limit_max());
-            it.printf(22, 464, id(font_small), id(color_muted), TextAlign::BOTTOM_LEFT, "%.0f", id(graph_temp_25h).get_graph_limit_min());
+            it.printf(23, 300, id(font_small), id(color_muted), TextAlign::TOP_LEFT, "%.0f", id(graph_temp_25h).get_graph_limit_max());
+            it.printf(23, 461, id(font_small), id(color_muted), TextAlign::BOTTOM_LEFT, "%.0f", id(graph_temp_25h).get_graph_limit_min());
           }
 
       - id: page_graphs_humidity
         lambda: |-
           it.fill(id(color_bg));
           // ---- Spolecne zahlavi (identicke na vsech strankach) ----
-          // Lista 0..44, nadpis na jejim svislem stredu (TextAlign::CENTER, aby
-          // nesedel jinak podle vysky pisma). Obsah stranky zacina na 50 a konci
-          // na 474 -- dashboard tam ma karty, grafove stranky dva grafy.
+          // Vsechny cerne mezery na strance jsou 6 px: pod ramecek, pod listu,
+          // mezi karty i panely. Z toho vychazi zbytek geometrie -- lista 0..42,
+          // obsah 49..470, karta 148x101, panel grafu 302x208.
+          // Nadpis je na svislem stredu listy (TextAlign::CENTER, aby nesedel
+          // jinak podle vysky pisma).
           it.rectangle(0, 0, 320, 480, id(color_card));
           it.rectangle(1, 1, 318, 478, id(color_card));
           it.rectangle(2, 2, 316, 476, id(color_card));
-          it.filled_rectangle(0, 0, 320, 44, id(color_card));
-          it.print(160, 22, id(font_title), id(color_arch), TextAlign::CENTER, "VLHKOST");
+          it.filled_rectangle(0, 0, 320, 43, id(color_card));
+          it.print(160, 21, id(font_title), id(color_arch), TextAlign::CENTER, "VLHKOST");
 
           // Panel 100 min -- stejna karta jako na dashboardu: cerna mezera 8 px
           // kolem dokola, podklad color_card, graf uvnitr s vnitrnim okrajem.
-          it.filled_rectangle(8, 50, 304, 208, id(color_card));
-          it.print(18, 58, id(font_small), id(color_arch), TextAlign::TOP_LEFT, "100 min");
+          it.filled_rectangle(9, 49, 302, 208, id(color_card));
+          it.print(19, 57, id(font_small), id(color_arch), TextAlign::TOP_LEFT, "100 min");
           if (!isnan(id(ha_humidity).state)) {
-            it.printf(302, 58, id(font_small), id(color_arch), TextAlign::TOP_RIGHT, "%.0f %%", id(ha_humidity).state);
+            it.printf(301, 57, id(font_small), id(color_arch), TextAlign::TOP_RIGHT, "%.0f %%", id(ha_humidity).state);
           }
-          it.graph(18, 84, id(graph_humidity_100m), id(color_grid));
+          it.graph(19, 83, id(graph_humidity_100m), id(color_grid));
           if (!isnan(id(graph_humidity_100m).get_graph_limit_max())) {
-            it.printf(22, 87, id(font_small), id(color_muted), TextAlign::TOP_LEFT, "%.0f", id(graph_humidity_100m).get_graph_limit_max());
-            it.printf(22, 248, id(font_small), id(color_muted), TextAlign::BOTTOM_LEFT, "%.0f", id(graph_humidity_100m).get_graph_limit_min());
+            it.printf(23, 86, id(font_small), id(color_muted), TextAlign::TOP_LEFT, "%.0f", id(graph_humidity_100m).get_graph_limit_max());
+            it.printf(23, 247, id(font_small), id(color_muted), TextAlign::BOTTOM_LEFT, "%.0f", id(graph_humidity_100m).get_graph_limit_min());
           }
 
           // Panel 25 h
-          it.filled_rectangle(8, 266, 304, 208, id(color_card));
-          it.print(18, 274, id(font_small), id(color_arch), TextAlign::TOP_LEFT, "25 h");
+          it.filled_rectangle(9, 263, 302, 208, id(color_card));
+          it.print(19, 271, id(font_small), id(color_arch), TextAlign::TOP_LEFT, "25 h");
           if (!isnan(id(ha_humidity).state)) {
-            it.printf(302, 274, id(font_small), id(color_arch), TextAlign::TOP_RIGHT, "%.0f %%", id(ha_humidity).state);
+            it.printf(301, 271, id(font_small), id(color_arch), TextAlign::TOP_RIGHT, "%.0f %%", id(ha_humidity).state);
           }
-          it.graph(18, 300, id(graph_humidity_25h), id(color_grid));
+          it.graph(19, 297, id(graph_humidity_25h), id(color_grid));
           if (!isnan(id(graph_humidity_25h).get_graph_limit_max())) {
-            it.printf(22, 303, id(font_small), id(color_muted), TextAlign::TOP_LEFT, "%.0f", id(graph_humidity_25h).get_graph_limit_max());
-            it.printf(22, 464, id(font_small), id(color_muted), TextAlign::BOTTOM_LEFT, "%.0f", id(graph_humidity_25h).get_graph_limit_min());
+            it.printf(23, 300, id(font_small), id(color_muted), TextAlign::TOP_LEFT, "%.0f", id(graph_humidity_25h).get_graph_limit_max());
+            it.printf(23, 461, id(font_small), id(color_muted), TextAlign::BOTTOM_LEFT, "%.0f", id(graph_humidity_25h).get_graph_limit_min());
           }
 
       - id: page_graphs_co2
         lambda: |-
           it.fill(id(color_bg));
           // ---- Spolecne zahlavi (identicke na vsech strankach) ----
-          // Lista 0..44, nadpis na jejim svislem stredu (TextAlign::CENTER, aby
-          // nesedel jinak podle vysky pisma). Obsah stranky zacina na 50 a konci
-          // na 474 -- dashboard tam ma karty, grafove stranky dva grafy.
+          // Vsechny cerne mezery na strance jsou 6 px: pod ramecek, pod listu,
+          // mezi karty i panely. Z toho vychazi zbytek geometrie -- lista 0..42,
+          // obsah 49..470, karta 148x101, panel grafu 302x208.
+          // Nadpis je na svislem stredu listy (TextAlign::CENTER, aby nesedel
+          // jinak podle vysky pisma).
           it.rectangle(0, 0, 320, 480, id(color_card));
           it.rectangle(1, 1, 318, 478, id(color_card));
           it.rectangle(2, 2, 316, 476, id(color_card));
-          it.filled_rectangle(0, 0, 320, 44, id(color_card));
-          it.print(160, 22, id(font_title), id(color_arch), TextAlign::CENTER, "CO2");
+          it.filled_rectangle(0, 0, 320, 43, id(color_card));
+          it.print(160, 21, id(font_title), id(color_arch), TextAlign::CENTER, "CO2");
 
           // Panel 100 min -- stejna karta jako na dashboardu: cerna mezera 8 px
           // kolem dokola, podklad color_card, graf uvnitr s vnitrnim okrajem.
-          it.filled_rectangle(8, 50, 304, 208, id(color_card));
-          it.print(18, 58, id(font_small), id(color_arch), TextAlign::TOP_LEFT, "100 min");
+          it.filled_rectangle(9, 49, 302, 208, id(color_card));
+          it.print(19, 57, id(font_small), id(color_arch), TextAlign::TOP_LEFT, "100 min");
           if (!isnan(id(ha_co2).state)) {
-            it.printf(302, 58, id(font_small), id(color_arch), TextAlign::TOP_RIGHT, "%.0f ppm", id(ha_co2).state);
+            it.printf(301, 57, id(font_small), id(color_arch), TextAlign::TOP_RIGHT, "%.0f ppm", id(ha_co2).state);
           }
-          it.graph(18, 84, id(graph_co2_100m), id(color_grid));
+          it.graph(19, 83, id(graph_co2_100m), id(color_grid));
           if (!isnan(id(graph_co2_100m).get_graph_limit_max())) {
-            it.printf(22, 87, id(font_small), id(color_muted), TextAlign::TOP_LEFT, "%.0f", id(graph_co2_100m).get_graph_limit_max());
-            it.printf(22, 248, id(font_small), id(color_muted), TextAlign::BOTTOM_LEFT, "%.0f", id(graph_co2_100m).get_graph_limit_min());
+            it.printf(23, 86, id(font_small), id(color_muted), TextAlign::TOP_LEFT, "%.0f", id(graph_co2_100m).get_graph_limit_max());
+            it.printf(23, 247, id(font_small), id(color_muted), TextAlign::BOTTOM_LEFT, "%.0f", id(graph_co2_100m).get_graph_limit_min());
           }
 
           // Panel 25 h
-          it.filled_rectangle(8, 266, 304, 208, id(color_card));
-          it.print(18, 274, id(font_small), id(color_arch), TextAlign::TOP_LEFT, "25 h");
+          it.filled_rectangle(9, 263, 302, 208, id(color_card));
+          it.print(19, 271, id(font_small), id(color_arch), TextAlign::TOP_LEFT, "25 h");
           if (!isnan(id(ha_co2).state)) {
-            it.printf(302, 274, id(font_small), id(color_arch), TextAlign::TOP_RIGHT, "%.0f ppm", id(ha_co2).state);
+            it.printf(301, 271, id(font_small), id(color_arch), TextAlign::TOP_RIGHT, "%.0f ppm", id(ha_co2).state);
           }
-          it.graph(18, 300, id(graph_co2_25h), id(color_grid));
+          it.graph(19, 297, id(graph_co2_25h), id(color_grid));
           if (!isnan(id(graph_co2_25h).get_graph_limit_max())) {
-            it.printf(22, 303, id(font_small), id(color_muted), TextAlign::TOP_LEFT, "%.0f", id(graph_co2_25h).get_graph_limit_max());
-            it.printf(22, 464, id(font_small), id(color_muted), TextAlign::BOTTOM_LEFT, "%.0f", id(graph_co2_25h).get_graph_limit_min());
+            it.printf(23, 300, id(font_small), id(color_muted), TextAlign::TOP_LEFT, "%.0f", id(graph_co2_25h).get_graph_limit_max());
+            it.printf(23, 461, id(font_small), id(color_muted), TextAlign::BOTTOM_LEFT, "%.0f", id(graph_co2_25h).get_graph_limit_min());
           }
 
       - id: page_graphs_voc
         lambda: |-
           it.fill(id(color_bg));
           // ---- Spolecne zahlavi (identicke na vsech strankach) ----
-          // Lista 0..44, nadpis na jejim svislem stredu (TextAlign::CENTER, aby
-          // nesedel jinak podle vysky pisma). Obsah stranky zacina na 50 a konci
-          // na 474 -- dashboard tam ma karty, grafove stranky dva grafy.
+          // Vsechny cerne mezery na strance jsou 6 px: pod ramecek, pod listu,
+          // mezi karty i panely. Z toho vychazi zbytek geometrie -- lista 0..42,
+          // obsah 49..470, karta 148x101, panel grafu 302x208.
+          // Nadpis je na svislem stredu listy (TextAlign::CENTER, aby nesedel
+          // jinak podle vysky pisma).
           it.rectangle(0, 0, 320, 480, id(color_card));
           it.rectangle(1, 1, 318, 478, id(color_card));
           it.rectangle(2, 2, 316, 476, id(color_card));
-          it.filled_rectangle(0, 0, 320, 44, id(color_card));
-          it.print(160, 22, id(font_title), id(color_arch), TextAlign::CENTER, "VOC");
+          it.filled_rectangle(0, 0, 320, 43, id(color_card));
+          it.print(160, 21, id(font_title), id(color_arch), TextAlign::CENTER, "VOC");
 
           // Panel 100 min -- stejna karta jako na dashboardu: cerna mezera 8 px
           // kolem dokola, podklad color_card, graf uvnitr s vnitrnim okrajem.
-          it.filled_rectangle(8, 50, 304, 208, id(color_card));
-          it.print(18, 58, id(font_small), id(color_arch), TextAlign::TOP_LEFT, "100 min");
+          it.filled_rectangle(9, 49, 302, 208, id(color_card));
+          it.print(19, 57, id(font_small), id(color_arch), TextAlign::TOP_LEFT, "100 min");
           if (!isnan(id(ha_voc).state)) {
-            it.printf(302, 58, id(font_small), id(color_arch), TextAlign::TOP_RIGHT, "%.0f idx", id(ha_voc).state);
+            it.printf(301, 57, id(font_small), id(color_arch), TextAlign::TOP_RIGHT, "%.0f idx", id(ha_voc).state);
           }
-          it.graph(18, 84, id(graph_voc_100m), id(color_grid));
+          it.graph(19, 83, id(graph_voc_100m), id(color_grid));
           if (!isnan(id(graph_voc_100m).get_graph_limit_max())) {
-            it.printf(22, 87, id(font_small), id(color_muted), TextAlign::TOP_LEFT, "%.0f", id(graph_voc_100m).get_graph_limit_max());
-            it.printf(22, 248, id(font_small), id(color_muted), TextAlign::BOTTOM_LEFT, "%.0f", id(graph_voc_100m).get_graph_limit_min());
+            it.printf(23, 86, id(font_small), id(color_muted), TextAlign::TOP_LEFT, "%.0f", id(graph_voc_100m).get_graph_limit_max());
+            it.printf(23, 247, id(font_small), id(color_muted), TextAlign::BOTTOM_LEFT, "%.0f", id(graph_voc_100m).get_graph_limit_min());
           }
 
           // Panel 25 h
-          it.filled_rectangle(8, 266, 304, 208, id(color_card));
-          it.print(18, 274, id(font_small), id(color_arch), TextAlign::TOP_LEFT, "25 h");
+          it.filled_rectangle(9, 263, 302, 208, id(color_card));
+          it.print(19, 271, id(font_small), id(color_arch), TextAlign::TOP_LEFT, "25 h");
           if (!isnan(id(ha_voc).state)) {
-            it.printf(302, 274, id(font_small), id(color_arch), TextAlign::TOP_RIGHT, "%.0f idx", id(ha_voc).state);
+            it.printf(301, 271, id(font_small), id(color_arch), TextAlign::TOP_RIGHT, "%.0f idx", id(ha_voc).state);
           }
-          it.graph(18, 300, id(graph_voc_25h), id(color_grid));
+          it.graph(19, 297, id(graph_voc_25h), id(color_grid));
           if (!isnan(id(graph_voc_25h).get_graph_limit_max())) {
-            it.printf(22, 303, id(font_small), id(color_muted), TextAlign::TOP_LEFT, "%.0f", id(graph_voc_25h).get_graph_limit_max());
-            it.printf(22, 464, id(font_small), id(color_muted), TextAlign::BOTTOM_LEFT, "%.0f", id(graph_voc_25h).get_graph_limit_min());
+            it.printf(23, 300, id(font_small), id(color_muted), TextAlign::TOP_LEFT, "%.0f", id(graph_voc_25h).get_graph_limit_max());
+            it.printf(23, 461, id(font_small), id(color_muted), TextAlign::BOTTOM_LEFT, "%.0f", id(graph_voc_25h).get_graph_limit_min());
           }
 
       - id: page_graphs_nox
         lambda: |-
           it.fill(id(color_bg));
           // ---- Spolecne zahlavi (identicke na vsech strankach) ----
-          // Lista 0..44, nadpis na jejim svislem stredu (TextAlign::CENTER, aby
-          // nesedel jinak podle vysky pisma). Obsah stranky zacina na 50 a konci
-          // na 474 -- dashboard tam ma karty, grafove stranky dva grafy.
+          // Vsechny cerne mezery na strance jsou 6 px: pod ramecek, pod listu,
+          // mezi karty i panely. Z toho vychazi zbytek geometrie -- lista 0..42,
+          // obsah 49..470, karta 148x101, panel grafu 302x208.
+          // Nadpis je na svislem stredu listy (TextAlign::CENTER, aby nesedel
+          // jinak podle vysky pisma).
           it.rectangle(0, 0, 320, 480, id(color_card));
           it.rectangle(1, 1, 318, 478, id(color_card));
           it.rectangle(2, 2, 316, 476, id(color_card));
-          it.filled_rectangle(0, 0, 320, 44, id(color_card));
-          it.print(160, 22, id(font_title), id(color_arch), TextAlign::CENTER, "NOX");
+          it.filled_rectangle(0, 0, 320, 43, id(color_card));
+          it.print(160, 21, id(font_title), id(color_arch), TextAlign::CENTER, "NOX");
 
           // Panel 100 min -- stejna karta jako na dashboardu: cerna mezera 8 px
           // kolem dokola, podklad color_card, graf uvnitr s vnitrnim okrajem.
-          it.filled_rectangle(8, 50, 304, 208, id(color_card));
-          it.print(18, 58, id(font_small), id(color_arch), TextAlign::TOP_LEFT, "100 min");
+          it.filled_rectangle(9, 49, 302, 208, id(color_card));
+          it.print(19, 57, id(font_small), id(color_arch), TextAlign::TOP_LEFT, "100 min");
           if (!isnan(id(ha_nox).state)) {
-            it.printf(302, 58, id(font_small), id(color_arch), TextAlign::TOP_RIGHT, "%.0f idx", id(ha_nox).state);
+            it.printf(301, 57, id(font_small), id(color_arch), TextAlign::TOP_RIGHT, "%.0f idx", id(ha_nox).state);
           }
-          it.graph(18, 84, id(graph_nox_100m), id(color_grid));
+          it.graph(19, 83, id(graph_nox_100m), id(color_grid));
           if (!isnan(id(graph_nox_100m).get_graph_limit_max())) {
-            it.printf(22, 87, id(font_small), id(color_muted), TextAlign::TOP_LEFT, "%.0f", id(graph_nox_100m).get_graph_limit_max());
-            it.printf(22, 248, id(font_small), id(color_muted), TextAlign::BOTTOM_LEFT, "%.0f", id(graph_nox_100m).get_graph_limit_min());
+            it.printf(23, 86, id(font_small), id(color_muted), TextAlign::TOP_LEFT, "%.0f", id(graph_nox_100m).get_graph_limit_max());
+            it.printf(23, 247, id(font_small), id(color_muted), TextAlign::BOTTOM_LEFT, "%.0f", id(graph_nox_100m).get_graph_limit_min());
           }
 
           // Panel 25 h
-          it.filled_rectangle(8, 266, 304, 208, id(color_card));
-          it.print(18, 274, id(font_small), id(color_arch), TextAlign::TOP_LEFT, "25 h");
+          it.filled_rectangle(9, 263, 302, 208, id(color_card));
+          it.print(19, 271, id(font_small), id(color_arch), TextAlign::TOP_LEFT, "25 h");
           if (!isnan(id(ha_nox).state)) {
-            it.printf(302, 274, id(font_small), id(color_arch), TextAlign::TOP_RIGHT, "%.0f idx", id(ha_nox).state);
+            it.printf(301, 271, id(font_small), id(color_arch), TextAlign::TOP_RIGHT, "%.0f idx", id(ha_nox).state);
           }
-          it.graph(18, 300, id(graph_nox_25h), id(color_grid));
+          it.graph(19, 297, id(graph_nox_25h), id(color_grid));
           if (!isnan(id(graph_nox_25h).get_graph_limit_max())) {
-            it.printf(22, 303, id(font_small), id(color_muted), TextAlign::TOP_LEFT, "%.0f", id(graph_nox_25h).get_graph_limit_max());
-            it.printf(22, 464, id(font_small), id(color_muted), TextAlign::BOTTOM_LEFT, "%.0f", id(graph_nox_25h).get_graph_limit_min());
+            it.printf(23, 300, id(font_small), id(color_muted), TextAlign::TOP_LEFT, "%.0f", id(graph_nox_25h).get_graph_limit_max());
+            it.printf(23, 461, id(font_small), id(color_muted), TextAlign::BOTTOM_LEFT, "%.0f", id(graph_nox_25h).get_graph_limit_min());
           }
 
       - id: page_graphs_lux
         lambda: |-
           it.fill(id(color_bg));
           // ---- Spolecne zahlavi (identicke na vsech strankach) ----
-          // Lista 0..44, nadpis na jejim svislem stredu (TextAlign::CENTER, aby
-          // nesedel jinak podle vysky pisma). Obsah stranky zacina na 50 a konci
-          // na 474 -- dashboard tam ma karty, grafove stranky dva grafy.
+          // Vsechny cerne mezery na strance jsou 6 px: pod ramecek, pod listu,
+          // mezi karty i panely. Z toho vychazi zbytek geometrie -- lista 0..42,
+          // obsah 49..470, karta 148x101, panel grafu 302x208.
+          // Nadpis je na svislem stredu listy (TextAlign::CENTER, aby nesedel
+          // jinak podle vysky pisma).
           it.rectangle(0, 0, 320, 480, id(color_card));
           it.rectangle(1, 1, 318, 478, id(color_card));
           it.rectangle(2, 2, 316, 476, id(color_card));
-          it.filled_rectangle(0, 0, 320, 44, id(color_card));
-          it.print(160, 22, id(font_title), id(color_arch), TextAlign::CENTER, "SVĚTLO");
+          it.filled_rectangle(0, 0, 320, 43, id(color_card));
+          it.print(160, 21, id(font_title), id(color_arch), TextAlign::CENTER, "SVĚTLO");
 
           // Panel 100 min -- stejna karta jako na dashboardu: cerna mezera 8 px
           // kolem dokola, podklad color_card, graf uvnitr s vnitrnim okrajem.
-          it.filled_rectangle(8, 50, 304, 208, id(color_card));
-          it.print(18, 58, id(font_small), id(color_arch), TextAlign::TOP_LEFT, "100 min");
+          it.filled_rectangle(9, 49, 302, 208, id(color_card));
+          it.print(19, 57, id(font_small), id(color_arch), TextAlign::TOP_LEFT, "100 min");
           if (!isnan(id(ha_lux).state)) {
-            it.printf(302, 58, id(font_small), id(color_arch), TextAlign::TOP_RIGHT, "%.0f lx", id(ha_lux).state);
+            it.printf(301, 57, id(font_small), id(color_arch), TextAlign::TOP_RIGHT, "%.0f lx", id(ha_lux).state);
           }
-          it.graph(18, 84, id(graph_lux_100m), id(color_grid));
+          it.graph(19, 83, id(graph_lux_100m), id(color_grid));
           if (!isnan(id(graph_lux_100m).get_graph_limit_max())) {
-            it.printf(22, 87, id(font_small), id(color_muted), TextAlign::TOP_LEFT, "%.0f", id(graph_lux_100m).get_graph_limit_max());
-            it.printf(22, 248, id(font_small), id(color_muted), TextAlign::BOTTOM_LEFT, "%.0f", id(graph_lux_100m).get_graph_limit_min());
+            it.printf(23, 86, id(font_small), id(color_muted), TextAlign::TOP_LEFT, "%.0f", id(graph_lux_100m).get_graph_limit_max());
+            it.printf(23, 247, id(font_small), id(color_muted), TextAlign::BOTTOM_LEFT, "%.0f", id(graph_lux_100m).get_graph_limit_min());
           }
 
           // Panel 25 h
-          it.filled_rectangle(8, 266, 304, 208, id(color_card));
-          it.print(18, 274, id(font_small), id(color_arch), TextAlign::TOP_LEFT, "25 h");
+          it.filled_rectangle(9, 263, 302, 208, id(color_card));
+          it.print(19, 271, id(font_small), id(color_arch), TextAlign::TOP_LEFT, "25 h");
           if (!isnan(id(ha_lux).state)) {
-            it.printf(302, 274, id(font_small), id(color_arch), TextAlign::TOP_RIGHT, "%.0f lx", id(ha_lux).state);
+            it.printf(301, 271, id(font_small), id(color_arch), TextAlign::TOP_RIGHT, "%.0f lx", id(ha_lux).state);
           }
-          it.graph(18, 300, id(graph_lux_25h), id(color_grid));
+          it.graph(19, 297, id(graph_lux_25h), id(color_grid));
           if (!isnan(id(graph_lux_25h).get_graph_limit_max())) {
-            it.printf(22, 303, id(font_small), id(color_muted), TextAlign::TOP_LEFT, "%.0f", id(graph_lux_25h).get_graph_limit_max());
-            it.printf(22, 464, id(font_small), id(color_muted), TextAlign::BOTTOM_LEFT, "%.0f", id(graph_lux_25h).get_graph_limit_min());
+            it.printf(23, 300, id(font_small), id(color_muted), TextAlign::TOP_LEFT, "%.0f", id(graph_lux_25h).get_graph_limit_max());
+            it.printf(23, 461, id(font_small), id(color_muted), TextAlign::BOTTOM_LEFT, "%.0f", id(graph_lux_25h).get_graph_limit_min());
           }
 
       - id: page_svatky
         lambda: |-
           it.fill(id(color_bg));
           // ---- Spolecne zahlavi (identicke na vsech strankach) ----
-          // Lista 0..44, nadpis na jejim svislem stredu (TextAlign::CENTER, aby
-          // nesedel jinak podle vysky pisma). Obsah stranky zacina na 50 a konci
-          // na 474 -- dashboard tam ma karty, grafove stranky dva grafy.
+          // Vsechny cerne mezery na strance jsou 6 px: pod ramecek, pod listu,
+          // mezi karty i panely. Z toho vychazi zbytek geometrie -- lista 0..42,
+          // obsah 49..470, karta 148x101, panel grafu 302x208.
+          // Nadpis je na svislem stredu listy (TextAlign::CENTER, aby nesedel
+          // jinak podle vysky pisma).
           it.rectangle(0, 0, 320, 480, id(color_card));
           it.rectangle(1, 1, 318, 478, id(color_card));
           it.rectangle(2, 2, 316, 476, id(color_card));
-          it.filled_rectangle(0, 0, 320, 44, id(color_card));
-          it.print(160, 22, id(font_title), id(color_arch), TextAlign::CENTER, "SVÁTKY");
+          it.filled_rectangle(0, 0, 320, 43, id(color_card));
+          it.print(160, 21, id(font_title), id(color_arch), TextAlign::CENTER, "SVÁTKY");
 
           // toupper() umi jen ASCII a dvoubajtove znaky by rozsekal. Cestina ma
           // velka o 32 niz v bloku C3 (á é í ó ú ý) a o 1 niz v C4/C5
@@ -942,16 +958,24 @@ display:
           // Dnesek ma napevno rezervovane DVA radky (Y_DNES a Y_DNES + 34), i kdyz
           // se jmeno vejde na jeden -- jinak by radky kolem poskakovaly podle toho,
           // jak dlouhy je zrovna dnesni svatek.
-          const int Y[7] = {60, 117, 174, 231, 331, 388, 445};
-          // Dnesni blok (231..293) ma dva radky rezervovane napevno, at okolni radky
+          // Kazdy den ma vlastni panel jako karta na dashboardu, deli je stejna
+          // cerna mezera 6 px. Dnesek je vyssi, protoze drzi misto na dva radky.
+          const int P_Y[7] = {49, 106, 163, 220, 306, 363, 420};
+          const int P_H[7] = {51, 51, 51, 80, 51, 51, 51};
+          for (int i = 0; i < 7; i++) {
+            it.filled_rectangle(9, P_Y[i], 302, P_H[i], id(color_card));
+          }
+          // Text je ve svislem stredu sveho panelu.
+          const int Y[7] = {65, 122, 179, 233, 322, 379, 436};
+          // Dnesni panel (220..299) ma dva radky rezervovane napevno, at okolni radky
           // neposkakuji podle delky svatku. Datum sedi na jeho svislem stredu vzdycky,
           // takze zabira levy pruh pres OBA radky -- proto se jmeno vejde jen do
           // SIRKA minus sirka data, a to i kdyz je na dva radky. Spolehat na to, ze
           // se datum svisle "vejde mezi radky", nejde: vyska pisma se lisi podle
           // fontu i podle toho, jestli ma text diakritiku.
           // Pri jednom radku sedne jmeno na uroven data = opticky jedna rada.
-          const int Y_DNES_2 = 265, Y_DNES_1RADEK = 248, Y_DNES_DATUM = 253;
-          const int SIRKA = 292, MEZERA = 10;   // x od 14 do 306
+          const int Y_DNES_2 = 267, Y_DNES_1RADEK = 247, Y_DNES_DATUM = 250;
+          const int SIRKA = 282, MEZERA = 10;   // x od 19 do 301
           text_sensor::TextSensor *JMENA[7] = {
             id(ha_svatek_m3), id(ha_svatek_m2), id(ha_svatek_m1), id(ha_svatek_dnes),
             id(ha_svatek_p1), id(ha_svatek_p2), id(ha_svatek_p3),
@@ -1037,21 +1061,21 @@ display:
 
             if (dnes) {
               if (!datum.empty()) {
-                it.print(14, Y_DNES_DATUM, id(font_small), id(color_arch),
+                it.print(19, Y_DNES_DATUM, id(font_small), id(color_arch),
                          TextAlign::TOP_LEFT, datum.c_str());
               }
               if (r2.empty()) {
-                it.print(306, Y_DNES_1RADEK, f, c_jmeno, TextAlign::TOP_RIGHT, r1.c_str());
+                it.print(301, Y_DNES_1RADEK, f, c_jmeno, TextAlign::TOP_RIGHT, r1.c_str());
               } else {
-                it.print(306, Y[i], f, c_jmeno, TextAlign::TOP_RIGHT, r1.c_str());
-                it.print(306, Y_DNES_2, f, c_jmeno, TextAlign::TOP_RIGHT, r2.c_str());
+                it.print(301, Y[i], f, c_jmeno, TextAlign::TOP_RIGHT, r1.c_str());
+                it.print(301, Y_DNES_2, f, c_jmeno, TextAlign::TOP_RIGHT, r2.c_str());
               }
             } else {
               if (!datum.empty()) {
-                it.print(14, Y[i], id(font_small), id(color_muted),
+                it.print(19, Y[i], id(font_small), id(color_muted),
                          TextAlign::TOP_LEFT, datum.c_str());
               }
-              it.print(306, Y[i], f, c_jmeno, TextAlign::TOP_RIGHT, r1.c_str());
+              it.print(301, Y[i], f, c_jmeno, TextAlign::TOP_RIGHT, r1.c_str());
             }
           }
 
