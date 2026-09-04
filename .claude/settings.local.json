@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(find / -xdev -iname \"*.pio*\" -maxdepth 3)",
+      "Bash(find / -xdev -iname \"site-packages\")",
+      "Bash(docker exec *)",
+      "Bash(python3 -c ' *)",
+      "Bash(python *)"
+    ]
+  }
+}
