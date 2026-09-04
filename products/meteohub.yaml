@@ -34,7 +34,8 @@
 #   display_id        id displeje k rozsireni (default displej35)
 #   time_id           id time komponenty (default sntp_time)
 #   ha_svatky         prefix entit se svatky (default sensor.svatek). Balicek cte
-#                     ${ha_svatky}_m3 .. _m1, _dnes, _p1 .. _p3 pro stranku Svátky.
+#                     ${ha_svatky}_m3 .. _m1, _0, _p1 .. _p3 pro stranku Svátky.
+#                     Vsech sedm ma stejne pravidlo, dnesek je _0 (ne _dnes).
 #   page_select_name  jmeno select entity pro prepinani stranek. Meni entity_id
 #                     v HA, takze u existujiciho kusu opsat to stavajici.
 #
@@ -157,8 +158,8 @@ text_sensor:
     entity_id: ${ha_svatky | default("sensor.svatek")}_m1
 
   - platform: homeassistant
-    id: ha_svatek_dnes
-    entity_id: ${ha_svatky | default("sensor.svatek")}_dnes
+    id: ha_svatek_0
+    entity_id: ${ha_svatky | default("sensor.svatek")}_0
 
   - platform: homeassistant
     id: ha_svatek_p1
@@ -240,6 +241,10 @@ graph:
       - sensor: ha_temperature
         line_type: SOLID
         line_thickness: 2
+        # Bez tohohle kresli ESPHome jen samostatne pixely -- default je
+        # continuous_{false} (graph.h). Pri malem rozptylu a kmitajicim
+        # cidle z toho jsou nespojite tecky misto cary.
+        continuous: true
         color: color_orange_1
 
   - id: graph_humidity_100m
@@ -253,6 +258,10 @@ graph:
       - sensor: ha_humidity
         line_type: SOLID
         line_thickness: 2
+        # Bez tohohle kresli ESPHome jen samostatne pixely -- default je
+        # continuous_{false} (graph.h). Pri malem rozptylu a kmitajicim
+        # cidle z toho jsou nespojite tecky misto cary.
+        continuous: true
         color: color_green_1
 
   - id: graph_co2_100m
@@ -266,6 +275,10 @@ graph:
       - sensor: ha_co2
         line_type: SOLID
         line_thickness: 2
+        # Bez tohohle kresli ESPHome jen samostatne pixely -- default je
+        # continuous_{false} (graph.h). Pri malem rozptylu a kmitajicim
+        # cidle z toho jsou nespojite tecky misto cary.
+        continuous: true
         color: color_green_0
 
   - id: graph_voc_100m
@@ -279,6 +292,10 @@ graph:
       - sensor: ha_voc
         line_type: SOLID
         line_thickness: 2
+        # Bez tohohle kresli ESPHome jen samostatne pixely -- default je
+        # continuous_{false} (graph.h). Pri malem rozptylu a kmitajicim
+        # cidle z toho jsou nespojite tecky misto cary.
+        continuous: true
         color: color_purple
 
   - id: graph_nox_100m
@@ -292,6 +309,10 @@ graph:
       - sensor: ha_nox
         line_type: SOLID
         line_thickness: 2
+        # Bez tohohle kresli ESPHome jen samostatne pixely -- default je
+        # continuous_{false} (graph.h). Pri malem rozptylu a kmitajicim
+        # cidle z toho jsou nespojite tecky misto cary.
+        continuous: true
         color: color_orange_2
 
   - id: graph_lux_100m
@@ -305,6 +326,10 @@ graph:
       - sensor: ha_lux
         line_type: SOLID
         line_thickness: 2
+        # Bez tohohle kresli ESPHome jen samostatne pixely -- default je
+        # continuous_{false} (graph.h). Pri malem rozptylu a kmitajicim
+        # cidle z toho jsou nespojite tecky misto cary.
+        continuous: true
         color: color_yellow
 
   # Grafy 25 hodin
@@ -319,6 +344,10 @@ graph:
       - sensor: ha_temperature
         line_type: SOLID
         line_thickness: 2
+        # Bez tohohle kresli ESPHome jen samostatne pixely -- default je
+        # continuous_{false} (graph.h). Pri malem rozptylu a kmitajicim
+        # cidle z toho jsou nespojite tecky misto cary.
+        continuous: true
         color: color_orange_1
 
   - id: graph_humidity_25h
@@ -332,6 +361,10 @@ graph:
       - sensor: ha_humidity
         line_type: SOLID
         line_thickness: 2
+        # Bez tohohle kresli ESPHome jen samostatne pixely -- default je
+        # continuous_{false} (graph.h). Pri malem rozptylu a kmitajicim
+        # cidle z toho jsou nespojite tecky misto cary.
+        continuous: true
         color: color_green_1
 
   - id: graph_co2_25h
@@ -345,6 +378,10 @@ graph:
       - sensor: ha_co2
         line_type: SOLID
         line_thickness: 2
+        # Bez tohohle kresli ESPHome jen samostatne pixely -- default je
+        # continuous_{false} (graph.h). Pri malem rozptylu a kmitajicim
+        # cidle z toho jsou nespojite tecky misto cary.
+        continuous: true
         color: color_green_0
 
   - id: graph_voc_25h
@@ -358,6 +395,10 @@ graph:
       - sensor: ha_voc
         line_type: SOLID
         line_thickness: 2
+        # Bez tohohle kresli ESPHome jen samostatne pixely -- default je
+        # continuous_{false} (graph.h). Pri malem rozptylu a kmitajicim
+        # cidle z toho jsou nespojite tecky misto cary.
+        continuous: true
         color: color_purple
 
   - id: graph_nox_25h
@@ -371,6 +412,10 @@ graph:
       - sensor: ha_nox
         line_type: SOLID
         line_thickness: 2
+        # Bez tohohle kresli ESPHome jen samostatne pixely -- default je
+        # continuous_{false} (graph.h). Pri malem rozptylu a kmitajicim
+        # cidle z toho jsou nespojite tecky misto cary.
+        continuous: true
         color: color_orange_2
 
   - id: graph_lux_25h
@@ -384,6 +429,10 @@ graph:
       - sensor: ha_lux
         line_type: SOLID
         line_thickness: 2
+        # Bez tohohle kresli ESPHome jen samostatne pixely -- default je
+        # continuous_{false} (graph.h). Pri malem rozptylu a kmitajicim
+        # cidle z toho jsou nespojite tecky misto cary.
+        continuous: true
         color: color_yellow
 
 select:
@@ -639,8 +688,8 @@ display:
             } else {
               it.print(x + CW - 12, y + 40, id(font_small), id(color_muted), TextAlign::TOP_RIGHT, "--");
             }
-            if (id(ha_svatek_dnes).has_state()) {
-              it.print(x + CW / 2, y + 72, id(font_small), id(color_purple), TextAlign::TOP_CENTER, id(ha_svatek_dnes).state.c_str());
+            if (id(ha_svatek_0).has_state()) {
+              it.print(x + CW / 2, y + 72, id(font_small), id(color_purple), TextAlign::TOP_CENTER, id(ha_svatek_0).state.c_str());
             } else {
               it.print(x + CW / 2, y + 72, id(font_small), id(color_muted), TextAlign::TOP_CENTER, "--");
             }
@@ -977,7 +1026,7 @@ display:
           const int Y_DNES_2 = 267, Y_DNES_1RADEK = 247, Y_DNES_DATUM = 250;
           const int SIRKA = 282, MEZERA = 10;   // x od 19 do 301
           text_sensor::TextSensor *JMENA[7] = {
-            id(ha_svatek_m3), id(ha_svatek_m2), id(ha_svatek_m1), id(ha_svatek_dnes),
+            id(ha_svatek_m3), id(ha_svatek_m2), id(ha_svatek_m1), id(ha_svatek_0),
             id(ha_svatek_p1), id(ha_svatek_p2), id(ha_svatek_p3),
           };
 
