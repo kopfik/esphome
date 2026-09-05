@@ -16,6 +16,7 @@
 #         vars:
 #           nadpis: METEOHUB
 #           ha_senzory: sensor.nejaky_prefix
+#           ha_tlak: sensor.nejaky_prefix_pressure_bmp585
 #           press_center: "965"
 #           foto_id: img_brocek
 #           page_select_name: Meteohub display page
@@ -26,6 +27,9 @@
 #                     NEodvozovat z controller_name -- HA si pred nej pridava svoje.
 #                     Suffixy (_temperature_sht45, _co2_scd41, ...) dodavaji balicky
 #                     sht4x / bmp58x_custom / scd4x / sgp4x / opt3001.
+#   ha_tlak           CELE entity_id tlaku, ne suffix. Nesdili prefix s ostatnimi:
+#                     solomon cte syrovy tlak z bmp585, rodice prepocet na hladinu
+#                     more z jineho senzoru. Proto samostatny var, ne ${ha_senzory}_*.
 #   press_center      stred prahove skaly tlaku v hPa. Vazany na konkretni cidlo
 #                     a nadmorskou vysku, ne na vzhled -- proto parametr.
 #                     Prahy jdou po 4 hPa od stredu na obe strany.
@@ -131,7 +135,7 @@ sensor:
 
   - platform: homeassistant
     id: ha_pressure
-    entity_id: ${ha_senzory}_pressure_bmp585
+    entity_id: ${ha_tlak}
 
   - platform: homeassistant
     id: ha_temperature
