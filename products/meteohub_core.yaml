@@ -1,0 +1,371 @@
+## products/meteohub_core.yaml
+#
+# "Kostra" skladaneho meteohubu. Sama o sobe NIC nekresli -- dodava jen
+# spolecne prostredky, ktere si berou dalsi balicky:
+#
+#   barvy a palety      color_*, script apply_palette, select barevneho schematu
+#   fonty               font_title / font_label / font_value / font_small
+#                       / font_name / font_icons
+#   ramecek + zahlavi   script chrome(titulek)
+#   prazdna karta       script karta_prazdna(x, y)  -- pro nevyuzity slot
+#   prepinani stranek   select display_page (PRAZDNY!), dve tlacitka,
+#                       global stranka_index
+#   radar + podsviceni  binary_sensor + script backlight_off_delayed
+#   obnovovani          interval 1s -> update na celou minutu
+#
+# Stranky, grafy ani HA senzory tady nejsou. Ty dodavaji meteohub_dashboard.yaml
+# a meteohub_senzor.yaml -- kazdy si svoji stranku pripoji sam pres
+# `display: - id: !extend displej35` a svoji polozku do `display_page`.
+#
+# POZOR: puvodni monoliticky products/meteohub.yaml zustava beze zmeny a dal
+# se pouziva na hotovych kusech (solomon, rodice). Tohle je paralelni vetev,
+# neni to nahrada a NEMICHAT je v jednom zarizeni -- kolidovala by id.
+#
+# ---- Geometrie (panel 320x480 na vysku, ST7796) ------------------------------
+# Vsechny cerne mezery jsou 6 px, ramecek 3 px.
+#   ramecek     0..2
+#   zahlavi     0..42, lista pres celou sirku
+#   obsah       49..470
+#   karta       148 x 101, mrizka 2 sloupce x 4 rady
+#                 X = 9, 163        Y = 49, 156, 263, 370
+#   panel grafu 302 x 208 na (9,49) a (9,263)
+#   graf        282 x 164 na (19,83) a (19,297)
+# Jiny panel = jiny produkt, souradnice jsou natvrdo napocitane.
+#
+# ---- Poradi stranek ----------------------------------------------------------
+# `!extend` pripojuje stranky na KONEC, takze poradi stranek = poradi balicku
+# v `packages:`. Stejne tak poradi polozek v `display_page`. Ty dva seznamy
+# musi sedet na sebe -- prepinani stranek jede podle indexu, ne podle jmena
+# stranky. Nic to nekontroluje: kdyz na balicek zapomenes, jen se to rozjede.
+#
+# Vars:
+#   display_id          id displeje (default displej35)
+#   time_id             id time komponenty (default sntp_time)
+#   page_select_name    jmeno select entity pro prepinani stranek
+#   schema_select_name  jmeno select entity pro barevne schema
+#
+# Device MUSI pred timhle balickem definovat (pevna jmena, nejsou to vars):
+#   displej35 / ${display_id}   ili9xxx ST7796, dimensions 320x480
+#   sntp_time / ${time_id}      packages/time.yaml
+#   backlight_light             components/lights/monochromatic.yaml
+#   segmentovy_displej_power    components/displays/tm1637.yaml
+#   ld2410c_has_target          components/sensors/ld2410.yaml
+
+esphome:
+  on_boot:
+    priority: -100
+    then:
+      # Nejdriv vykreslit (podsviceni je jeste zhasle), az potom rozsvitit -
+      # jinak je na displeji zrni z neinicializovaneho bufferu.
+      - script.execute: apply_palette
+      - delay: 3s
+      - component.update: ${display_id | default("displej35")}
+      - light.turn_on:
+          id: backlight_light
+          brightness: 100%
+
+globals:
+  # Index barevneho schematu; drzi hodnotu pres reboot, select ho jen prepina.
+  - id: paleta
+    type: int
+    restore_value: true
+    initial_value: '0'
+
+  # Ktera stranka je videt. Displej sam index nezna (umi jen next/prev), takze
+  # si ho drzime tady a udrzujeme ho v souladu pri kazdem prepnuti.
+  # Po rebootu je videt prvni stranka, proto restore_value: false.
+  - id: stranka_index
+    type: int
+    restore_value: false
+    initial_value: '0'
+
+color:
+  - id: color_bg
+    hex: "000000"
+
+  - id: color_arch
+    hex: "1793D1"
+
+  - id: color_white
+    hex: "FFFFFF"
+
+  # Prahova skala ztlumena o 10 % (kazdy kanal * 0,9), aby tolik nesvitila.
+  # Puvodni cisty rozsah byl 00FF00 .. FF0000 pres FFFF00.
+  - id: color_green_0
+    hex: "00E600"
+
+  - id: color_green_1
+    hex: "3AE600"
+
+  - id: color_green_2
+    hex: "73E600"
+
+  - id: color_green_3
+    hex: "ACE600"
+
+  - id: color_yellow
+    hex: "E6E600"
+
+  - id: color_orange_1
+    hex: "E6AC00"
+
+  - id: color_orange_2
+    hex: "E67300"
+
+  - id: color_orange_3
+    hex: "E63A00"
+
+  - id: color_red
+    hex: "E60000"
+
+  # Sytejsi fialova: puvodni C040FF mela ve vsech kanalech bily podklad,
+  # ted je bez nej a taky ztlumena o 10 %.
+  - id: color_purple
+    hex: "9000E6"
+
+  - id: color_grid
+    # Mrizka a ramecek grafu lezi na podkladu color_card (#141B24), ne na cerne,
+    # takze musi byt svetlejsi nez on -- puvodnich #151515 by se v nem ztratilo.
+    hex: "26323F"
+
+  - id: color_card
+    hex: "141B24"
+
+  - id: color_muted
+    hex: "7A8CA0"
+
+script:
+  # Prepise dve "chromove" barvy podle vybraneho schematu. Prahove barvy
+  # (green/yellow/orange/red) se nemeni schvalne - nesou vyznam.
+  #
+  # Barvy grafovych tras se sem taky netahaji, a nejde to ani technicky:
+  # GraphTrace::set_line_color(Color val) si hodnotu ZKOPIRUJE pri setup(),
+  # takze pozdejsi zmena color_* uz se do trasy nepromitne (graph.h:118).
+  #
+  # Pridani dalsiho schematu = jeden radek do PAL nize + jedna polozka do
+  # options selectu barevne_schema. Poradi musi sedet, prepina se podle indexu.
+  - id: apply_palette
+    then:
+      - lambda: |-
+          //                        akcent              panel
+          static const uint8_t PAL[][2][3] = {
+            {{0x17, 0x93, 0xD1}, {0x14, 0x1B, 0x24}},   // 0 Arch modra
+            {{0x3F, 0xB9, 0x50}, {0x10, 0x1C, 0x13}},   // 1 Zelena
+            {{0xE0, 0xA0, 0x30}, {0x1E, 0x18, 0x11}},   // 2 Jantar
+            {{0xE8, 0x5D, 0x04}, {0x1A, 0x0E, 0x06}},   // 3 Zhavá
+          };
+          const int N = sizeof(PAL) / sizeof(PAL[0]);
+          int i = id(paleta);
+          if (i < 0 || i >= N) i = 0;
+          id(color_arch) = Color(PAL[i][0][0], PAL[i][0][1], PAL[i][0][2]);
+          id(color_card) = Color(PAL[i][1][0], PAL[i][1][1], PAL[i][1][2]);
+
+  # Zhasne az kdyz je 3 min klid; kazdy novy on_release odpocet restartuje.
+  # Skutecna prodleva je delsi -- ld2410c_has_target sam drzi jeste svuj hold
+  # time, nez pusti clear.
+  - id: backlight_off_delayed
+    mode: restart
+    then:
+      - delay: 3min
+      - light.turn_off: backlight_light
+      - switch.turn_off: segmentovy_displej_power
+
+  # ---- Spolecny ramecek a zahlavi ----
+  # Kresli se ze scriptu, ne v kazde lambde stranky zvlast. Volani z lambdy
+  # stranky bezi SYNCHRONNE (SingleScript bez delay), takze to jde do stejneho
+  # framebufferu ve stejnem snimku.
+  #
+  # POZOR: do kresliciho scriptu se NESMI dostat `delay` ani nic cekaciho --
+  # tim by se stal asynchronnim a nevykreslil by se.
+  - id: chrome
+    mode: single
+    parameters:
+      titulek: string
+    then:
+      - lambda: |-
+          auto &it = *id(${display_id | default("displej35")});
+          it.rectangle(0, 0, 320, 480, id(color_card));
+          it.rectangle(1, 1, 318, 478, id(color_card));
+          it.rectangle(2, 2, 316, 476, id(color_card));
+          it.filled_rectangle(0, 0, 320, 43, id(color_card));
+          // Nadpis na svislem stredu listy (CENTER, aby nesedel jinak podle
+          // vysky pisma).
+          it.print(160, 21, id(font_title), id(color_arch), TextAlign::CENTER, titulek.c_str());
+
+  # Nevyuzity slot na dashboardu -- prazdna karta, aby mrizka drzela tvar.
+  - id: karta_prazdna
+    mode: single
+    parameters:
+      x: int
+      y: int
+    then:
+      - lambda: |-
+          auto &it = *id(${display_id | default("displej35")});
+          it.filled_rectangle(x, y, 148, 101, id(color_card));
+
+binary_sensor:
+  # Presence/moving/still + number entity pro ladeni radaru dodava package
+  # ld2410c; tady se jen doveluji akce na podsviceni a sedmisegmentovku.
+  # !extend na ld2410c_has_target NEJDE -- ten senzor je vnoreny v `has_target:`
+  # uvnitr platformy, ne samostatna polozka seznamu. Proto kopie pres `copy`.
+  - platform: copy
+    source_id: ld2410c_has_target
+    id: radar_presence_akce
+    internal: true
+    on_press:
+      - script.stop: backlight_off_delayed
+      - light.turn_on:
+          id: backlight_light
+          brightness: 100%
+      - switch.turn_on: segmentovy_displej_power
+    on_release:
+      - script.execute: backlight_off_delayed
+
+select:
+  - platform: template
+    name: "${schema_select_name | default(\"Barevne schema\")}"
+    id: barevne_schema
+    optimistic: true
+    restore_value: true
+    options:
+      - "Arch modrá"
+      - "Zelená"
+      - "Jantar"
+      - "Žhavá"
+    initial_option: "Arch modrá"
+    set_action:
+      # Podle indexu, ne podle jmena -- pridani schematu je pak jen dalsi
+      # polozka nahore + dalsi radek v PAL.
+      - lambda: |-
+          auto &opts = id(barevne_schema).traits.get_options();
+          for (size_t i = 0; i < opts.size(); i++) {
+            if (x == opts[i]) { id(paleta) = (int) i; break; }
+          }
+      - script.execute: apply_palette
+      - component.update: ${display_id | default("displej35")}
+
+  # Prazdny schvalne. Kazdy balicek se strankou si svoji polozku pripoji sam:
+  #   select:
+  #     - id: !extend display_page
+  #       options: ["Grafy - Teplota"]
+  # Poradi polozek musi sedet na poradi stranek, prepina se podle indexu.
+  - platform: template
+    name: "${page_select_name | default(\"Aktuální stránka\")}"
+    id: display_page
+    optimistic: true
+    options: []
+    set_action:
+      - lambda: |-
+          auto &opts = id(display_page).traits.get_options();
+          const int n = (int) opts.size();
+          if (n == 0) return;
+          int cil = 0;
+          for (int i = 0; i < n; i++) {
+            if (x == opts[i]) { cil = i; break; }
+          }
+          // Displej umi jen next/prev, tak se k cili dokrouzime.
+          int cur = id(stranka_index) % n;
+          while (cur != cil) {
+            id(${display_id | default("displej35")}).show_next_page();
+            cur = (cur + 1) % n;
+          }
+          id(stranka_index) = cil;
+      - component.update: ${display_id | default("displej35")}
+
+button:
+  - platform: template
+    name: "Stranka dalsi"
+    id: btn_page_next
+    on_press:
+      - display.page.show_next: ${display_id | default("displej35")}
+      # Index si musime dopocitat sami, jinak by se select rozesel s realitou.
+      - lambda: |-
+          const int n = (int) id(display_page).traits.get_options().size();
+          if (n > 0) id(stranka_index) = (id(stranka_index) + 1) % n;
+      - component.update: ${display_id | default("displej35")}
+
+  - platform: template
+    name: "Stranka predchozi"
+    id: btn_page_prev
+    on_press:
+      - display.page.show_previous: ${display_id | default("displej35")}
+      - lambda: |-
+          const int n = (int) id(display_page).traits.get_options().size();
+          if (n > 0) id(stranka_index) = (id(stranka_index) + n - 1) % n;
+      - component.update: ${display_id | default("displej35")}
+
+interval:
+  - interval: 1s
+    then:
+      - if:
+          condition:
+            lambda: |-
+              auto time = id(${time_id | default("sntp_time")}).now();
+              return time.is_valid() && time.second == 0;
+          then:
+            - component.update: ${display_id | default("displej35")}
+
+font:
+  - file:
+      type: gfonts
+      family: Ubuntu
+      weight: 500
+    id: font_title
+    size: 26
+    glyphsets:
+      - GF_Latin_Core
+
+  - file:
+      type: gfonts
+      family: Ubuntu
+      weight: 400
+    id: font_label
+    size: 28
+    glyphsets:
+      - GF_Latin_Core
+
+  - file:
+      type: gfonts
+      family: Ubuntu
+      weight: 500
+    id: font_value
+    size: 33
+    glyphsets:
+      - GF_Latin_Core
+
+  - file:
+      type: gfonts
+      family: Ubuntu
+      weight: 400
+    id: font_small
+    size: 19
+    glyphsets:
+      - GF_Latin_Core
+
+  - file:
+      type: gfonts
+      family: Ubuntu
+      weight: 500
+    id: font_name
+    size: 31
+    glyphsets:
+      - GF_Latin_Core
+
+  # Ikony pro karty. Kdyz bude potreba dalsi, pripoji se pres !extend
+  # (v balicku senzoru nebo primo v device YAMLu):
+  #   font:
+  #     - id: !extend font_icons
+  #       glyphs: ["\U000F1234"]
+  # Stejny glyph ale nepridavat dvakrat -- ESPHome hlasi duplicitu.
+  - file: "https://github.com/Templarian/MaterialDesign-Webfont/raw/master/fonts/materialdesignicons-webfont.ttf"
+    id: font_icons
+    size: 36
+    glyphs:
+      - "\U000F050F"   # thermometer
+      - "\U000F058E"   # water-percent
+      - "\U000F07E4"   # molecule-co2
+      - "\U000F029A"   # gauge
+      - "\U000F01F7"   # emoticon-poop (VOC)
+      - "\U000F020F"   # factory (NOx)
+      - "\U000F05A8"   # white-balance-sunny
+      - "\U000F09D2"   # calendar-heart

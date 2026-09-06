@@ -1,0 +1,65 @@
+## products/meteohub_dashboard.yaml
+#
+# Jedna stranka dashboardu -- mrizka 2 x 4 karet. Sam nic nemeri: jen zavola
+# osm kreslicich scriptu, ktere dodaly balicky meteohub_senzor.yaml.
+#
+# Sloty se plni po radcich zleva doprava:
+#     slot1  slot2
+#     slot3  slot4
+#     slot5  slot6
+#     slot7  slot8
+#
+# Nevyplneny slot spadne na karta_prazdna z core (prazdna karta, mrizka drzi
+# tvar). Kdyz mas 20 senzoru, das tri dashboardy: 8 + 8 + 4.
+#
+# Vyzaduje products/meteohub_core.yaml.
+#
+# ---- Poradi -----------------------------------------------------------------
+# Balicky se sklada v poradi, v jakem jsou v `packages:`, a `!extend` je
+# pripojuje na konec. Kdyz chces, aby stranky s grafy sly hned za svym
+# dashboardem, poskladej to takhle:
+#
+#   packages:
+#     core:      meteohub_core.yaml
+#     dash1:     meteohub_dashboard.yaml   (slot1..slot8)
+#     s_temp:    meteohub_senzor.yaml      \
+#     s_hum:     meteohub_senzor.yaml       |  osm senzoru z dash1,
+#     ...                                   |  ve stejnem poradi jako sloty
+#     dash2:     meteohub_dashboard.yaml   (dalsich osm)
+#     s_sklep:   meteohub_senzor.yaml      ...
+#
+# POZOR: nic tohle poradi nekontroluje. Jmena senzoru pises dvakrat -- jednou
+# v `packages:` (tim urcis poradi stranek) a jednou do slotu dashboardu (tim
+# urcis pozici karty). YAML neumi smycky, jinak to nejde.
+#
+# POZOR 2: co je napsane primo v device YAMLu (ne pres `packages:`) se sloucí
+# az ZA vsechny balicky. Stranku ani polozku selectu proto do device YAMLu
+# nepsat, jinak skonci na konci bez ohledu na to, kde to je napsane.
+#
+# Vars:
+#   sufix          zaklad id stranky -> page_dash_${sufix} (1, 2, sklep, ...)
+#   titulek        nadpis v zahlavi, KAPITALKAMA
+#   volba          text polozky v selectu prepinani stranek
+#   slot1 .. slot8 id kreslicich scriptu karet (karta_temp, karta_hum, ...);
+#                  nevyplnene spadnou na karta_prazdna
+
+select:
+  - id: !extend display_page
+    options:
+      - "${volba}"
+
+display:
+  - id: !extend ${display_id | default("displej35")}
+    pages:
+      - id: page_dash_${sufix}
+        lambda: |-
+          it.fill(id(color_bg));
+          id(chrome)->execute("${titulek}");
+          id(${slot1 | default("karta_prazdna")})->execute(  9,  49);
+          id(${slot2 | default("karta_prazdna")})->execute(163,  49);
+          id(${slot3 | default("karta_prazdna")})->execute(  9, 156);
+          id(${slot4 | default("karta_prazdna")})->execute(163, 156);
+          id(${slot5 | default("karta_prazdna")})->execute(  9, 263);
+          id(${slot6 | default("karta_prazdna")})->execute(163, 263);
+          id(${slot7 | default("karta_prazdna")})->execute(  9, 370);
+          id(${slot8 | default("karta_prazdna")})->execute(163, 370);

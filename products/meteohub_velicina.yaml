@@ -1,0 +1,98 @@
+## products/meteohub_velicina.yaml
+#
+# Jedna merena velicina: cteni z HA + karta na dashboard. ZADNA stranka,
+# zadny graf -- ty dodava meteohub_grafy.yaml (nebo meteohub_grafy_multi.yaml,
+# kdyz ma byt na jedne strance vic veliciny naraz).
+#
+#   sensor   ha_${prefix}            hodnota z HA
+#   script   karta_${prefix}(x, y)   kresli kartu do slotu dashboardu
+#
+# Vetsinou nechces includovat tenhle soubor primo -- na bezny pripad
+# "velicina + vlastni stranka s grafy" je meteohub_senzor.yaml, ktery
+# obojí sleci dohromady. Tohle se hodi, kdyz ma velicina jen kartu a jeji
+# cara ma jit do cizího grafu pres meteohub_trasa.yaml.
+#
+# Vyzaduje products/meteohub_core.yaml.
+#
+# Vars:
+#   prefix        zaklad vsech id (temp, hum, venku_temp, ...)
+#   entita        CELE entity_id v HA, opsat z HA -- neodvozovat
+#   popisek       popisek na karte (Teplota)
+#   ikona         MDI glyph; musi byt ve font_icons v core
+#   jednotka      text pod hodnotou (°C, %, ppm, idx, lx)
+#   desetiny      0 nebo 1 -- pocet desetinnych mist
+#
+#   rezim         jak se pocita barva hodnoty:
+#                   0  vzestupna -- 8 prahu ve `prahy`, vzestupne
+#                   1  symetricka -- `stred` a `krok`, skala roste na obe strany
+#                   2  pevna -- porad `pevna_barva`
+#   prahy         8 hodnot vzestupne, oddelene carkou (rezim 0)
+#   stred, krok   stred skaly a velikost jednoho stupne (rezim 1)
+#   pevna_barva   id barvy (rezim 2, default color_yellow)
+#
+# Skala ma 9 stupnu: green_0, green_1, green_2, green_3, yellow,
+# orange_1, orange_2, orange_3, red.
+
+sensor:
+  - platform: homeassistant
+    id: ha_${prefix}
+    entity_id: ${entita}
+    internal: true
+
+script:
+  # Karta na dashboardu. Volat SYNCHRONNE z lambdy stranky:
+  #   id(karta_${prefix})->execute(9, 49);
+  # Uvnitr nesmi byt zadny `delay` -- script by se stal asynchronnim
+  # a karta by se nevykreslila do aktualniho snimku.
+  - id: karta_${prefix}
+    mode: single
+    parameters:
+      x: int
+      y: int
+    then:
+      - lambda: |-
+          auto &it = *id(${display_id | default("displej35")});
+          const int CW = 148, CH = 101;
+
+          const int REZIM = ${rezim | default("0")};
+          const float PRAHY[8] = {${prahy | default("0, 0, 0, 0, 0, 0, 0, 0")}};
+          const float STRED = ${stred | default("0")};
+          const float KROK  = ${krok | default("1")};
+
+          auto barva = [&](float v) -> Color {
+            if (isnan(v)) return id(color_muted);
+            if (REZIM == 2) return id(${pevna_barva | default("color_yellow")});
+            const Color S[9] = {
+              id(color_green_0), id(color_green_1), id(color_green_2),
+              id(color_green_3), id(color_yellow),  id(color_orange_1),
+              id(color_orange_2), id(color_orange_3), id(color_red)};
+            int lvl = 0;
+            if (REZIM == 1) {
+              // Nad stredem se stupen zaokrouhluje dolu, pod nim nahoru --
+              // tim skala vychazi na obe strany stejne siroka. Odpovida to
+              // rucne psanym prahum v puvodnim products/meteohub.yaml.
+              float d = fabsf(v - STRED) / KROK;
+              lvl = (v >= STRED) ? (int) floorf(d) : (int) ceilf(d);
+            } else {
+              for (int i = 0; i < 8; i++) if (v >= PRAHY[i]) lvl = i + 1;
+            }
+            if (lvl < 0) lvl = 0;
+            if (lvl > 8) lvl = 8;
+            return S[lvl];
+          };
+
+          const float v = id(ha_${prefix}).state;
+          const Color vc = barva(v);
+
+          it.filled_rectangle(x, y, CW, CH, id(color_card));
+          it.print(x + 8, y + 26, id(font_icons), vc, TextAlign::TOP_LEFT, "${ikona}");
+          it.print(x + CW - 12, y + 8, id(font_small), id(color_muted), TextAlign::TOP_RIGHT, "${popisek}");
+          if (isnan(v)) {
+            it.print(x + CW - 12, y + 34, id(font_value), id(color_muted), TextAlign::TOP_RIGHT, "--");
+          } else if (${desetiny | default("0")} == 0) {
+            it.printf(x + CW - 12, y + 34, id(font_value), vc, TextAlign::TOP_RIGHT, "%.0f", v);
+          } else {
+            it.printf(x + CW - 12, y + 34, id(font_value), vc, TextAlign::TOP_RIGHT, "%.1f", v);
+          }
+          it.print(x + CW - 12, y + 76, id(font_small), id(color_muted), TextAlign::TOP_RIGHT, "${jednotka}");
+          it.filled_rectangle(x + CW - 6, y + 8, 3, CH - 16, isnan(v) ? id(color_grid) : vc);

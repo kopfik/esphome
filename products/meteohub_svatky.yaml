@@ -1,0 +1,265 @@
+## products/meteohub_svatky.yaml
+#
+# Svatky -- karta na dashboard i cela stranka se sedmi dny (tri zpatky,
+# dnesek, tri dopredu).
+#
+#   text_sensor  ha_svatek_m3 .. _m1, _0, _p1 .. _p3
+#   script       karta_svatek(x, y)   karta do slotu dashboardu
+#   page         page_svatky
+#   select       polozka "${volba}"
+#
+# Entity dodava HA (rest sensor nad svatkyapi.netlify.app, jeden
+# resource_template na kazdy offset, vsech sedm podle stejneho pravidla,
+# dnesek je _0). Bez nich se vsechno jen vykresli s "--", nic se nerozbije.
+#
+# Vyzaduje products/meteohub_core.yaml.
+#
+# Vars:
+#   ha_svatky  prefix entit se svatky (default sensor.svatek)
+#   volba      text polozky v selectu prepinani stranek
+#   titulek    nadpis stranky, KAPITALKAMA (default SVÁTKY)
+
+text_sensor:
+  - platform: homeassistant
+    id: ha_svatek_m3
+    entity_id: ${ha_svatky | default("sensor.svatek")}_m3
+
+  - platform: homeassistant
+    id: ha_svatek_m2
+    entity_id: ${ha_svatky | default("sensor.svatek")}_m2
+
+  - platform: homeassistant
+    id: ha_svatek_m1
+    entity_id: ${ha_svatky | default("sensor.svatek")}_m1
+
+  - platform: homeassistant
+    id: ha_svatek_0
+    entity_id: ${ha_svatky | default("sensor.svatek")}_0
+
+  - platform: homeassistant
+    id: ha_svatek_p1
+    entity_id: ${ha_svatky | default("sensor.svatek")}_p1
+
+  - platform: homeassistant
+    id: ha_svatek_p2
+    entity_id: ${ha_svatky | default("sensor.svatek")}_p2
+
+  - platform: homeassistant
+    id: ha_svatek_p3
+    entity_id: ${ha_svatky | default("sensor.svatek")}_p3
+
+script:
+  # Karta Svatek na dashboardu. Tri radky: popisek, datum, jmeno. Jmeno je az
+  # pod ikonou pres celou sirku karty, aby se veslo i "Bartolomej".
+  - id: karta_svatek
+    mode: single
+    parameters:
+      x: int
+      y: int
+    then:
+      - lambda: |-
+          auto &it = *id(${display_id | default("displej35")});
+          const int CW = 148, CH = 101;
+          it.filled_rectangle(x, y, CW, CH, id(color_card));
+          it.print(x + 8, y + 26, id(font_icons), id(color_purple), TextAlign::TOP_LEFT, "\U000F09D2");
+          it.print(x + CW - 12, y + 8, id(font_small), id(color_muted), TextAlign::TOP_RIGHT, "Svátek");
+          auto ts = id(${time_id | default("sntp_time")}).now();
+          if (ts.is_valid()) {
+            it.strftime(x + CW - 12, y + 40, id(font_small), id(color_white), TextAlign::TOP_RIGHT, "%d. %m.", ts);
+          } else {
+            it.print(x + CW - 12, y + 40, id(font_small), id(color_muted), TextAlign::TOP_RIGHT, "--");
+          }
+          if (id(ha_svatek_0).has_state()) {
+            it.print(x + CW / 2, y + 72, id(font_small), id(color_purple), TextAlign::TOP_CENTER, id(ha_svatek_0).state.c_str());
+          } else {
+            it.print(x + CW / 2, y + 72, id(font_small), id(color_muted), TextAlign::TOP_CENTER, "--");
+          }
+
+select:
+  - id: !extend display_page
+    options:
+      - "${volba}"
+
+display:
+  - id: !extend ${display_id | default("displej35")}
+    pages:
+      - id: page_svatky
+        lambda: |-
+          it.fill(id(color_bg));
+          id(chrome)->execute("${titulek | default("SVÁTKY")}");
+
+          // toupper() umi jen ASCII a dvoubajtove znaky by rozsekal. Cestina ma
+          // velka o 32 niz v bloku C3 (á é í ó ú ý) a o 1 niz v C4/C5
+          // (č ď ě ň ř š ť ů ž). Jina pismena nechavam byt.
+          auto velka = [](const std::string &in) -> std::string {
+            std::string out;
+            const unsigned char *q = (const unsigned char *) in.c_str();
+            for (; *q; q++) {
+              if (*q >= 'a' && *q <= 'z') { out += (char) (*q - 32); continue; }
+              unsigned char b = q[1];
+              int d = 0;
+              if (*q == 0xC3 && (b==0xA1||b==0xA9||b==0xAD||b==0xB3||b==0xBA||b==0xBD)) d = 32;
+              else if (*q == 0xC4 && (b==0x8D||b==0x8F||b==0x9B)) d = 1;
+              else if (*q == 0xC5 && (b==0x88||b==0x99||b==0xA1||b==0xA5||b==0xAF||b==0xBE)) d = 1;
+              if (d) { out += (char) *q; out += (char) (b - d); q++; continue; }
+              out += (char) *q;
+            }
+            return out;
+          };
+
+          auto sirka = [&](font::Font *f, const std::string &t) -> int {
+            if (t.empty()) return 0;
+            int w = 0, x = 0;
+            f->measure(t.c_str(), &w, &x, &x, &x);
+            return w;
+          };
+
+          // Orez po celych UTF-8 znacich, at nezustane pulka vicebajtoveho znaku.
+          auto orez = [&](font::Font *f, std::string t, int max_w) -> std::string {
+            while (sirka(f, t) > max_w && t.size() > 4) {
+              size_t n = t.size() - 4;
+              while (n > 0 && ((unsigned char) t[n] & 0xC0) == 0x80) n--;
+              t = t.substr(0, n) + "...";
+            }
+            return t;
+          };
+
+          // Rozdeli na mezere na dva radky: prvni do max1, zbytek do max2.
+          auto zalom = [&](font::Font *f, const std::string &t, int max1, int max2,
+                           std::string &r1, std::string &r2) -> bool {
+            size_t kde = std::string::npos;
+            for (size_t i = t.find(' '); i != std::string::npos; i = t.find(' ', i + 1)) {
+              if (sirka(f, t.substr(0, i)) > max1) break;
+              kde = i;
+            }
+            // I kdyz se zbytek nevejde, deleni si necham -- volajici pak orizne
+            // jen druhy radek misto toho, aby zahodil cele zalomeni.
+            if (kde == std::string::npos) { r1 = t; r2.clear(); return false; }
+            r1 = t.substr(0, kde);
+            r2 = t.substr(kde + 1);
+            return sirka(f, r2) <= max2;
+          };
+
+          // ESPTime.day_of_week je 1 = nedele.
+          static const char *const DNY[8] = {"", "NE", "PO", "ÚT", "ST", "ČT", "PÁ", "SO"};
+          // Kazdy den ma vlastni panel jako karta na dashboardu, deli je stejna
+          // cerna mezera 6 px. Dnesek je vyssi, protoze drzi misto na dva radky
+          // POKAZDE -- i kdyz se jmeno vejde na jeden. Jinak by radky kolem
+          // poskakovaly podle toho, jak dlouhy je zrovna dnesni svatek.
+          const int P_Y[7] = {49, 106, 163, 220, 306, 363, 420};
+          const int P_H[7] = {51, 51, 51, 80, 51, 51, 51};
+          for (int i = 0; i < 7; i++) {
+            it.filled_rectangle(9, P_Y[i], 302, P_H[i], id(color_card));
+          }
+          // Text je ve svislem stredu sveho panelu.
+          const int Y[7] = {65, 122, 179, 233, 322, 379, 436};
+          // Datum sedi na svislem stredu dnesniho panelu vzdycky, takze zabira
+          // levy pruh pres OBA radky -- proto se jmeno vejde jen do SIRKA minus
+          // sirka data, a to i kdyz je na dva radky. Spolehat na to, ze se datum
+          // svisle "vejde mezi radky", nejde: vyska pisma se lisi podle fontu
+          // i podle toho, jestli ma text diakritiku.
+          // Pri jednom radku sedne jmeno na uroven data = opticky jedna rada.
+          const int Y_DNES_2 = 267, Y_DNES_1RADEK = 247, Y_DNES_DATUM = 250;
+          const int SIRKA = 282, MEZERA = 10;   // x od 19 do 301
+          text_sensor::TextSensor *JMENA[7] = {
+            id(ha_svatek_m3), id(ha_svatek_m2), id(ha_svatek_m1), id(ha_svatek_0),
+            id(ha_svatek_p1), id(ha_svatek_p2), id(ha_svatek_p3),
+          };
+
+          auto ted = id(${time_id | default("sntp_time")}).now();
+          // Datum se pocita z mistniho poledne, ne z aktualniho casu -- pricitani
+          // 86400 s pres prechod letniho casu by jinak u pulnoci preskocilo den.
+          int32_t poledne = 0;
+          if (ted.is_valid()) {
+            poledne = (int32_t) ted.timestamp
+                      - (ted.hour * 3600 + ted.minute * 60 + ted.second) + 43200;
+          }
+
+          for (int i = 0; i < 7; i++) {
+            bool dnes = (i == 3);
+            bool ma_stav = JMENA[i]->has_state();
+            // Dnesek se odlisuje velikosti, barvou i kapitalkami.
+            std::string jmeno = ma_stav ? (dnes ? velka(JMENA[i]->state) : JMENA[i]->state)
+                                        : "--";
+            Color c_jmeno = ma_stav ? (dnes ? id(color_arch) : id(color_white))
+                                    : id(color_muted);
+
+            std::string dat_plne, dat_kratke;
+            if (ted.is_valid()) {
+              auto d = ESPTime::from_epoch_local((time_t) (poledne + (i - 3) * 86400));
+              char buf[24];
+              snprintf(buf, sizeof(buf), "%s %d. %d.", DNY[d.day_of_week],
+                       d.day_of_month, d.month);
+              dat_plne = buf;
+              snprintf(buf, sizeof(buf), "%d. %d.", d.day_of_month, d.month);
+              dat_kratke = buf;
+            }
+
+            // API dava do 'name' i svatky bez jmenin -- 6. 7. je "Den upálení
+            // mistra Jana Husa", 28. 10. dokonce "Den vzniku samostatného
+            // československého státu". Proto se ustupuje po poradi: zkratka dne,
+            // cele datum, mensi font, druhy radek, a az uplne nakonec orez.
+            font::Font *f = dnes ? id(font_label) : id(font_small);
+            std::string datum = dat_plne, r1 = jmeno, r2;
+
+            if (dnes) {
+              font::Font *fonty[2] = {id(font_label), id(font_small)};
+              std::string data[2] = {dat_plne, dat_kratke};
+              bool hotovo = false;
+              // 1) Vejde se jmeno na jeden radek vedle data? Tam se o sirku deli.
+              for (int fi = 0; fi < 2 && !hotovo; fi++) {
+                for (int di = 0; di < 2 && !hotovo; di++) {
+                  f = fonty[fi];
+                  datum = data[di];
+                  int max1 = SIRKA - sirka(id(font_small), datum)
+                             - (datum.empty() ? 0 : MEZERA);
+                  if (sirka(f, jmeno) <= max1) { r1 = jmeno; r2.clear(); hotovo = true; }
+                }
+              }
+              // 2) Nevejde -> dva radky, oba se stejnym stropem (datum je vlevo
+              //    pres cely blok).
+              for (int fi = 0; fi < 2 && !hotovo; fi++) {
+                for (int di = 0; di < 2 && !hotovo; di++) {
+                  f = fonty[fi];
+                  datum = data[di];
+                  int max1 = SIRKA - sirka(id(font_small), datum) - MEZERA;
+                  if (zalom(f, jmeno, max1, max1, r1, r2)) hotovo = true;
+                }
+              }
+              if (!hotovo) {
+                f = id(font_small);
+                datum = dat_kratke;
+                int max1 = SIRKA - sirka(id(font_small), datum) - MEZERA;
+                zalom(f, jmeno, max1, max1, r1, r2);
+                r1 = orez(f, r1, max1);
+                r2 = orez(f, r2, max1);
+              }
+            } else {
+              auto vejde = [&]() {
+                return sirka(id(font_small), datum) + (datum.empty() ? 0 : MEZERA)
+                       + sirka(f, r1) <= SIRKA;
+              };
+              if (!vejde()) datum = dat_kratke;
+              if (!vejde()) datum.clear();
+              if (!vejde()) r1 = orez(f, r1, SIRKA);
+            }
+
+            if (dnes) {
+              if (!datum.empty()) {
+                it.print(19, Y_DNES_DATUM, id(font_small), id(color_arch),
+                         TextAlign::TOP_LEFT, datum.c_str());
+              }
+              if (r2.empty()) {
+                it.print(301, Y_DNES_1RADEK, f, c_jmeno, TextAlign::TOP_RIGHT, r1.c_str());
+              } else {
+                it.print(301, Y[i], f, c_jmeno, TextAlign::TOP_RIGHT, r1.c_str());
+                it.print(301, Y_DNES_2, f, c_jmeno, TextAlign::TOP_RIGHT, r2.c_str());
+              }
+            } else {
+              if (!datum.empty()) {
+                it.print(19, Y[i], id(font_small), id(color_muted),
+                         TextAlign::TOP_LEFT, datum.c_str());
+              }
+              it.print(301, Y[i], f, c_jmeno, TextAlign::TOP_RIGHT, r1.c_str());
+            }
+          }

@@ -1,0 +1,56 @@
+## products/meteohub_trasa.yaml
+#
+# Prida dalsi caru do UZ EXISTUJICI dvojice grafu. Tim se na jedne strance
+# potkaji dve nebo tri veliciny -- treba teplota uvnitr a venku.
+#
+# `!extend` na grafu seznam tras PRIPOJUJE, takze se to da retezit kolikrat
+# chces. Poradi car = poradi balicku v `packages:`.
+#
+# Predpoklada, ze cilova stranka uz existuje. Aby u vic car bylo poznat, ktera
+# je ktera, ma byt cil postaveny na meteohub_grafy_multi.yaml (kresli legendu),
+# ne na meteohub_grafy.yaml (kresli jednu hodnotu vpravo nahore).
+#
+# Zdrojova velicina musi existovat -- typicky z meteohub_velicina.yaml, ktery
+# dela jen senzor a kartu, bez vlastni stranky.
+#
+# Inline:
+#   # 1) venkovni teplota: jen senzor a karta, zadna vlastni stranka
+#   v_venku:  products/meteohub_velicina.yaml   (prefix: venku, ...)
+#   # 2) stranka teplot s legendou
+#   g_teploty: products/meteohub_grafy_multi.yaml (prefix: temp, ...)
+#   # 3) druha cara do te stranky
+#   t_venku:
+#     <<: *kopfik_esphome_remote
+#     files:
+#       - path: products/meteohub_trasa.yaml
+#         vars:
+#           cil: temp
+#           zdroj: ha_venku
+#           nazev: "Venku"
+#           barva: color_arch
+#
+# Vars:
+#   cil     prefix stranky, do jejichz grafu se cara prida (graf_${cil}_100m/_25h)
+#   zdroj   id senzoru, ze ktereho se cara kresli (ha_venku)
+#   nazev   popisek cary v legende
+#   barva   id barvy cary; palety s ni nehybou (GraphTrace si Color kopiruje
+#           pri setup(), graph.h:118)
+
+graph:
+  - id: !extend graf_${cil}_100m
+    traces:
+      - sensor: ${zdroj}
+        name: "${nazev}"
+        line_type: SOLID
+        line_thickness: 2
+        continuous: true
+        color: ${barva}
+
+  - id: !extend graf_${cil}_25h
+    traces:
+      - sensor: ${zdroj}
+        name: "${nazev}"
+        line_type: SOLID
+        line_thickness: 2
+        continuous: true
+        color: ${barva}

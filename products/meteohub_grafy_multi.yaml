@@ -1,0 +1,104 @@
+## products/meteohub_grafy_multi.yaml
+#
+# Jako meteohub_grafy.yaml, ale pocita s VIC carami v jednom grafu. Misto
+# jedne hodnoty vpravo nahore kresli legendu (vestavena GraphLegend), takze
+# je poznat, ktera cara je ktera, at uz jich je jedna nebo tri.
+#
+# Dalsi cary se pridavaji pres meteohub_trasa.yaml, ten je pripoji k
+# graf_${prefix}_100m a _25h.
+#
+# Vyzaduje meteohub_core.yaml a senzor ${zdroj} (typicky z
+# meteohub_velicina.yaml, ktery dela jen senzor a kartu, bez vlastni stranky).
+#
+# POZOR na sirku: v zahlavi panelu je 282 px, z toho si bere popisek okna
+# (~65 px) a zbytek legenda. Dve cary s hodnotami se tam vejdou, tri uz
+# tesne -- pak nastav `legenda_hodnoty: NONE` a legenda ukaze jen jmena.
+# Vizualne to na panelu jeste zkontroluj, tohle je spocitane, ne videne.
+#
+# Vars: jako meteohub_grafy.yaml, ale navic a s jednim rozdilem:
+#   prefix           zaklad id STRANKY a GRAFU (teploty) -- nemusi to byt zadny
+#                    senzor, stranka je spolecna pro vic velicin
+#   zdroj            id senzoru pro PRVNI caru (ha_temp). Tady se, na rozdil od
+#                    meteohub_grafy.yaml, neodvozuje z prefixu -- prave proto,
+#                    ze stranka nepatri jedne velicine.
+#   popisek          jmeno prvni cary v legende (Uvnitř)
+#   legenda_hodnoty  AUTO (default) ukazuje jmeno i hodnotu, NONE jen jmena
+
+graph:
+  - id: graf_${prefix}_100m
+    duration: 100min
+    width: 282
+    height: 164
+    x_grid: 25min
+    y_grid: ${y_grid_100m}
+    border: true
+    legend:
+      name_font: font_small
+      value_font: font_small
+      direction: HORIZONTAL
+      show_values: ${legenda_hodnoty | default("AUTO")}
+      show_lines: true
+      border: false
+    traces:
+      - sensor: ${zdroj}
+        name: "${popisek}"
+        line_type: SOLID
+        line_thickness: 2
+        continuous: true
+        color: ${barva_grafu}
+
+  - id: graf_${prefix}_25h
+    duration: 25h
+    width: 282
+    height: 164
+    x_grid: 6h
+    y_grid: ${y_grid_25h}
+    border: true
+    legend:
+      name_font: font_small
+      value_font: font_small
+      direction: HORIZONTAL
+      show_values: ${legenda_hodnoty | default("AUTO")}
+      show_lines: true
+      border: false
+    traces:
+      - sensor: ${zdroj}
+        name: "${popisek}"
+        line_type: SOLID
+        line_thickness: 2
+        continuous: true
+        color: ${barva_grafu}
+
+select:
+  - id: !extend display_page
+    options:
+      - "${volba}"
+
+display:
+  - id: !extend ${display_id | default("displej35")}
+    pages:
+      - id: page_${prefix}
+        lambda: |-
+          it.fill(id(color_bg));
+          id(chrome)->execute("${titulek}");
+
+          // Panel 100 min. Legenda je vlevo, popisek okna vpravo -- opacne nez
+          // u jedne cary, protoze legenda roste doprava a nesmi pretect panel.
+          it.filled_rectangle(9, 49, 302, 208, id(color_card));
+          it.legend(19, 55, id(graf_${prefix}_100m), id(color_arch));
+          it.print(301, 57, id(font_small), id(color_arch), TextAlign::TOP_RIGHT, "100 min");
+          it.graph(19, 83, id(graf_${prefix}_100m), id(color_grid));
+          if (!isnan(id(graf_${prefix}_100m).get_graph_limit_max())) {
+            it.printf(23, 86, id(font_small), id(color_muted), TextAlign::TOP_LEFT, "%.0f", id(graf_${prefix}_100m).get_graph_limit_max());
+            it.printf(23, 247, id(font_small), id(color_muted), TextAlign::BOTTOM_LEFT, "%.0f", id(graf_${prefix}_100m).get_graph_limit_min());
+          }
+
+          // Panel 25 h
+          it.filled_rectangle(9, 263, 302, 208, id(color_card));
+          it.legend(19, 269, id(graf_${prefix}_25h), id(color_arch));
+          it.print(301, 271, id(font_small), id(color_arch), TextAlign::TOP_RIGHT, "25 h");
+          it.graph(19, 297, id(graf_${prefix}_25h), id(color_grid));
+          if (!isnan(id(graf_${prefix}_25h).get_graph_limit_max())) {
+            it.printf(23, 300, id(font_small), id(color_muted), TextAlign::TOP_LEFT, "%.0f", id(graf_${prefix}_25h).get_graph_limit_max());
+            it.printf(23, 461, id(font_small), id(color_muted), TextAlign::BOTTOM_LEFT, "%.0f", id(graf_${prefix}_25h).get_graph_limit_min());
+          }

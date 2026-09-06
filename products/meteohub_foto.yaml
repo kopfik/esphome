@@ -1,0 +1,30 @@
+## products/meteohub_foto.yaml
+#
+# Stranka s jednim obrazkem pres cely panel (320x480). Bez ramecku a zahlavi
+# -- schvalne, obrazek ma vyplnit celou plochu.
+#
+# Obrazek si definuje ZARIZENI, ne tenhle balicek: soubor lezi v media/
+# konkretniho repa, sem se preda jen jeho id.
+#
+# Flash: obrazek 320x480 v RGB565 zabere ~300 kB. Na 4MB desce (app partition
+# 1 835 008 B) se druhy takovy uz nemusi vejit -- pred pridanim dalsiho
+# zkontroluj `Flash:` po compile.
+#
+# Vyzaduje products/meteohub_core.yaml.
+#
+# Vars:
+#   foto_id   id obrazku (device: `image:` nad souborem v media/)
+#   sufix     zaklad id stranky -> page_foto_${sufix}
+#   volba     text polozky v selectu prepinani stranek
+
+select:
+  - id: !extend display_page
+    options:
+      - "${volba}"
+
+display:
+  - id: !extend ${display_id | default("displej35")}
+    pages:
+      - id: page_foto_${sufix}
+        lambda: |-
+          it.image(0, 0, id(${foto_id}));

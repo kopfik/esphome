@@ -1,0 +1,97 @@
+## products/meteohub_grafy.yaml
+#
+# Stranka se dvema grafy jedne veliciny -- nahore 100 min, dole 25 h.
+# V zahlavi kazdeho panelu je casove okno vlevo a aktualni hodnota vpravo.
+#
+#   graph    graf_${prefix}_100m / _25h
+#   page     page_${prefix}
+#   select   polozka "${volba}"
+#
+# Vyzaduje meteohub_core.yaml a senzor ha_${prefix}
+# (dodava meteohub_velicina.yaml).
+#
+# Na jednu caru. Kdyz ma byt v jednom grafu vic veliciny, pouzij
+# meteohub_grafy_multi.yaml -- ten misto jedne hodnoty kresli legendu.
+#
+# Vars:
+#   prefix        stejny jako u veliciny -- z nej se odvozuji id
+#   titulek       nadpis stranky, KAPITALKAMA
+#   volba         text polozky v selectu prepinani stranek
+#   format        printf pro hodnotu v zahlavi panelu ("%.1f °C")
+#   barva_grafu   id barvy cary. Palety s ni nehybou: GraphTrace si Color
+#                 zkopiruje pri setup() (graph.h:118), pozdejsi zmena uz
+#                 na caru nema vliv.
+#   y_grid_100m   roztec vodorovne mrizky v okne 100 min
+#   y_grid_25h    roztec vodorovne mrizky v okne 25 h
+
+graph:
+  - id: graf_${prefix}_100m
+    duration: 100min
+    width: 282
+    height: 164
+    x_grid: 25min
+    y_grid: ${y_grid_100m}
+    border: true
+    traces:
+      - sensor: ha_${prefix}
+        name: "${popisek | default(\"\")}"
+        line_type: SOLID
+        line_thickness: 2
+        # Bez tohohle kresli ESPHome jen samostatne pixely -- default je
+        # continuous_{false} (graph.h). Pri malem rozptylu a kmitajicim
+        # cidle z toho jsou nespojite tecky misto cary.
+        continuous: true
+        color: ${barva_grafu}
+
+  - id: graf_${prefix}_25h
+    duration: 25h
+    width: 282
+    height: 164
+    x_grid: 6h
+    y_grid: ${y_grid_25h}
+    border: true
+    traces:
+      - sensor: ha_${prefix}
+        name: "${popisek | default(\"\")}"
+        line_type: SOLID
+        line_thickness: 2
+        continuous: true
+        color: ${barva_grafu}
+
+select:
+  - id: !extend display_page
+    options:
+      - "${volba}"
+
+display:
+  - id: !extend ${display_id | default("displej35")}
+    pages:
+      - id: page_${prefix}
+        lambda: |-
+          it.fill(id(color_bg));
+          id(chrome)->execute("${titulek}");
+
+          // Panel 100 min -- stejna karta jako na dashboardu: cerna mezera
+          // 6 px kolem dokola, podklad color_card, graf s vnitrnim okrajem.
+          it.filled_rectangle(9, 49, 302, 208, id(color_card));
+          it.print(19, 57, id(font_small), id(color_arch), TextAlign::TOP_LEFT, "100 min");
+          if (!isnan(id(ha_${prefix}).state)) {
+            it.printf(301, 57, id(font_small), id(color_arch), TextAlign::TOP_RIGHT, "${format}", id(ha_${prefix}).state);
+          }
+          it.graph(19, 83, id(graf_${prefix}_100m), id(color_grid));
+          if (!isnan(id(graf_${prefix}_100m).get_graph_limit_max())) {
+            it.printf(23, 86, id(font_small), id(color_muted), TextAlign::TOP_LEFT, "%.0f", id(graf_${prefix}_100m).get_graph_limit_max());
+            it.printf(23, 247, id(font_small), id(color_muted), TextAlign::BOTTOM_LEFT, "%.0f", id(graf_${prefix}_100m).get_graph_limit_min());
+          }
+
+          // Panel 25 h
+          it.filled_rectangle(9, 263, 302, 208, id(color_card));
+          it.print(19, 271, id(font_small), id(color_arch), TextAlign::TOP_LEFT, "25 h");
+          if (!isnan(id(ha_${prefix}).state)) {
+            it.printf(301, 271, id(font_small), id(color_arch), TextAlign::TOP_RIGHT, "${format}", id(ha_${prefix}).state);
+          }
+          it.graph(19, 297, id(graf_${prefix}_25h), id(color_grid));
+          if (!isnan(id(graf_${prefix}_25h).get_graph_limit_max())) {
+            it.printf(23, 300, id(font_small), id(color_muted), TextAlign::TOP_LEFT, "%.0f", id(graf_${prefix}_25h).get_graph_limit_max());
+            it.printf(23, 461, id(font_small), id(color_muted), TextAlign::BOTTOM_LEFT, "%.0f", id(graf_${prefix}_25h).get_graph_limit_min());
+          }

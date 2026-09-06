@@ -1,0 +1,70 @@
+## products/meteohub_senzor.yaml
+#
+# Bezny pripad: jedna velicina + jeji vlastni stranka se dvema grafy.
+# Je to jen slepenec dvou balicku, nic vlastniho tu neni:
+#
+#   meteohub_velicina.yaml   sensor ha_${prefix} + script karta_${prefix}
+#   meteohub_grafy.yaml      grafy, stranka page_${prefix}, polozka selectu
+#
+# Kdyz ma mit velicina jen kartu a jeji cara ma jit do CIZIHO grafu, includuj
+# misto tohohle rovnou meteohub_velicina.yaml a caru pridej pres
+# meteohub_trasa.yaml.
+#
+# Vyzaduje products/meteohub_core.yaml.
+#
+# Inline:
+#   s_temp:
+#     <<: *kopfik_esphome_remote
+#     files:
+#       - path: products/meteohub_senzor.yaml
+#         vars:
+#           prefix: temp
+#           entita: sensor.neco_temperature_sht45
+#           popisek: "Teplota"
+#           titulek: "TEPLOTA"
+#           volba: "Grafy - Teplota"
+#           ikona: "\U000F050F"
+#           jednotka: "°C"
+#           desetiny: "1"
+#           format: "%.1f °C"
+#           barva_grafu: color_orange_1
+#           y_grid_100m: "1.0"
+#           y_grid_25h: "2.0"
+#           rezim: "0"
+#           prahy: "22, 23, 24, 25, 26, 27, 28, 29"
+#
+# POZOR: vnorene `!include` se resi RELATIVNE k tomuhle souboru, ne ke koreni
+# konfigurace -- proto `file: meteohub_velicina.yaml` bez `products/`.
+#
+# Vars jsou sjednocenim obou balicku -- popis viz meteohub_velicina.yaml
+# a meteohub_grafy.yaml.
+
+packages:
+  velicina: !include
+    file: meteohub_velicina.yaml
+    vars:
+      prefix: ${prefix}
+      entita: ${entita}
+      popisek: ${popisek}
+      ikona: ${ikona}
+      jednotka: ${jednotka}
+      desetiny: ${desetiny | default("0")}
+      rezim: ${rezim | default("0")}
+      prahy: ${prahy | default("0, 0, 0, 0, 0, 0, 0, 0")}
+      stred: ${stred | default("0")}
+      krok: ${krok | default("1")}
+      pevna_barva: ${pevna_barva | default("color_yellow")}
+      display_id: ${display_id | default("displej35")}
+
+  grafy: !include
+    file: meteohub_grafy.yaml
+    vars:
+      prefix: ${prefix}
+      popisek: ${popisek}
+      titulek: ${titulek}
+      volba: ${volba}
+      format: ${format}
+      barva_grafu: ${barva_grafu}
+      y_grid_100m: ${y_grid_100m}
+      y_grid_25h: ${y_grid_25h}
+      display_id: ${display_id | default("displej35")}
