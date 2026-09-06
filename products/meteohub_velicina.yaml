@@ -26,7 +26,18 @@
 #                   0  vzestupna -- 8 prahu ve `prahy`, vzestupne
 #                   1  symetricka -- `stred` a `krok`, skala roste na obe strany
 #                   2  pevna -- porad `pevna_barva`
-#   prahy         8 hodnot vzestupne, oddelene carkou (rezim 0)
+#   prahy         8 hodnot vzestupne VE SLOZENYCH ZAVORKACH, napr.
+#                 prahy: "{750, 900, 1050, 1200, 1350, 1500, 1650, 1800}"
+#                 Ty zavorky tam MUSI byt. ESPHome se u substituce, ktera tvori
+#                 celou hodnotu promenne, pokusi vysledek prehnat pres
+#                 ast.literal_eval (components/substitutions/jinja.py). Holy
+#                 seznam "750, 900, ..." je platny Python tuple, takze by se
+#                 vyrenderoval SE ZAVORKAMI jako "(750, 900, ...)" -- a "(a, b, c)"
+#                 je v C++ operator carka, ktery se vyhodnoti na posledni prvek.
+#                 Pole by pak melo PRAHY[0] = posledni prah a zbytek nuly, takze
+#                 by kazda hodnota prekrocila sedm nulovych prahu a karta by byla
+#                 porad cervena. Se zavorkami z toho vyjde Python set, ktery
+#                 ESPHome odmita a vraci puvodni retezec nedotceny.
 #   stred, krok   stred skaly a velikost jednoho stupne (rezim 1)
 #   pevna_barva   id barvy (rezim 2, default color_yellow)
 #
@@ -55,7 +66,7 @@ script:
           const int CW = 148, CH = 101;
 
           const int REZIM = ${rezim | default("0")};
-          const float PRAHY[8] = {${prahy | default("0, 0, 0, 0, 0, 0, 0, 0")}};
+          const float PRAHY[8] = ${prahy | default("{0, 0, 0, 0, 0, 0, 0, 0}")};
           const float STRED = ${stred | default("0")};
           const float KROK  = ${krok | default("1")};
 
