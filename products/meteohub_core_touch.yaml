@@ -4,7 +4,7 @@
 # meteohub_core.yaml a jen k nemu pridava to, co se bez dotyku nehodi:
 #
 #   ikony v liste   zatim jen domecek vlevo; sipka zpet, MENU a OK pribydou
-#   obsluha dotyku  domecek -> dashboard, jinak listovani vlevo/vpravo
+#   obsluha dotyku  domecek -> dashboardy dokola, jinak listovani vlevo/vpravo
 #   globaly         touch_cil / touch_x / touch_y (viz nize, proc)
 #
 # Ikony jdou do LISTY, ne do zapati. Lista je 320 px siroka a i nejsirsi
@@ -33,8 +33,11 @@
 #
 # Vars:
 #   touch_id            id touchscreen komponenty (povinne, napr. touch_4_0)
-#   domu_index          index stranky, na kterou vraci domecek (default 0,
-#                       tedy prvni balicek se strankou = dashboard)
+#   pocet_dashboardu    kolik prvnich stranek jsou dashboardy (default 1).
+#                       Domecek mezi nimi prepina dokola; z jine stranky
+#                       vraci na prvni. Musi sedet s tim, kolik balicku
+#                       meteohub_dashboard.yaml je v `packages:` -- a musi
+#                       byt uplne prvni ze stranek.
 #   display_id, time_id, page_select_name, schema_select_name
 #                       predavaji se rovnou do meteohub_core.yaml
 
@@ -110,10 +113,14 @@ touchscreen:
             id(touch_cil) = nullptr;
           } else if (id(touch_y) < ${g_lista_h} + ${g_mezera}
                      && id(touch_x) < ${g_lista_hotspot_w}) {
-            // Domecek v liste -- zpatky na dashboard.
-            const int cil = ${domu_index | default("0")};
+            // Domecek v liste. Dashboardy jsou v poradi stranek prvni, takze
+            // index mensi nez pocet_dashboardu znamena "stojim na dashboardu".
+            // Odtud domecek prepina na DALSI dashboard dokola, odjinud vraci
+            // na prvni. Pri jedinem dashboardu se chova jako obycejne "domu".
+            const int ND = ${pocet_dashboardu | default("1")};
             if (n > 0) {
               int cur = id(stranka_index) % n;
+              const int cil = (cur < ND) ? (cur + 1) % ND : 0;
               while (cur != cil) { d.show_next_page(); cur = (cur + 1) % n; }
               id(stranka_index) = cil;
             }

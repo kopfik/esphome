@@ -1,48 +1,25 @@
 ## products/meteohub_velicina.yaml
 #
-# Jedna merena velicina: cteni z HA + karta na dashboard. ZADNA stranka,
-# zadny graf -- ty dodava meteohub_grafy.yaml (nebo meteohub_grafy_multi.yaml,
-# kdyz ma byt na jedne strance vic veliciny naraz).
+# Hodnota z HA + karticka na dashboard. ZADNA stranka, zadny graf -- ty dodava
+# meteohub_grafy.yaml (nebo meteohub_grafy_2.yaml, kdyz maji byt na jedne
+# strance dve veliciny).
 #
 #   sensor   ha_${prefix}            hodnota z HA
-#   script   karta_${prefix}(x, y)   kresli kartu do slotu dashboardu
+#   script   karta_${prefix}(x, y)   dodava meteohub_karta.yaml
 #
-# Vetsinou nechces includovat tenhle soubor primo -- na bezny pripad
-# "velicina + vlastni stranka s grafy" je meteohub_senzor.yaml, ktery
-# obojí sleci dohromady. Tohle se hodi, kdyz ma velicina jen kartu a jeji
-# cara ma jit do cizího grafu pres meteohub_trasa.yaml.
+# Nad LOKALNIM senzorem desky (sht41, scd40, bmp581) tohle nepouzivej --
+# na to je rovnou meteohub_karta.yaml s `zdroj:` na to id.
 #
-# Vyzaduje products/meteohub_core.yaml.
+# Vetsinou nechces includovat ani tenhle soubor primo -- na bezny pripad
+# "velicina + vlastni stranka s grafy" je meteohub_senzor.yaml.
 #
-# Vars:
-#   prefix        zaklad vsech id (temp, hum, venku_temp, ...)
-#   entita        CELE entity_id v HA, opsat z HA -- neodvozovat
-#   popisek       popisek na karte (Teplota)
-#   ikona         MDI glyph; musi byt ve font_icons v core
-#   jednotka      text pod hodnotou (°C, %, ppm, idx, lx)
-#   desetiny      0 nebo 1 -- pocet desetinnych mist
+# Vyzaduje products/meteohub_core.yaml a products/meteohub_geo_*.yaml.
 #
-#   rezim         jak se pocita barva hodnoty:
-#                   0  vzestupna -- 8 prahu ve `prahy`, vzestupne
-#                   1  symetricka -- `stred` a `krok`, skala roste na obe strany
-#                   2  pevna -- porad `pevna_barva`
-#   prahy         8 hodnot vzestupne VE SLOZENYCH ZAVORKACH, napr.
-#                 prahy: "{750, 900, 1050, 1200, 1350, 1500, 1650, 1800}"
-#                 Ty zavorky tam MUSI byt. ESPHome se u substituce, ktera tvori
-#                 celou hodnotu promenne, pokusi vysledek prehnat pres
-#                 ast.literal_eval (components/substitutions/jinja.py). Holy
-#                 seznam "750, 900, ..." je platny Python tuple, takze by se
-#                 vyrenderoval SE ZAVORKAMI jako "(750, 900, ...)" -- a "(a, b, c)"
-#                 je v C++ operator carka, ktery se vyhodnoti na posledni prvek.
-#                 Pole by pak melo PRAHY[0] = posledni prah a zbytek nuly, takze
-#                 by kazda hodnota prekrocila sedm nulovych prahu a karta by byla
-#                 porad cervena. Se zavorkami z toho vyjde Python set, ktery
-#                 ESPHome odmita a vraci puvodni retezec nedotceny.
-#   stred, krok   stred skaly a velikost jednoho stupne (rezim 1)
-#   pevna_barva   id barvy (rezim 2, default color_yellow)
+# POZOR: vnorene `!include` se resi RELATIVNE k tomuhle souboru, ne ke koreni
+# konfigurace -- proto `file: meteohub_karta.yaml` bez `products/`.
 #
-# Skala ma 9 stupnu: green_0, green_1, green_2, green_3, yellow,
-# orange_1, orange_2, orange_3, red.
+# Vars: `entita` (cele entity_id v HA, opsat z HA -- neodvozovat), zbytek se
+# preposila do meteohub_karta.yaml, popis viz tam.
 
 sensor:
   - platform: homeassistant
@@ -50,65 +27,19 @@ sensor:
     entity_id: ${entita}
     internal: true
 
-script:
-  # Karta na dashboardu. Volat SYNCHRONNE z lambdy stranky:
-  #   id(karta_${prefix})->execute(9, 49);
-  # Uvnitr nesmi byt zadny `delay` -- script by se stal asynchronnim
-  # a karta by se nevykreslila do aktualniho snimku.
-  - id: karta_${prefix}
-    mode: single
-    parameters:
-      x: int
-      y: int
-    then:
-      - lambda: |-
-          auto &it = *id(${display_id | default("displej35")});
-          // Rozmery z products/meteohub_geo_*.yaml.
-          const int CW = ${g_karta_w}, CH = ${g_karta_h};
-
-          const int REZIM = ${rezim | default("0")};
-          const float PRAHY[8] = ${prahy | default("{0, 0, 0, 0, 0, 0, 0, 0}")};
-          const float STRED = ${stred | default("0")};
-          const float KROK  = ${krok | default("1")};
-
-          auto barva = [&](float v) -> Color {
-            if (isnan(v)) return id(color_muted);
-            if (REZIM == 2) return id(${pevna_barva | default("color_yellow")});
-            const Color S[9] = {
-              id(color_green_0), id(color_green_1), id(color_green_2),
-              id(color_green_3), id(color_yellow),  id(color_orange_1),
-              id(color_orange_2), id(color_orange_3), id(color_red)};
-            int lvl = 0;
-            if (REZIM == 1) {
-              // Nad stredem se stupen zaokrouhluje dolu, pod nim nahoru --
-              // tim skala vychazi na obe strany stejne siroka. Odpovida to
-              // rucne psanym prahum v puvodnim products/meteohub.yaml.
-              float d = fabsf(v - STRED) / KROK;
-              lvl = (v >= STRED) ? (int) floorf(d) : (int) ceilf(d);
-            } else {
-              for (int i = 0; i < 8; i++) if (v >= PRAHY[i]) lvl = i + 1;
-            }
-            if (lvl < 0) lvl = 0;
-            if (lvl > 8) lvl = 8;
-            return S[lvl];
-          };
-
-          const float v = id(ha_${prefix}).state;
-          const Color vc = barva(v);
-
-          const int L = ${g_karta_okraj}, R = ${g_karta_okraj_p}, PRUH = ${g_karta_pruh};
-          const int xr = x + CW - R;
-
-          it.filled_rectangle(x, y, CW, CH, id(color_card));
-          it.print(x + L, y + ${g_karta_ikona_y}, id(font_icons), vc, TextAlign::TOP_LEFT, "${ikona}");
-          it.print(xr, y + ${g_karta_popisek_y}, id(font_small), id(color_muted), TextAlign::TOP_RIGHT, "${popisek}");
-          if (isnan(v)) {
-            it.print(xr, y + ${g_karta_hodnota_y}, id(font_value), id(color_muted), TextAlign::TOP_RIGHT, "--");
-          } else if (${desetiny | default("0")} == 0) {
-            it.printf(xr, y + ${g_karta_hodnota_y}, id(font_value), vc, TextAlign::TOP_RIGHT, "%.0f", v);
-          } else {
-            it.printf(xr, y + ${g_karta_hodnota_y}, id(font_value), vc, TextAlign::TOP_RIGHT, "%.1f", v);
-          }
-          it.print(xr, y + ${g_karta_jednotka_y}, id(font_small), id(color_muted), TextAlign::TOP_RIGHT, "${jednotka}");
-          it.filled_rectangle(x + CW - 2 * PRUH, y + L, PRUH, CH - 2 * L,
-                              isnan(v) ? id(color_grid) : vc);
+packages:
+  karta: !include
+    file: meteohub_karta.yaml
+    vars:
+      prefix: ${prefix}
+      zdroj: ha_${prefix}
+      popisek: ${popisek}
+      ikona: ${ikona}
+      jednotka: ${jednotka}
+      desetiny: ${desetiny | default("0")}
+      rezim: ${rezim | default("0")}
+      prahy: ${prahy | default("{0, 0, 0, 0, 0, 0, 0, 0}")}
+      stred: ${stred | default("0")}
+      krok: ${krok | default("1")}
+      pevna_barva: ${pevna_barva | default("color_yellow")}
+      display_id: ${display_id | default("displej35")}
