@@ -33,11 +33,14 @@
 #
 # Vars:
 #   touch_id            id touchscreen komponenty (povinne, napr. touch_4_0)
-#   pocet_dashboardu    kolik prvnich stranek jsou dashboardy (default 1).
+#   prvni_dashboard     index prvni stranky, ktera je dashboard (default 0).
+#                       Kdyz je pred dashboardy jeste klidova stranka
+#                       (meteohub_hodiny.yaml), je to 1.
+#   pocet_dashboardu    kolik po sobe jdoucich stranek jsou dashboardy (default 1).
 #                       Domecek mezi nimi prepina dokola; z jine stranky
 #                       vraci na prvni. Musi sedet s tim, kolik balicku
-#                       meteohub_dashboard.yaml je v `packages:` -- a musi
-#                       byt uplne prvni ze stranek.
+#                       meteohub_dashboard.yaml je v `packages:` a kde
+#                       v poradi stranek zacinaji.
 #   display_id, time_id, page_select_name, schema_select_name
 #                       predavaji se rovnou do meteohub_core.yaml
 
@@ -117,10 +120,12 @@ touchscreen:
             // index mensi nez pocet_dashboardu znamena "stojim na dashboardu".
             // Odtud domecek prepina na DALSI dashboard dokola, odjinud vraci
             // na prvni. Pri jedinem dashboardu se chova jako obycejne "domu".
+            const int OFF = ${prvni_dashboard | default("0")};
             const int ND = ${pocet_dashboardu | default("1")};
             if (n > 0) {
               int cur = id(stranka_index) % n;
-              const int cil = (cur < ND) ? (cur + 1) % ND : 0;
+              const int cil = (cur >= OFF && cur < OFF + ND)
+                              ? OFF + ((cur - OFF + 1) % ND) : OFF;
               while (cur != cil) { d.show_next_page(); cur = (cur + 1) % n; }
               id(stranka_index) = cil;
             }

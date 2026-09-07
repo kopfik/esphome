@@ -1,0 +1,126 @@
+## products/meteohub_hodiny.yaml
+#
+# Klidova stranka: cerne pozadi, velke hodiny ve 24h formatu na dva radky
+# (nahore hodina, dole minuta), dole datum a nahore dve hodnoty.
+#
+#   page    page_hodiny
+#   select  polozka "${volba}"
+#   font    font_hodiny (jen cislice 0-9)
+#
+# Nema ramecek ani listu -- kresli se na cernou. Horni a dolni pas jsou ale
+# stejne vysoke jako lista na ostatnich strankach (g_lista_h), takze text
+# sedi na stejne vysce a prepnuti na dashboard "neposkoci".
+#
+# Ma byt PRVNI stranka v poradi balicku: ESPHome po startu ukazuje prvni
+# stranku, takze se tim resi "po bootu je videt tahle".
+#
+# Dotykove chovani (klepnuti -> dashboard, navrat po case necinnosti) dodava
+# meteohub_hodiny_touch.yaml. Bez nej je to obycejna stranka v listovani,
+# coz se hodi na kusy bez dotyku.
+#
+# Vyzaduje products/meteohub_core.yaml a products/meteohub_geo_*.yaml.
+#
+# Vars:
+#   volba          text polozky v selectu prepinani stranek
+#   zdroj_vlevo    id senzoru vlevo nahore (napr. sht41_temp_raw)
+#   format_vlevo   printf vcetne jednotky (default "%.1f °C")
+#   zdroj_vpravo   id senzoru vpravo nahore
+#   format_vpravo  printf vcetne jednotky (default "%.0f PPM")
+#   display_id, time_id
+
+select:
+  - id: !extend display_page
+    options:
+      - "${volba}"
+
+font:
+  # Jen cislice -- cely GF_Latin_Core by v teto velikosti zral flash zbytecne.
+  - file:
+      type: gfonts
+      family: Ubuntu
+      weight: 500
+    id: font_hodiny
+    size: ${g_font_hodiny}
+    glyphs: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
+
+display:
+  - id: !extend ${display_id | default("displej35")}
+    pages:
+      - id: page_hodiny
+        lambda: |-
+          it.fill(id(color_bg));
+
+          // Rozmery z products/meteohub_geo_*.yaml.
+          const int W = ${g_panel_w}, H = ${g_panel_h};
+          const int LISTA = ${g_lista_h};
+          const int GX = ${g_graf_x}, GW = ${g_graf_w};
+
+          // Volny pas mezi hornim a dolnim pasem; hodina na jeho ctvrtine,
+          // minuta na tri ctvrtinach -- opticky vyvazene i pri jine vysce.
+          const int PAS = H - 2 * LISTA;
+          const int Y_HOD = LISTA + PAS / 4;
+          const int Y_MIN = LISTA + 3 * PAS / 4;
+          const int Y_LISTA = (LISTA - 1) / 2;          // svisly stred pasu
+          const int Y_ZAPATI = H - 1 - Y_LISTA;
+
+          auto ted = id(${time_id | default("sntp_time")}).now();
+
+          // ---- horni pas: dve hodnoty, bez popisku ----
+          // Stejne pismo jako hodnota na karticce dashboardu (font_value).
+          // Na 302 px se to vejde s rezervou: '-12.5 °C' + '1450 PPM' je 277 px.
+          const float vl = id(${zdroj_vlevo}).state;
+          if (isnan(vl)) {
+            it.print(GX, Y_LISTA, id(font_value), id(color_muted),
+                     TextAlign::CENTER_LEFT, "--");
+          } else {
+            it.printf(GX, Y_LISTA, id(font_value), id(color_arch),
+                      TextAlign::CENTER_LEFT, "${format_vlevo | default("%.1f °C")}", vl);
+          }
+          const float vp = id(${zdroj_vpravo}).state;
+          if (isnan(vp)) {
+            it.print(GX + GW, Y_LISTA, id(font_value), id(color_muted),
+                     TextAlign::CENTER_RIGHT, "--");
+          } else {
+            it.printf(GX + GW, Y_LISTA, id(font_value), id(color_arch),
+                      TextAlign::CENTER_RIGHT, "${format_vpravo | default("%.0f PPM")}", vp);
+          }
+
+          // ---- hodiny: 24h, hodina nad minutou ----
+          if (ted.is_valid()) {
+            it.strftime(W / 2, Y_HOD, id(font_hodiny), id(color_white),
+                        TextAlign::CENTER, "%H", ted);
+            it.strftime(W / 2, Y_MIN, id(font_hodiny), id(color_white),
+                        TextAlign::CENTER, "%M", ted);
+          } else {
+            it.print(W / 2, Y_HOD, id(font_hodiny), id(color_muted), TextAlign::CENTER, "00");
+            it.print(W / 2, Y_MIN, id(font_hodiny), id(color_muted), TextAlign::CENTER, "00");
+          }
+
+          // ---- dolni pas: datum, stejnym pismem jako hodnoty nahore ----
+          // strftime umi jen anglicke nazvy, takze den i mesic z poli.
+          // ESPTime.day_of_week je 1 = nedele, month je 1 = leden.
+          if (ted.is_valid()) {
+            static const char *const DNY[8] = {"", "neděle", "pondělí", "úterý",
+                                               "středa", "čtvrtek", "pátek", "sobota"};
+            static const char *const DNY_ZKR[8] = {"", "ne", "po", "út",
+                                                   "st", "čt", "pá", "so"};
+            static const char *const MESICE[13] = {"",
+                "ledna", "února", "března", "dubna", "května", "června",
+                "července", "srpna", "září", "října", "listopadu", "prosince"};
+
+            char buf[48];
+            snprintf(buf, sizeof(buf), "%s %d. %s", DNY[ted.day_of_week],
+                     ted.day_of_month, MESICE[ted.month]);
+            // 'pondělí 28. listopadu' ma 321 px z 302 -- pretece asi 30 dnu
+            // v roce. Pak se zkrati den, nazev mesice se necha ('po 28.
+            // listopadu' ma 244 px). Nazev mesice je smysl teto stranky,
+            // takze ustupuje den, ne mesic.
+            int sw = 0, sx = 0;
+            id(font_value)->measure(buf, &sw, &sx, &sx, &sx);
+            if (sw > GW) {
+              snprintf(buf, sizeof(buf), "%s %d. %s", DNY_ZKR[ted.day_of_week],
+                       ted.day_of_month, MESICE[ted.month]);
+            }
+            it.print(W / 2, Y_ZAPATI, id(font_value), id(color_arch),
+                     TextAlign::CENTER, buf);
+          }

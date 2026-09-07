@@ -1,0 +1,58 @@
+## products/meteohub_hodiny_touch.yaml
+#
+# Dotykove chovani klidove stranky z meteohub_hodiny.yaml:
+#
+#   klepnuti na hodiny  -> skok na dashboard
+#   10 minut bez doteku -> zpatky na hodiny
+#
+# Odpocet se restartuje pri KAZDEM doteku, at uz jsi kdekoliv -- takze se to
+# vrati az kdyz displej opravdu nikdo neobsluhuje. S casovacem podsviceni to
+# nema nic spolecneho: to hlida radar (pritomnost v mistnosti), tohle hlida
+# dotyk.
+#
+# Vyzaduje products/meteohub_core_touch.yaml a musi byt v `packages:` AZ ZA
+# nim -- core_touch v `on_touch` nuluje touch_cil a tady se teprve nastavuje.
+#
+# Vars:
+#   touch_id       id touchscreen komponenty (povinne)
+#   cil_page       kam skocit po klepnuti na hodiny (napr. page_dash_1)
+#   hodiny_index   index stranky s hodinami v poradi stranek (default 0)
+#   navrat_po      doba necinnosti, po ktere se to vrati (default 10min)
+#   display_id
+
+esphome:
+  on_boot:
+    # Az po vsem ostatnim: po startu je videt prvni stranka (hodiny) a odpocet
+    # se rozjede, aby se to vratilo i kdyz nekdo hned po bootu listuje.
+    priority: -200
+    then:
+      - script.execute: hodiny_navrat
+
+script:
+  - id: hodiny_navrat
+    mode: restart
+    then:
+      - delay: ${navrat_po | default("10min")}
+      - lambda: |-
+          auto &d = *id(${display_id | default("displej35")});
+          const int n = (int) id(display_page).traits.get_options().size();
+          const int cil = ${hodiny_index | default("0")};
+          if (n > 0) {
+            int cur = id(stranka_index) % n;
+            while (cur != cil) { d.show_next_page(); cur = (cur + 1) % n; }
+            id(stranka_index) = cil;
+          }
+      - component.update: ${display_id | default("displej35")}
+
+touchscreen:
+  - id: !extend ${touch_id}
+    on_touch:
+      - lambda: |-
+          // Klepnuti kamkoliv na hodinach vede na dashboard. Samotny skok
+          // dela az `on_release` v core_touch, tady se jen rekne kam.
+          if (id(${display_id | default("displej35")}).get_active_page()
+              == id(page_hodiny)) {
+            id(touch_cil) = id(${cil_page});
+          }
+      # Kazdy dotek posouva navrat o dalsich ${navrat_po | default("10min")}.
+      - script.execute: hodiny_navrat
