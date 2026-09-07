@@ -1,0 +1,61 @@
+## products/meteohub_dashboard_touch.yaml
+#
+# Dotykove chovani jednoho dashboardu: klepnuti na karticku otevre stranku
+# s jejimi grafy. Kresleni dashboardu dela meteohub_dashboard.yaml, tenhle
+# balicek jen pridava trefovani -- proto se pridava VEDLE nej, se stejnym
+# `sufix`.
+#
+# Je to zvlast schvalne: meteohub_dashboard.yaml pouzivaji i kusy bez dotyku
+# a `touchscreen: - id: !extend ...` by na nich spadlo na neexistujici id.
+#
+# Vyzaduje products/meteohub_core_touch.yaml a musi byt v `packages:` AZ ZA
+# nim -- core_touch v `on_touch` nuluje touch_cil a tady se teprve nastavuje.
+# Samotny skok se dela az v `on_release` v core_touch, takze na poradi vuci
+# ostatnim dashboardum uz nezalezi.
+#
+# Nevyplneny slot ukazuje sam na sebe (page_dash_${sufix}), takze klepnuti
+# na prazdnou kartu nikam neskoci.
+#
+# Vars:
+#   sufix          stejny jako u meteohub_dashboard.yaml -> page_dash_${sufix}
+#   touch_id       id touchscreen komponenty (povinne)
+#   display_id     id displeje (default displej35)
+#   slot1_page .. slot8_page   id cilovych stranek pro jednotlive sloty,
+#                  po radcich zleva doprava, stejne jako slot1..slot8
+
+touchscreen:
+  - id: !extend ${touch_id}
+    on_touch:
+      - lambda: |-
+          // Jen kdyz je videt prave tenhle dashboard.
+          if (id(${display_id | default("displej35")}).get_active_page()
+              != id(page_dash_${sufix})) {
+            return;
+          }
+          // Mrizka se pocita stejne jako v meteohub_dashboard.yaml, ze
+          // stejnych substituci -- nesmi se rozejit. Mezera pripada karte
+          // pred sebou, at se do toho da trefit prstem.
+          const int MEZ = ${g_mezera};
+          const int OX = ${g_obsah_x}, OY = ${g_obsah_y};
+          const int CW = ${g_karta_w}, CH = ${g_karta_h};
+          const int SL = ${g_sloupcu}, RD = ${g_radku};
+          if (touch.x < OX || touch.y < OY) return;
+          const int col = (touch.x - OX) / (CW + MEZ);
+          const int row = (touch.y - OY) / (CH + MEZ);
+          if (col >= SL || row >= RD) return;
+
+          display::DisplayPage *cile[8] = {
+            id(${slot1_page | default("page_dash_" ~ sufix)}),
+            id(${slot2_page | default("page_dash_" ~ sufix)}),
+            id(${slot3_page | default("page_dash_" ~ sufix)}),
+            id(${slot4_page | default("page_dash_" ~ sufix)}),
+            id(${slot5_page | default("page_dash_" ~ sufix)}),
+            id(${slot6_page | default("page_dash_" ~ sufix)}),
+            id(${slot7_page | default("page_dash_" ~ sufix)}),
+            id(${slot8_page | default("page_dash_" ~ sufix)}),
+          };
+          display::DisplayPage *cil = cile[row * SL + col];
+          // Ukazuje sam na sebe -> slot je prazdny, necha se listovat.
+          if (cil != id(page_dash_${sufix})) {
+            id(touch_cil) = cil;
+          }

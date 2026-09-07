@@ -1,0 +1,129 @@
+## products/meteohub_core_touch.yaml
+#
+# Core pro kusy s DOTYKOVYM displejem. Neni to kopie -- includuje
+# meteohub_core.yaml a jen k nemu pridava to, co se bez dotyku nehodi:
+#
+#   ikony v liste   zatim jen domecek vlevo; sipka zpet, MENU a OK pribydou
+#   obsluha dotyku  domecek -> dashboard, jinak listovani vlevo/vpravo
+#   globaly         touch_cil / touch_x / touch_y (viz nize, proc)
+#
+# Ikony jdou do LISTY, ne do zapati. Lista je 320 px siroka a i nejsirsi
+# nadpis (METEOHUB, 142 px) nechava 89 px na kazde strane, tedy misto na dve
+# ikony po 36 px vlevo a dve vpravo -- na domecek, zpet, MENU i OK to staci.
+# Zapati by ukouslo 49 px z obsahu: karta by spadla ze 101 na 88 px (jednotka
+# na y+76 je vysoka 22 px, tedy by pretekla o 10) a graf ze 164 na 139.
+# Az bude potreba paty knoflik, prida se zapati OBEMA rodinam naraz.
+#
+# ---- Jak je poresene poradi obsluhy dotyku ----------------------------------
+# Skok z karticky rovnou na jeji grafy dela meteohub_dashboard_touch.yaml,
+# ktery se pripoji AZ ZA tenhle balicek (poradi v `packages:`). Kdyby se
+# listovalo uz v `on_touch`, dashboard by pak sahal na stranku, ze ktere se
+# mezitim odlistovalo. Proto je to na dve faze:
+#
+#   on_touch    tady    zapamatuje souradnice a vynuluje touch_cil
+#   on_touch    dashboard  kdyz trefil kartu, nastavi touch_cil
+#   on_release  tady    kdyz je touch_cil, skoci na nej; jinak domecek/listovani
+#
+# Uvolneni prijde vzdycky az po vsech `on_touch`, takze na poradi balicku
+# uz nezalezi. Vedlejsi efekt: odpada zamek proti opakovanemu vystreleni
+# on_touch behem jednoho drzeni, akce se stane jednou pri pusteni.
+#
+# Vyzaduje: vsechno co meteohub_core.yaml, navic `touchscreen:` s id z
+# varu touch_id.
+#
+# Vars:
+#   touch_id            id touchscreen komponenty (povinne, napr. touch_4_0)
+#   domu_index          index stranky, na kterou vraci domecek (default 0,
+#                       tedy prvni balicek se strankou = dashboard)
+#   display_id, time_id, page_select_name, schema_select_name
+#                       predavaji se rovnou do meteohub_core.yaml
+
+packages:
+  jadro: !include
+    file: meteohub_core.yaml
+    vars:
+      display_id: ${display_id | default("displej35")}
+      time_id: ${time_id | default("sntp_time")}
+      page_select_name: ${page_select_name | default("Aktuální stránka")}
+      schema_select_name: ${schema_select_name | default("Barevne schema")}
+
+globals:
+  # Kam se ma pri pusteni skocit. nullptr = nikam, resi se listovani.
+  - id: touch_cil
+    type: display::DisplayPage *
+    restore_value: false
+    initial_value: 'nullptr'
+  - id: touch_x
+    type: int
+    restore_value: false
+    initial_value: '0'
+  - id: touch_y
+    type: int
+    restore_value: false
+    initial_value: '0'
+
+font:
+  # Vlastni, mensi rez ikon: font_icons z core je 36 px na karty, v 43px
+  # liste by sedel natesno. Stejny TTF, ESPHome si ho stahne jednou.
+  - file: "https://github.com/Templarian/MaterialDesign-Webfont/raw/master/fonts/materialdesignicons-webfont.ttf"
+    id: font_icons_lista
+    size: ${g_font_icons_lista}
+    glyphs:
+      - "\U000F02DC"   # home
+
+script:
+  # Dokresli ikony do listy, kterou vykreslilo jadro. `!extend` akce PRIDAVA
+  # na konec, takze se to nakresli az nad hotovou listu.
+  - id: !extend chrome
+    then:
+      - lambda: |-
+          auto &it = *id(${display_id | default("displej35")});
+          const int LISTA = ${g_lista_h};
+          it.print(${g_lista_ikona_x}, (LISTA - 1) / 2, id(font_icons_lista),
+                   id(color_arch), TextAlign::CENTER_LEFT, "\U000F02DC");
+
+touchscreen:
+  - id: !extend ${touch_id}
+    on_touch:
+      - lambda: |-
+          // Jen si zapamatuj, kam se sahlo. Rozhoduje se az pri pusteni --
+          // do te doby maji dashboardy sanci nastavit touch_cil.
+          id(touch_cil) = nullptr;
+          id(touch_x) = touch.x;
+          id(touch_y) = touch.y;
+    on_release:
+      - lambda: |-
+          auto &d = *id(${display_id | default("displej35")});
+          const int n = (int) id(display_page).traits.get_options().size();
+
+          if (id(touch_cil) != nullptr) {
+            // Dashboard trefil kartu a rekl, kam se ma jit. DisplayPage nema
+            // verejne get_next(), takze index cile se necte -- dokrouzime se
+            // k nemu pres show_next_page() a kroky si rovnou spocitame.
+            // Prekresluje se az pozdejsim component.update, takze je to levne.
+            int kroku = 0;
+            while (d.get_active_page() != id(touch_cil) && kroku < n) {
+              d.show_next_page();
+              kroku++;
+            }
+            if (n > 0) id(stranka_index) = (id(stranka_index) + kroku) % n;
+            id(touch_cil) = nullptr;
+          } else if (id(touch_y) < ${g_lista_h} + ${g_mezera}
+                     && id(touch_x) < ${g_lista_hotspot_w}) {
+            // Domecek v liste -- zpatky na dashboard.
+            const int cil = ${domu_index | default("0")};
+            if (n > 0) {
+              int cur = id(stranka_index) % n;
+              while (cur != cil) { d.show_next_page(); cur = (cur + 1) % n; }
+              id(stranka_index) = cil;
+            }
+          } else if (id(touch_x) < d.get_width() / 2) {
+            d.show_prev_page();
+            if (n > 0) id(stranka_index) = (id(stranka_index) + n - 1) % n;
+          } else {
+            d.show_next_page();
+            if (n > 0) id(stranka_index) = (id(stranka_index) + 1) % n;
+          }
+      # Prekresli hned. Bez toho se nova stranka objevi az pri nejblizsim
+      # pravidelnem update, tedy az za vterinu -- to je ta "lenost".
+      - component.update: ${display_id | default("displej35")}

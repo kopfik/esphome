@@ -10,7 +10,7 @@
 #   prazdna karta       script karta_prazdna(x, y)  -- pro nevyuzity slot
 #   prepinani stranek   select display_page (PRAZDNY!), dve tlacitka,
 #                       global stranka_index
-#   radar + podsviceni  binary_sensor + script backlight_off_delayed
+#   radar + podsviceni  binary_sensor + script display_backlight_off_delayed
 #   obnovovani          interval 1s -> update na celou minutu
 #
 # Stranky, grafy ani HA senzory tady nejsou. Ty dodavaji meteohub_dashboard.yaml
@@ -21,16 +21,11 @@
 # se pouziva na hotovych kusech (solomon, rodice). Tohle je paralelni vetev,
 # neni to nahrada a NEMICHAT je v jednom zarizeni -- kolidovala by id.
 #
-# ---- Geometrie (panel 320x480 na vysku, ST7796) ------------------------------
-# Vsechny cerne mezery jsou 6 px, ramecek 3 px.
-#   ramecek     0..2
-#   zahlavi     0..42, lista pres celou sirku
-#   obsah       49..470
-#   karta       148 x 101, mrizka 2 sloupce x 4 rady
-#                 X = 9, 163        Y = 49, 156, 263, 370
-#   panel grafu 302 x 208 na (9,49) a (9,263)
-#   graf        282 x 164 na (19,83) a (19,297)
-# Jiny panel = jiny produkt, souradnice jsou natvrdo napocitane.
+# ---- Geometrie --------------------------------------------------------------
+# Zadne pevne souradnice tady nejsou. Rozmery dodava balicek
+# products/meteohub_geo_<sirka>x<vyska>.yaml jako substituce a lambdy si
+# z nich zbytek dopocitaji. Jiny displej = jiny geo soubor, tenhle se nemeni.
+# Musi byt v `packages:` PRED timhle balickem.
 #
 # ---- Poradi stranek ----------------------------------------------------------
 # `!extend` pripojuje stranky na KONEC, takze poradi stranek = poradi balicku
@@ -47,9 +42,12 @@
 # Device MUSI pred timhle balickem definovat (pevna jmena, nejsou to vars):
 #   displej35 / ${display_id}   ili9xxx ST7796, dimensions 320x480
 #   sntp_time / ${time_id}      packages/time.yaml
-#   backlight_light             components/lights/monochromatic.yaml
-#   segmentovy_displej_power    components/displays/tm1637.yaml
+#   display_backlight             components/lights/monochromatic.yaml
 #   ld2410c_has_target          components/sensors/ld2410.yaml
+#
+# Sedmisegmentovka (TM1637) tady NENI -- ne kazdy kus ji ma (p4eth-stul-kopfik
+# treba ne). Kdo ji ma, prida balicek meteohub_segment.yaml, ktery si sve akce
+# pripoji k radaru i k odpocitavaci podsviceni sam.
 
 esphome:
   on_boot:
@@ -61,7 +59,7 @@ esphome:
       - delay: 3s
       - component.update: ${display_id | default("displej35")}
       - light.turn_on:
-          id: backlight_light
+          id: display_backlight
           brightness: 100%
 
 globals:
@@ -161,14 +159,14 @@ script:
           id(color_card) = Color(PAL[i][1][0], PAL[i][1][1], PAL[i][1][2]);
 
   # Zhasne az kdyz je 3 min klid; kazdy novy on_release odpocet restartuje.
+  # Sedmisegmentovku sem netahat -- pripoji si ji meteohub_segment.yaml.
   # Skutecna prodleva je delsi -- ld2410c_has_target sam drzi jeste svuj hold
   # time, nez pusti clear.
-  - id: backlight_off_delayed
+  - id: display_backlight_off_delayed
     mode: restart
     then:
       - delay: 3min
-      - light.turn_off: backlight_light
-      - switch.turn_off: segmentovy_displej_power
+      - light.turn_off: display_backlight
 
   # ---- Spolecny ramecek a zahlavi ----
   # Kresli se ze scriptu, ne v kazde lambde stranky zvlast. Volani z lambdy
@@ -184,13 +182,18 @@ script:
     then:
       - lambda: |-
           auto &it = *id(${display_id | default("displej35")});
-          it.rectangle(0, 0, 320, 480, id(color_card));
-          it.rectangle(1, 1, 318, 478, id(color_card));
-          it.rectangle(2, 2, 316, 476, id(color_card));
-          it.filled_rectangle(0, 0, 320, 43, id(color_card));
+          // Geometrie se pocita z products/meteohub_geo_*.yaml, zadne
+          // pevne cislo tady nema co delat.
+          const int W = ${g_panel_w}, H = ${g_panel_h};
+          const int RAM = ${g_ramecek}, LISTA = ${g_lista_h};
+          for (int i = 0; i < RAM; i++) {
+            it.rectangle(i, i, W - 2 * i, H - 2 * i, id(color_card));
+          }
+          it.filled_rectangle(0, 0, W, LISTA, id(color_card));
           // Nadpis na svislem stredu listy (CENTER, aby nesedel jinak podle
           // vysky pisma).
-          it.print(160, 21, id(font_title), id(color_arch), TextAlign::CENTER, titulek.c_str());
+          it.print(W / 2, (LISTA - 1) / 2, id(font_title), id(color_arch),
+                   TextAlign::CENTER, titulek.c_str());
 
   # Nevyuzity slot na dashboardu -- prazdna karta, aby mrizka drzela tvar.
   - id: karta_prazdna
@@ -201,7 +204,9 @@ script:
     then:
       - lambda: |-
           auto &it = *id(${display_id | default("displej35")});
-          it.filled_rectangle(x, y, 148, 101, id(color_card));
+          // Rozmery z products/meteohub_geo_*.yaml.
+          const int CW = ${g_karta_w}, CH = ${g_karta_h};
+          it.filled_rectangle(x, y, CW, CH, id(color_card));
 
 binary_sensor:
   # Presence/moving/still + number entity pro ladeni radaru dodava package
@@ -213,13 +218,12 @@ binary_sensor:
     id: radar_presence_akce
     internal: true
     on_press:
-      - script.stop: backlight_off_delayed
+      - script.stop: display_backlight_off_delayed
       - light.turn_on:
-          id: backlight_light
+          id: display_backlight
           brightness: 100%
-      - switch.turn_on: segmentovy_displej_power
     on_release:
-      - script.execute: backlight_off_delayed
+      - script.execute: display_backlight_off_delayed
 
 select:
   - platform: template
@@ -311,7 +315,7 @@ font:
       family: Ubuntu
       weight: 500
     id: font_title
-    size: 26
+    size: ${g_font_title}
     glyphsets:
       - GF_Latin_Core
 
@@ -320,7 +324,7 @@ font:
       family: Ubuntu
       weight: 400
     id: font_label
-    size: 28
+    size: ${g_font_label}
     glyphsets:
       - GF_Latin_Core
 
@@ -329,7 +333,7 @@ font:
       family: Ubuntu
       weight: 500
     id: font_value
-    size: 33
+    size: ${g_font_value}
     glyphsets:
       - GF_Latin_Core
 
@@ -338,7 +342,7 @@ font:
       family: Ubuntu
       weight: 400
     id: font_small
-    size: 19
+    size: ${g_font_small}
     glyphsets:
       - GF_Latin_Core
 
@@ -347,7 +351,7 @@ font:
       family: Ubuntu
       weight: 500
     id: font_name
-    size: 31
+    size: ${g_font_name}
     glyphsets:
       - GF_Latin_Core
 
@@ -359,7 +363,7 @@ font:
   # Stejny glyph ale nepridavat dvakrat -- ESPHome hlasi duplicitu.
   - file: "https://github.com/Templarian/MaterialDesign-Webfont/raw/master/fonts/materialdesignicons-webfont.ttf"
     id: font_icons
-    size: 36
+    size: ${g_font_icons}
     glyphs:
       - "\U000F050F"   # thermometer
       - "\U000F058E"   # water-percent

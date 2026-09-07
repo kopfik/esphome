@@ -59,20 +59,26 @@ script:
     then:
       - lambda: |-
           auto &it = *id(${display_id | default("displej35")});
-          const int CW = 148, CH = 101;
+          // Rozmery z products/meteohub_geo_*.yaml.
+          const int CW = ${g_karta_w}, CH = ${g_karta_h};
+          const int L = ${g_karta_okraj}, R = ${g_karta_okraj_p};
+          const int xr = x + CW - R;
           it.filled_rectangle(x, y, CW, CH, id(color_card));
-          it.print(x + 8, y + 26, id(font_icons), id(color_purple), TextAlign::TOP_LEFT, "\U000F09D2");
-          it.print(x + CW - 12, y + 8, id(font_small), id(color_muted), TextAlign::TOP_RIGHT, "Svátek");
+          it.print(x + L, y + ${g_karta_ikona_y}, id(font_icons), id(color_purple), TextAlign::TOP_LEFT, "\U000F09D2");
+          it.print(xr, y + ${g_karta_popisek_y}, id(font_small), id(color_muted), TextAlign::TOP_RIGHT, "Svátek");
+          // Datum na druhem radku, jmeno az na tretim pres celou sirku karty.
+          const int y_datum = y + ${g_karta_hodnota_y} + 6;
+          const int y_jmeno = y + ${g_karta_jednotka_y} - 4;
           auto ts = id(${time_id | default("sntp_time")}).now();
           if (ts.is_valid()) {
-            it.strftime(x + CW - 12, y + 40, id(font_small), id(color_white), TextAlign::TOP_RIGHT, "%d. %m.", ts);
+            it.strftime(xr, y_datum, id(font_small), id(color_white), TextAlign::TOP_RIGHT, "%d. %m.", ts);
           } else {
-            it.print(x + CW - 12, y + 40, id(font_small), id(color_muted), TextAlign::TOP_RIGHT, "--");
+            it.print(xr, y_datum, id(font_small), id(color_muted), TextAlign::TOP_RIGHT, "--");
           }
           if (id(ha_svatek_0).has_state()) {
-            it.print(x + CW / 2, y + 72, id(font_small), id(color_purple), TextAlign::TOP_CENTER, id(ha_svatek_0).state.c_str());
+            it.print(x + CW / 2, y_jmeno, id(font_small), id(color_purple), TextAlign::TOP_CENTER, id(ha_svatek_0).state.c_str());
           } else {
-            it.print(x + CW / 2, y + 72, id(font_small), id(color_muted), TextAlign::TOP_CENTER, "--");
+            it.print(x + CW / 2, y_jmeno, id(font_small), id(color_muted), TextAlign::TOP_CENTER, "--");
           }
 
 select:
@@ -146,21 +152,35 @@ display:
           // cerna mezera 6 px. Dnesek je vyssi, protoze drzi misto na dva radky
           // POKAZDE -- i kdyz se jmeno vejde na jeden. Jinak by radky kolem
           // poskakovaly podle toho, jak dlouhy je zrovna dnesni svatek.
-          const int P_Y[7] = {49, 106, 163, 220, 306, 363, 420};
-          const int P_H[7] = {51, 51, 51, 80, 51, 51, 51};
-          for (int i = 0; i < 7; i++) {
-            it.filled_rectangle(9, P_Y[i], 302, P_H[i], id(color_card));
+          // Rozmery z products/meteohub_geo_*.yaml.
+          const int MEZ = ${g_mezera};
+          const int OX = ${g_obsah_x}, OY = ${g_obsah_y}, OW = ${g_obsah_w};
+          const int GX = ${g_graf_x}, GW = ${g_graf_w};
+          const int DNES_H = ${g_svatky_dnes_h}, SV_H = ${g_svatky_h};
+          int P_Y[7], P_H[7], Y[7];
+          {
+            int y = OY;
+            for (int i = 0; i < 7; i++) {
+              P_H[i] = (i == 3) ? DNES_H : SV_H;
+              P_Y[i] = y;
+              // Text je ve svislem stredu sveho panelu.
+              Y[i] = y + ((i == 3) ? ${g_sv_dnes_text_dy} : ${g_sv_text_dy});
+              y += P_H[i] + MEZ;
+            }
           }
-          // Text je ve svislem stredu sveho panelu.
-          const int Y[7] = {65, 122, 179, 233, 322, 379, 436};
+          for (int i = 0; i < 7; i++) {
+            it.filled_rectangle(OX, P_Y[i], OW, P_H[i], id(color_card));
+          }
           // Datum sedi na svislem stredu dnesniho panelu vzdycky, takze zabira
           // levy pruh pres OBA radky -- proto se jmeno vejde jen do SIRKA minus
           // sirka data, a to i kdyz je na dva radky. Spolehat na to, ze se datum
           // svisle "vejde mezi radky", nejde: vyska pisma se lisi podle fontu
           // i podle toho, jestli ma text diakritiku.
           // Pri jednom radku sedne jmeno na uroven data = opticky jedna rada.
-          const int Y_DNES_2 = 267, Y_DNES_1RADEK = 247, Y_DNES_DATUM = 250;
-          const int SIRKA = 282, MEZERA = 10;   // x od 19 do 301
+          const int Y_DNES_2 = P_Y[3] + ${g_sv_dnes_2_dy};
+          const int Y_DNES_1RADEK = P_Y[3] + ${g_sv_dnes_1radek_dy};
+          const int Y_DNES_DATUM = P_Y[3] + ${g_sv_dnes_datum_dy};
+          const int SIRKA = GW, MEZERA = ${g_sv_mezera};   // x od GX do GX+GW
           text_sensor::TextSensor *JMENA[7] = {
             id(ha_svatek_m3), id(ha_svatek_m2), id(ha_svatek_m1), id(ha_svatek_0),
             id(ha_svatek_p1), id(ha_svatek_p2), id(ha_svatek_p3),
@@ -246,20 +266,20 @@ display:
 
             if (dnes) {
               if (!datum.empty()) {
-                it.print(19, Y_DNES_DATUM, id(font_small), id(color_arch),
+                it.print(GX, Y_DNES_DATUM, id(font_small), id(color_arch),
                          TextAlign::TOP_LEFT, datum.c_str());
               }
               if (r2.empty()) {
-                it.print(301, Y_DNES_1RADEK, f, c_jmeno, TextAlign::TOP_RIGHT, r1.c_str());
+                it.print(GX + GW, Y_DNES_1RADEK, f, c_jmeno, TextAlign::TOP_RIGHT, r1.c_str());
               } else {
-                it.print(301, Y[i], f, c_jmeno, TextAlign::TOP_RIGHT, r1.c_str());
-                it.print(301, Y_DNES_2, f, c_jmeno, TextAlign::TOP_RIGHT, r2.c_str());
+                it.print(GX + GW, Y[i], f, c_jmeno, TextAlign::TOP_RIGHT, r1.c_str());
+                it.print(GX + GW, Y_DNES_2, f, c_jmeno, TextAlign::TOP_RIGHT, r2.c_str());
               }
             } else {
               if (!datum.empty()) {
-                it.print(19, Y[i], id(font_small), id(color_muted),
+                it.print(GX, Y[i], id(font_small), id(color_muted),
                          TextAlign::TOP_LEFT, datum.c_str());
               }
-              it.print(301, Y[i], f, c_jmeno, TextAlign::TOP_RIGHT, r1.c_str());
+              it.print(GX + GW, Y[i], f, c_jmeno, TextAlign::TOP_RIGHT, r1.c_str());
             }
           }

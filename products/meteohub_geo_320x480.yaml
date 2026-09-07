@@ -1,0 +1,94 @@
+## products/meteohub_geo_320x480.yaml
+#
+# Geometrie panelu 320x480 na vysku (ST7796, ILI9488). Krome barev a fontu
+# je tohle JEDINE misto, kde se rozhoduje, jak je co velke -- kreslici
+# balicky uz zadne pevne cislo neobsahuji, vsechno si dopocitaji z tehle
+# hrstky rozmeru.
+#
+# Jiny displej = kopie tohohle souboru s jinymi cisly, treba
+# meteohub_geo_480x800.yaml. Kreslici balicky se nemeni.
+#
+# Zaradit do `packages:` JAKO PRVNI z meteohub balicku -- jsou to obycejne
+# substituce, takze musi byt k dispozici drive, nez se rozbaluji lambdy.
+#
+# Soubor ma dve casti: nahore ZAKLADNI rozmery, ktere se u jineho panelu
+# opravdu meni, dole ODVOZENE, ktere si Jinja dopocita sama. Odvozena cisla
+# needituj -- oprav zaklad a prepocitaji se.
+#
+# Kdyz menis cisla, hlidej si dve veci:
+#   - karta musi zustat vyssi nez jednotka_y + vyska font_small, jinak
+#     jednotka pretece ven (pri 101 px konci na 98).
+#   - obsah musi vyjit beze zbytku, jinak zustane krivy pruh dole.
+
+substitutions:
+  ## --- ram panelu
+  g_panel_w: "320"
+  g_panel_h: "480"
+  g_ramecek: "3"          # tloustka ramecku kolem dokola
+  g_lista_h: "43"         # vyska zahlavi (a jednou i zapati, az bude)
+  g_mezera: "6"           # cerna mezera: pod ramecek, pod listu, mezi karty
+
+  ## --- mrizka dashboardu
+  g_sloupcu: "2"
+  g_radku: "4"
+
+  ## --- vnitrek karticky (odsazeni od jejiho leveho horniho rohu)
+  g_karta_okraj: "8"        # levy okraj (ikona)
+  g_karta_okraj_p: "12"     # pravy okraj (popisek, hodnota, jednotka)
+  g_karta_popisek_y: "8"
+  g_karta_ikona_y: "26"
+  g_karta_hodnota_y: "34"
+  g_karta_jednotka_y: "76"
+  g_karta_pruh: "3"         # sirka barevneho prouzku u praveho okraje
+
+  ## --- panely s grafy
+  g_graf_okraj: "10"        # okraj grafu uvnitr panelu (vlevo/vpravo/dole)
+  g_graf_zahlavi: "34"      # pas nad grafem na okno a hodnoty
+  g_panel_text_dy: "8"      # odsazeni textu zahlavi od horniho okraje panelu
+  g_graf_popisek_dx: "4"    # popisky min/max uvnitr plochy grafu
+  g_graf_popisek_dy: "3"
+
+  ## --- stranka se svatky
+  g_svatky_dnes_h: "80"     # dnesni panel je vyssi, drzi misto na dva radky
+  g_sv_text_dy: "16"        # text v beznem panelu
+  g_sv_dnes_text_dy: "13"   # prvni radek dnesniho panelu
+  g_sv_dnes_2_dy: "47"      # druhy radek dnesniho panelu
+  g_sv_dnes_1radek_dy: "27" # jmeno na jeden radek -- opticky na stred
+  g_sv_dnes_datum_dy: "30"  # datum, svisly stred dnesniho panelu
+  g_sv_mezera: "10"         # mezera mezi datem a jmenem
+
+  ## --- lista u dotykovych kusu
+  g_lista_ikona_x: "19"      # levy okraj prvni ikony v liste
+  g_lista_hotspot_w: "64"    # sirka dotykove oblasti domecku (vetsi nez ikona,
+                             # at se do ni da trefit prstem)
+
+  ## --- velikosti pisma
+  g_font_title: "26"
+  g_font_label: "28"
+  g_font_value: "33"
+  g_font_small: "19"
+  g_font_name: "31"
+  g_font_icons: "36"        # ikony na kartickach
+  g_font_icons_lista: "28"  # ikony v liste (jen dotykove kusy)
+
+  ## ---------------------------------------------------------------------
+  ## Odvozene. NEEDITOVAT, pocita se to z hodnot vyse.
+  ## Pro 320x480 z toho vychazi cisla v zavorkach.
+  ## ---------------------------------------------------------------------
+  g_obsah_x: "${ g_ramecek | int + g_mezera | int }"                                   # 9
+  g_obsah_y: "${ g_lista_h | int + g_mezera | int }"                                   # 49
+  g_obsah_w: "${ g_panel_w | int - 2 * (g_ramecek | int + g_mezera | int) }"           # 302
+  g_obsah_h: "${ g_panel_h | int - (g_lista_h | int + g_mezera | int) - g_mezera | int - g_ramecek | int }"   # 422
+
+  g_karta_w: "${ (g_obsah_w | int - (g_sloupcu | int - 1) * (g_mezera | int)) // (g_sloupcu | int) }"   # 148
+  g_karta_h: "${ (g_obsah_h | int - (g_radku | int - 1) * (g_mezera | int)) // (g_radku | int) }"       # 101
+
+  g_gpanel_h: "${ (g_obsah_h | int - g_mezera | int) // 2 }"                           # 208
+  g_gpanel_y1: "${ g_obsah_y | int }"                                                  # 49
+  g_gpanel_y2: "${ g_obsah_y | int + (g_obsah_h | int - g_mezera | int) // 2 + g_mezera | int }"   # 263
+
+  g_graf_x: "${ g_obsah_x | int + g_graf_okraj | int }"                                # 19
+  g_graf_w: "${ g_obsah_w | int - 2 * (g_graf_okraj | int) }"                          # 282
+  g_graf_h: "${ g_gpanel_h | int - g_graf_zahlavi | int - g_graf_okraj | int }"        # 164
+
+  g_svatky_h: "${ (g_obsah_h | int - 6 * (g_mezera | int) - g_svatky_dnes_h | int) // 6 }"   # 51

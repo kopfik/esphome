@@ -63,7 +63,8 @@ script:
     then:
       - lambda: |-
           auto &it = *id(${display_id | default("displej35")});
-          const int CW = 148, CH = 101;
+          // Rozmery z products/meteohub_geo_*.yaml.
+          const int CW = ${g_karta_w}, CH = ${g_karta_h};
 
           const int REZIM = ${rezim | default("0")};
           const float PRAHY[8] = ${prahy | default("{0, 0, 0, 0, 0, 0, 0, 0}")};
@@ -95,15 +96,19 @@ script:
           const float v = id(ha_${prefix}).state;
           const Color vc = barva(v);
 
+          const int L = ${g_karta_okraj}, R = ${g_karta_okraj_p}, PRUH = ${g_karta_pruh};
+          const int xr = x + CW - R;
+
           it.filled_rectangle(x, y, CW, CH, id(color_card));
-          it.print(x + 8, y + 26, id(font_icons), vc, TextAlign::TOP_LEFT, "${ikona}");
-          it.print(x + CW - 12, y + 8, id(font_small), id(color_muted), TextAlign::TOP_RIGHT, "${popisek}");
+          it.print(x + L, y + ${g_karta_ikona_y}, id(font_icons), vc, TextAlign::TOP_LEFT, "${ikona}");
+          it.print(xr, y + ${g_karta_popisek_y}, id(font_small), id(color_muted), TextAlign::TOP_RIGHT, "${popisek}");
           if (isnan(v)) {
-            it.print(x + CW - 12, y + 34, id(font_value), id(color_muted), TextAlign::TOP_RIGHT, "--");
+            it.print(xr, y + ${g_karta_hodnota_y}, id(font_value), id(color_muted), TextAlign::TOP_RIGHT, "--");
           } else if (${desetiny | default("0")} == 0) {
-            it.printf(x + CW - 12, y + 34, id(font_value), vc, TextAlign::TOP_RIGHT, "%.0f", v);
+            it.printf(xr, y + ${g_karta_hodnota_y}, id(font_value), vc, TextAlign::TOP_RIGHT, "%.0f", v);
           } else {
-            it.printf(x + CW - 12, y + 34, id(font_value), vc, TextAlign::TOP_RIGHT, "%.1f", v);
+            it.printf(xr, y + ${g_karta_hodnota_y}, id(font_value), vc, TextAlign::TOP_RIGHT, "%.1f", v);
           }
-          it.print(x + CW - 12, y + 76, id(font_small), id(color_muted), TextAlign::TOP_RIGHT, "${jednotka}");
-          it.filled_rectangle(x + CW - 6, y + 8, 3, CH - 16, isnan(v) ? id(color_grid) : vc);
+          it.print(xr, y + ${g_karta_jednotka_y}, id(font_small), id(color_muted), TextAlign::TOP_RIGHT, "${jednotka}");
+          it.filled_rectangle(x + CW - 2 * PRUH, y + L, PRUH, CH - 2 * L,
+                              isnan(v) ? id(color_grid) : vc);

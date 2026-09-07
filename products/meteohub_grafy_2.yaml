@@ -41,8 +41,8 @@
 graph:
   - id: graf_${prefix}_100m
     duration: 100min
-    width: 282
-    height: 164
+    width: ${g_graf_w}
+    height: ${g_graf_h}
     x_grid: 25min
     y_grid: ${y_grid_100m}
     border: true
@@ -62,8 +62,8 @@ graph:
 
   - id: graf_${prefix}_25h
     duration: 25h
-    width: 282
-    height: 164
+    width: ${g_graf_w}
+    height: ${g_graf_h}
     x_grid: 6h
     y_grid: ${y_grid_25h}
     border: true
@@ -92,6 +92,15 @@ display:
           it.fill(id(color_bg));
           id(chrome)->execute("${titulek}");
 
+          // Rozmery z products/meteohub_geo_*.yaml, zadne pevne cislo tady.
+          const int OX = ${g_obsah_x}, OW = ${g_obsah_w};
+          const int PH = ${g_gpanel_h};                   // panel jednoho grafu
+          const int PY[2] = {${g_gpanel_y1}, ${g_gpanel_y2}};
+          const int ZAH = ${g_graf_zahlavi};
+          const int GX = ${g_graf_x}, GW = ${g_graf_w}, GH = ${g_graf_h};
+          const int TY = ${g_panel_text_dy};
+          const int PDX = ${g_graf_popisek_dx}, PDY = ${g_graf_popisek_dy};
+
           auto sirka = [&](font::Font *f, const std::string &t) -> int {
             if (t.empty()) return 0;
             int w = 0, x = 0;
@@ -100,14 +109,15 @@ display:
           };
 
           // Zahlavi panelu na JEDEN radek: okno vlevo, obe veliciny vpravo,
-          // kazda barvou sve cary. Vic nez 282 px (x od 19 do 301) k dispozici
-          // neni, a sirka hodnot se v case meni, takze se ustupuje po poradi:
+          // kazda barvou sve cary. Vic nez sirka grafu (pro 320x480 je to
+          // 282 px) k dispozici neni a sirka hodnot se v case meni, takze se
+          // ustupuje po poradi:
           // s jednotkou -> bez jednotky -> jen hodnoty -> zahodit popisek okna.
           // Rozhodnuti je pro oba panely spolecne, viz mereni sirky nize.
           // Nejtesnejsi je tlak: "Kopfik 1013" + "Hajzl 1013" + "100 min"
           // je 280 z 282 px, takze na prvni variantu se spolehnout nejde.
           auto zahlavi = [&](int py, const char *okno) {
-            const int X_R = 301, X_L = 19, SIRKA = 282, MEZERA = 10;
+            const int X_R = GX + GW, X_L = GX, SIRKA = GW, MEZERA = ${g_sv_mezera};
             font::Font *f = id(font_small);
 
             char h1[24], h2[24];
@@ -147,20 +157,24 @@ display:
           };
 
           // Panel 100 min -- stejna karta jako na dashboardu: cerna mezera
-          // 6 px kolem dokola, podklad color_card, graf s vnitrnim okrajem.
-          it.filled_rectangle(9, 49, 302, 208, id(color_card));
-          zahlavi(57, "100 min");
-          it.graph(19, 83, id(graf_${prefix}_100m), id(color_grid));
+          // kolem dokola, podklad color_card, graf s vnitrnim okrajem.
+          it.filled_rectangle(OX, PY[0], OW, PH, id(color_card));
+          zahlavi(PY[0] + TY, "100 min");
+          it.graph(GX, PY[0] + ZAH, id(graf_${prefix}_100m), id(color_grid));
           if (!isnan(id(graf_${prefix}_100m).get_graph_limit_max())) {
-            it.printf(23, 86, id(font_small), id(color_muted), TextAlign::TOP_LEFT, "%.0f", id(graf_${prefix}_100m).get_graph_limit_max());
-            it.printf(23, 247, id(font_small), id(color_muted), TextAlign::BOTTOM_LEFT, "%.0f", id(graf_${prefix}_100m).get_graph_limit_min());
+            it.printf(GX + PDX, PY[0] + ZAH + PDY, id(font_small), id(color_muted),
+                      TextAlign::TOP_LEFT, "%.0f", id(graf_${prefix}_100m).get_graph_limit_max());
+            it.printf(GX + PDX, PY[0] + ZAH + GH, id(font_small), id(color_muted),
+                      TextAlign::BOTTOM_LEFT, "%.0f", id(graf_${prefix}_100m).get_graph_limit_min());
           }
 
           // Panel 25 h
-          it.filled_rectangle(9, 263, 302, 208, id(color_card));
-          zahlavi(271, "25 h");
-          it.graph(19, 297, id(graf_${prefix}_25h), id(color_grid));
+          it.filled_rectangle(OX, PY[1], OW, PH, id(color_card));
+          zahlavi(PY[1] + TY, "25 h");
+          it.graph(GX, PY[1] + ZAH, id(graf_${prefix}_25h), id(color_grid));
           if (!isnan(id(graf_${prefix}_25h).get_graph_limit_max())) {
-            it.printf(23, 300, id(font_small), id(color_muted), TextAlign::TOP_LEFT, "%.0f", id(graf_${prefix}_25h).get_graph_limit_max());
-            it.printf(23, 461, id(font_small), id(color_muted), TextAlign::BOTTOM_LEFT, "%.0f", id(graf_${prefix}_25h).get_graph_limit_min());
+            it.printf(GX + PDX, PY[1] + ZAH + PDY, id(font_small), id(color_muted),
+                      TextAlign::TOP_LEFT, "%.0f", id(graf_${prefix}_25h).get_graph_limit_max());
+            it.printf(GX + PDX, PY[1] + ZAH + GH, id(font_small), id(color_muted),
+                      TextAlign::BOTTOM_LEFT, "%.0f", id(graf_${prefix}_25h).get_graph_limit_min());
           }

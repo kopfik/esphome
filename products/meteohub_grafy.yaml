@@ -27,8 +27,8 @@
 graph:
   - id: graf_${prefix}_100m
     duration: 100min
-    width: 282
-    height: 164
+    width: ${g_graf_w}
+    height: ${g_graf_h}
     x_grid: 25min
     y_grid: ${y_grid_100m}
     border: true
@@ -45,8 +45,8 @@ graph:
 
   - id: graf_${prefix}_25h
     duration: 25h
-    width: 282
-    height: 164
+    width: ${g_graf_w}
+    height: ${g_graf_h}
     x_grid: 6h
     y_grid: ${y_grid_25h}
     border: true
@@ -71,27 +71,42 @@ display:
           it.fill(id(color_bg));
           id(chrome)->execute("${titulek}");
 
+          // Rozmery z products/meteohub_geo_*.yaml, zadne pevne cislo tady.
+          const int OX = ${g_obsah_x}, OW = ${g_obsah_w};
+          const int PH = ${g_gpanel_h};                   // panel jednoho grafu
+          const int PY[2] = {${g_gpanel_y1}, ${g_gpanel_y2}};
+          const int ZAH = ${g_graf_zahlavi};
+          const int GX = ${g_graf_x}, GW = ${g_graf_w}, GH = ${g_graf_h};
+          const int TY = ${g_panel_text_dy};
+          const int PDX = ${g_graf_popisek_dx}, PDY = ${g_graf_popisek_dy};
+
           // Panel 100 min -- stejna karta jako na dashboardu: cerna mezera
-          // 6 px kolem dokola, podklad color_card, graf s vnitrnim okrajem.
-          it.filled_rectangle(9, 49, 302, 208, id(color_card));
-          it.print(19, 57, id(font_small), id(color_arch), TextAlign::TOP_LEFT, "100 min");
+          // kolem dokola, podklad color_card, graf s vnitrnim okrajem.
+          it.filled_rectangle(OX, PY[0], OW, PH, id(color_card));
+          it.print(GX, PY[0] + TY, id(font_small), id(color_arch), TextAlign::TOP_LEFT, "100 min");
           if (!isnan(id(ha_${prefix}).state)) {
-            it.printf(301, 57, id(font_small), id(color_arch), TextAlign::TOP_RIGHT, "${format}", id(ha_${prefix}).state);
+            it.printf(GX + GW, PY[0] + TY, id(font_small), id(color_arch),
+                      TextAlign::TOP_RIGHT, "${format}", id(ha_${prefix}).state);
           }
-          it.graph(19, 83, id(graf_${prefix}_100m), id(color_grid));
+          it.graph(GX, PY[0] + ZAH, id(graf_${prefix}_100m), id(color_grid));
           if (!isnan(id(graf_${prefix}_100m).get_graph_limit_max())) {
-            it.printf(23, 86, id(font_small), id(color_muted), TextAlign::TOP_LEFT, "%.0f", id(graf_${prefix}_100m).get_graph_limit_max());
-            it.printf(23, 247, id(font_small), id(color_muted), TextAlign::BOTTOM_LEFT, "%.0f", id(graf_${prefix}_100m).get_graph_limit_min());
+            it.printf(GX + PDX, PY[0] + ZAH + PDY, id(font_small), id(color_muted),
+                      TextAlign::TOP_LEFT, "%.0f", id(graf_${prefix}_100m).get_graph_limit_max());
+            it.printf(GX + PDX, PY[0] + ZAH + GH, id(font_small), id(color_muted),
+                      TextAlign::BOTTOM_LEFT, "%.0f", id(graf_${prefix}_100m).get_graph_limit_min());
           }
 
           // Panel 25 h
-          it.filled_rectangle(9, 263, 302, 208, id(color_card));
-          it.print(19, 271, id(font_small), id(color_arch), TextAlign::TOP_LEFT, "25 h");
+          it.filled_rectangle(OX, PY[1], OW, PH, id(color_card));
+          it.print(GX, PY[1] + TY, id(font_small), id(color_arch), TextAlign::TOP_LEFT, "25 h");
           if (!isnan(id(ha_${prefix}).state)) {
-            it.printf(301, 271, id(font_small), id(color_arch), TextAlign::TOP_RIGHT, "${format}", id(ha_${prefix}).state);
+            it.printf(GX + GW, PY[1] + TY, id(font_small), id(color_arch),
+                      TextAlign::TOP_RIGHT, "${format}", id(ha_${prefix}).state);
           }
-          it.graph(19, 297, id(graf_${prefix}_25h), id(color_grid));
+          it.graph(GX, PY[1] + ZAH, id(graf_${prefix}_25h), id(color_grid));
           if (!isnan(id(graf_${prefix}_25h).get_graph_limit_max())) {
-            it.printf(23, 300, id(font_small), id(color_muted), TextAlign::TOP_LEFT, "%.0f", id(graf_${prefix}_25h).get_graph_limit_max());
-            it.printf(23, 461, id(font_small), id(color_muted), TextAlign::BOTTOM_LEFT, "%.0f", id(graf_${prefix}_25h).get_graph_limit_min());
+            it.printf(GX + PDX, PY[1] + ZAH + PDY, id(font_small), id(color_muted),
+                      TextAlign::TOP_LEFT, "%.0f", id(graf_${prefix}_25h).get_graph_limit_max());
+            it.printf(GX + PDX, PY[1] + ZAH + GH, id(font_small), id(color_muted),
+                      TextAlign::BOTTOM_LEFT, "%.0f", id(graf_${prefix}_25h).get_graph_limit_min());
           }

@@ -55,11 +55,20 @@ display:
         lambda: |-
           it.fill(id(color_bg));
           id(chrome)->execute("${titulek}");
-          id(${slot1 | default("karta_prazdna")})->execute(  9,  49);
-          id(${slot2 | default("karta_prazdna")})->execute(163,  49);
-          id(${slot3 | default("karta_prazdna")})->execute(  9, 156);
-          id(${slot4 | default("karta_prazdna")})->execute(163, 156);
-          id(${slot5 | default("karta_prazdna")})->execute(  9, 263);
-          id(${slot6 | default("karta_prazdna")})->execute(163, 263);
-          id(${slot7 | default("karta_prazdna")})->execute(  9, 370);
-          id(${slot8 | default("karta_prazdna")})->execute(163, 370);
+
+          // Geometrie z products/meteohub_geo_*.yaml.
+          const int MEZ = ${g_mezera};
+          const int OX = ${g_obsah_x}, OY = ${g_obsah_y};
+          const int CW = ${g_karta_w}, CH = ${g_karta_h};
+          const int SL = ${g_sloupcu}, RD = ${g_radku};
+          const int X[2] = {OX, OX + CW + MEZ};
+          const int Y[4] = {OY, OY + CH + MEZ, OY + 2 * (CH + MEZ), OY + 3 * (CH + MEZ)};
+
+          id(${slot1 | default("karta_prazdna")})->execute(X[0], Y[0]);
+          id(${slot2 | default("karta_prazdna")})->execute(X[1], Y[0]);
+          id(${slot3 | default("karta_prazdna")})->execute(X[0], Y[1]);
+          id(${slot4 | default("karta_prazdna")})->execute(X[1], Y[1]);
+          id(${slot5 | default("karta_prazdna")})->execute(X[0], Y[2]);
+          id(${slot6 | default("karta_prazdna")})->execute(X[1], Y[2]);
+          id(${slot7 | default("karta_prazdna")})->execute(X[0], Y[3]);
+          id(${slot8 | default("karta_prazdna")})->execute(X[1], Y[3]);

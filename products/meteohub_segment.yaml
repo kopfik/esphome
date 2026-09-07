@@ -1,0 +1,26 @@
+## products/meteohub_segment.yaml
+#
+# Volitelny doplnek pro kusy, ktere maji sedmisegmentovku (TM1637). Prive?uje
+# jeji zapinani a zhasinani k tomu, co uz dela core: pri detekci cloveka se
+# rozsviti spolu s podsvicenim, po 3 minutach klidu spolu s nim zhasne.
+#
+# Core sam o sedmisegmentovce nevi -- p4eth-stul-kopfik ji nema, a nejde ji
+# mit "volitelne" primo v nem, protoze YAML neumi podminku. Proto tenhle
+# samostatny balicek, ktery se pres `!extend` pripoji k hotovemu radaru
+# a hotovemu scriptu. Akce se do `on_press` i do `then:` PRIDAVAJI na konec,
+# nic neprepisuji.
+#
+# Vyzaduje products/meteohub_core.yaml a device musi definovat
+# `segmentovy_displej_power` (components/displays/tm1637.yaml).
+#
+# Vars: zadne.
+
+binary_sensor:
+  - id: !extend radar_presence_akce
+    on_press:
+      - switch.turn_on: segmentovy_displej_power
+
+script:
+  - id: !extend display_backlight_off_delayed
+    then:
+      - switch.turn_off: segmentovy_displej_power
