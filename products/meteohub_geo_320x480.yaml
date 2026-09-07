@@ -69,9 +69,9 @@ substitutions:
   g_font_small: "19"
   g_font_name: "31"
   g_font_icons: "36"        # ikony na kartickach
-  g_font_hodiny: "210"      # velke cislice na strance s hodinami. Pro 320x480
-                            # ma '88' 238 px na sirku a 152 px na vysku, dva
-                            # radky tedy 304 z 394 px volneho pasu.
+  g_font_hodiny: "180"      # velke cislice na strance s hodinami. Pro 320x480
+                            # ma '88' 204 px na sirku a 125 px na vysku, dva
+                            # radky tedy 250 z 394 px volneho pasu.
   g_font_icons_lista: "28"  # ikony v liste (jen dotykove kusy)
 
   ## ---------------------------------------------------------------------

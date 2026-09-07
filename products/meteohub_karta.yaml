@@ -48,35 +48,12 @@ script:
           // Rozmery z products/meteohub_geo_*.yaml.
           const int CW = ${g_karta_w}, CH = ${g_karta_h};
 
-          const int REZIM = ${rezim | default("0")};
-          const float PRAHY[8] = ${prahy | default("{0, 0, 0, 0, 0, 0, 0, 0}")};
-          const float STRED = ${stred | default("0")};
-          const float KROK  = ${krok | default("1")};
-
-          auto barva = [&](float v) -> Color {
-            if (isnan(v)) return id(color_muted);
-            if (REZIM == 2) return id(${pevna_barva | default("color_yellow")});
-            const Color S[9] = {
-              id(color_green_0), id(color_green_1), id(color_green_2),
-              id(color_green_3), id(color_yellow),  id(color_orange_1),
-              id(color_orange_2), id(color_orange_3), id(color_red)};
-            int lvl = 0;
-            if (REZIM == 1) {
-              // Nad stredem se stupen zaokrouhluje dolu, pod nim nahoru --
-              // tim skala vychazi na obe strany stejne siroka. Odpovida to
-              // rucne psanym prahum v puvodnim products/meteohub.yaml.
-              float d = fabsf(v - STRED) / KROK;
-              lvl = (v >= STRED) ? (int) floorf(d) : (int) ceilf(d);
-            } else {
-              for (int i = 0; i < 8; i++) if (v >= PRAHY[i]) lvl = i + 1;
-            }
-            if (lvl < 0) lvl = 0;
-            if (lvl > 8) lvl = 8;
-            return S[lvl];
-          };
-
           const float v = id(${zdroj}).state;
-          const Color vc = barva(v);
+          // Prahovou barvu pocita products/meteohub_skala.yaml (viz `packages:`
+          // dole) -- stejny vypocet pak muze pouzit i jina stranka, treba
+          // zahlavi hodin, aniz by se logika kopirovala.
+          id(skala_${prefix})->execute(v);
+          const Color vc = id(barva_${prefix});
 
           const int L = ${g_karta_okraj}, R = ${g_karta_okraj_p}, PRUH = ${g_karta_pruh};
           const int xr = x + CW - R;
@@ -94,3 +71,16 @@ script:
           it.print(xr, y + ${g_karta_jednotka_y}, id(font_small), id(color_muted), TextAlign::TOP_RIGHT, "${jednotka}");
           it.filled_rectangle(x + CW - 2 * PRUH, y + L, PRUH, CH - 2 * L,
                               isnan(v) ? id(color_grid) : vc);
+
+packages:
+  # POZOR: vnorene `!include` se resi RELATIVNE k tomuhle souboru, ne ke koreni
+  # konfigurace -- proto bez `products/`.
+  skala: !include
+    file: meteohub_skala.yaml
+    vars:
+      prefix: ${prefix}
+      rezim: ${rezim | default("0")}
+      prahy: ${prahy | default("{0, 0, 0, 0, 0, 0, 0, 0}")}
+      stred: ${stred | default("0")}
+      krok: ${krok | default("1")}
+      pevna_barva: ${pevna_barva | default("color_yellow")}

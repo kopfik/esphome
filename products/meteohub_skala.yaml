@@ -1,0 +1,73 @@
+## products/meteohub_skala.yaml
+#
+# Prahova barva jedne veliciny. Sama nic nekresli -- jen prevede hodnotu na
+# barvu a ulozi ji do globalu, aby ji mohlo pouzit vic mist naraz:
+#
+#   global  barva_${prefix}    Color, vysledek posledniho vypoctu
+#   script  skala_${prefix}(v) spocita barvu pro hodnotu v
+#
+# Pouziti:
+#   id(skala_lok_temp)->execute(hodnota);
+#   Color c = id(barva_lok_temp);
+#
+# Volani je synchronni (SingleScript bez delay), takze barva je k dispozici
+# hned na dalsim radku. Uvnitr nesmi pribyt zadny `delay`.
+#
+# Vlastni includovani obvykle nepotrebujes: meteohub_karta.yaml si tenhle
+# balicek zavola sam, takze ke kazde karticce uz jedna skala existuje a jde
+# ji pouzit i jinde (napr. meteohub_hodiny.yaml barvi hodnoty v zahlavi
+# stejne jako odpovidajici karticka na dashboardu).
+#
+# Skala ma 9 stupnu: green_0, green_1, green_2, green_3, yellow,
+# orange_1, orange_2, orange_3, red.
+#
+# Vars:
+#   prefix        zaklad id -> skala_${prefix}, barva_${prefix}
+#   rezim         0 vzestupna (`prahy`) | 1 symetricka (`stred`+`krok`)
+#                 | 2 pevna (`pevna_barva`)
+#   prahy         8 hodnot vzestupne VE SLOZENYCH ZAVORKACH, napr.
+#                 prahy: "{750, 900, 1050, 1200, 1350, 1500, 1650, 1800}"
+#                 Zavorky tam MUSI byt: substituce, ktera tvori celou hodnotu
+#                 promenne, jde v ESPHome pres ast.literal_eval a holy seznam
+#                 "750, 900, ..." by se stal Python tuplem a vyrenderoval se
+#                 SE ZAVORKAMI -- a "(a, b, c)" je v C++ operator carka.
+#   stred, krok   stred skaly a velikost jednoho stupne (rezim 1)
+#   pevna_barva   id barvy (rezim 2, default color_yellow)
+
+globals:
+  - id: barva_${prefix}
+    type: Color
+    restore_value: false
+
+script:
+  - id: skala_${prefix}
+    mode: single
+    parameters:
+      v: float
+    then:
+      - lambda: |-
+          const int REZIM = ${rezim | default("0")};
+          const float PRAHY[8] = ${prahy | default("{0, 0, 0, 0, 0, 0, 0, 0}")};
+          const float STRED = ${stred | default("0")};
+          const float KROK  = ${krok | default("1")};
+
+          if (isnan(v)) { id(barva_${prefix}) = id(color_muted); return; }
+          if (REZIM == 2) { id(barva_${prefix}) = id(${pevna_barva | default("color_yellow")}); return; }
+
+          const Color S[9] = {
+            id(color_green_0), id(color_green_1), id(color_green_2),
+            id(color_green_3), id(color_yellow),  id(color_orange_1),
+            id(color_orange_2), id(color_orange_3), id(color_red)};
+          int lvl = 0;
+          if (REZIM == 1) {
+            // Nad stredem se stupen zaokrouhluje dolu, pod nim nahoru --
+            // tim skala vychazi na obe strany stejne siroka. Odpovida to
+            // rucne psanym prahum v puvodnim products/meteohub.yaml.
+            float d = fabsf(v - STRED) / KROK;
+            lvl = (v >= STRED) ? (int) floorf(d) : (int) ceilf(d);
+          } else {
+            for (int i = 0; i < 8; i++) if (v >= PRAHY[i]) lvl = i + 1;
+          }
+          if (lvl < 0) lvl = 0;
+          if (lvl > 8) lvl = 8;
+          id(barva_${prefix}) = S[lvl];

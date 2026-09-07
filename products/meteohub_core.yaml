@@ -132,6 +132,11 @@ color:
   - id: color_muted
     hex: "7A8CA0"
 
+  # Tlumena bila (75 % bile, 25 % cerne). Na velke plochy, ktere by v cisté
+  # bile prilis zarily -- napr. cislice hodin na klidove strance.
+  - id: color_dim
+    hex: "BFBFBF"
+
 script:
   # Prepise dve "chromove" barvy podle vybraneho schematu. Prahove barvy
   # (green/yellow/orange/red) se nemeni schvalne - nesou vyznam.

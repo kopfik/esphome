@@ -23,9 +23,14 @@
 # Vars:
 #   volba          text polozky v selectu prepinani stranek
 #   zdroj_vlevo    id senzoru vlevo nahore (napr. sht41_temp_raw)
-#   format_vlevo   printf vcetne jednotky (default "%.1f °C")
-#   zdroj_vpravo   id senzoru vpravo nahore
-#   format_vpravo  printf vcetne jednotky (default "%.0f PPM")
+#   format_vlevo   printf SAMOTNEHO cisla, bez jednotky (default "%.1f")
+#   jednotka_vlevo text za cislem (default "°C")
+#   skala_vlevo    prefix karticky, jejiz prahovou barvu ma cislo pouzit
+#                  (napr. lok_temp -> pouzije skala_lok_temp). Diky tomu ma
+#                  hodnota tady stejnou barvu jako na dashboardu, aniz by se
+#                  prahy psaly znovu.
+#   zdroj_vpravo, format_vpravo, jednotka_vpravo, skala_vpravo
+#                  totez pro pravou stranu (default "%.0f" a "PPM")
 #   display_id, time_id
 
 select:
@@ -67,29 +72,57 @@ display:
 
           // ---- horni pas: dve hodnoty, bez popisku ----
           // Stejne pismo jako hodnota na karticce dashboardu (font_value).
-          // Na 302 px se to vejde s rezervou: '-12.5 °C' + '1450 PPM' je 277 px.
-          const float vl = id(${zdroj_vlevo}).state;
-          if (isnan(vl)) {
-            it.print(GX, Y_LISTA, id(font_value), id(color_muted),
-                     TextAlign::CENTER_LEFT, "--");
-          } else {
-            it.printf(GX, Y_LISTA, id(font_value), id(color_arch),
-                      TextAlign::CENTER_LEFT, "${format_vlevo | default("%.1f °C")}", vl);
+          // Cislo ma prahovou barvu jako na dashboardu, jednotka zustava
+          // v akcentu -- proto se kresli zvlast a musi se zmerit sirka.
+          // Na 302 px je rezerva: '-12.5 °C' + '1450 PPM' je 277 px.
+          const int MEZ_JEDN = 4;
+          auto sirka = [&](const std::string &s) -> int {
+            if (s.empty()) return 0;
+            int w = 0, x = 0;
+            id(font_value)->measure(s.c_str(), &w, &x, &x, &x);
+            return w;
+          };
+
+          {
+            const float vl = id(${zdroj_vlevo}).state;
+            char cbuf[24];
+            Color cc = id(color_muted);
+            if (isnan(vl)) {
+              snprintf(cbuf, sizeof(cbuf), "--");
+            } else {
+              snprintf(cbuf, sizeof(cbuf), "${format_vlevo | default("%.1f")}", vl);
+              id(skala_${skala_vlevo})->execute(vl);
+              cc = id(barva_${skala_vlevo});
+            }
+            it.print(GX, Y_LISTA, id(font_value), cc, TextAlign::CENTER_LEFT, cbuf);
+            it.print(GX + sirka(cbuf) + MEZ_JEDN, Y_LISTA, id(font_value),
+                     id(color_arch), TextAlign::CENTER_LEFT, "${jednotka_vlevo | default("°C")}");
           }
-          const float vp = id(${zdroj_vpravo}).state;
-          if (isnan(vp)) {
-            it.print(GX + GW, Y_LISTA, id(font_value), id(color_muted),
-                     TextAlign::CENTER_RIGHT, "--");
-          } else {
-            it.printf(GX + GW, Y_LISTA, id(font_value), id(color_arch),
-                      TextAlign::CENTER_RIGHT, "${format_vpravo | default("%.0f PPM")}", vp);
+          {
+            const float vp = id(${zdroj_vpravo}).state;
+            char cbuf[24];
+            Color cc = id(color_muted);
+            if (isnan(vp)) {
+              snprintf(cbuf, sizeof(cbuf), "--");
+            } else {
+              snprintf(cbuf, sizeof(cbuf), "${format_vpravo | default("%.0f")}", vp);
+              id(skala_${skala_vpravo})->execute(vp);
+              cc = id(barva_${skala_vpravo});
+            }
+            const std::string J = "${jednotka_vpravo | default("PPM")}";
+            it.print(GX + GW, Y_LISTA, id(font_value), id(color_arch),
+                     TextAlign::CENTER_RIGHT, J.c_str());
+            it.print(GX + GW - sirka(J) - MEZ_JEDN, Y_LISTA, id(font_value),
+                     cc, TextAlign::CENTER_RIGHT, cbuf);
           }
 
           // ---- hodiny: 24h, hodina nad minutou ----
+          // Tlumena bila (color_dim), ne cista -- takova plocha by v cerne
+          // strance zarila az moc.
           if (ted.is_valid()) {
-            it.strftime(W / 2, Y_HOD, id(font_hodiny), id(color_white),
+            it.strftime(W / 2, Y_HOD, id(font_hodiny), id(color_dim),
                         TextAlign::CENTER, "%H", ted);
-            it.strftime(W / 2, Y_MIN, id(font_hodiny), id(color_white),
+            it.strftime(W / 2, Y_MIN, id(font_hodiny), id(color_dim),
                         TextAlign::CENTER, "%M", ted);
           } else {
             it.print(W / 2, Y_HOD, id(font_hodiny), id(color_muted), TextAlign::CENTER, "00");
