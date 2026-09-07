@@ -70,8 +70,12 @@ substitutions:
   g_font_name: "31"
   g_font_icons: "36"        # ikony na kartickach
   g_font_hodiny: "180"      # velke cislice na strance s hodinami. Pro 320x480
-                            # ma '88' 204 px na sirku a 125 px na vysku, dva
-                            # radky tedy 250 z 394 px volneho pasu.
+                            # ma '88' 204 px na sirku a 131 px na vysku.
+  g_hodiny_rozestup: "150"  # vzdalenost stredu radku hodin a minut. Oba jsou
+                            # symetricky kolem stredu volneho pasu, takze tohle
+                            # ridi mezeru mezi nimi: 150 - 131 = 19 px mezery
+                            # a shodnych 57 px k zahlavi i k zapati.
+                            # Mensi cislo = blize u sebe.
   g_font_icons_lista: "28"  # ikony v liste (jen dotykove kusy)
 
   ## ---------------------------------------------------------------------

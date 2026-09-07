@@ -60,11 +60,15 @@ display:
           const int LISTA = ${g_lista_h};
           const int GX = ${g_graf_x}, GW = ${g_graf_w};
 
-          // Volny pas mezi hornim a dolnim pasem; hodina na jeho ctvrtine,
-          // minuta na tri ctvrtinach -- opticky vyvazene i pri jine vysce.
+          // Oba radky symetricky kolem stredu volneho pasu, vzdalene od sebe
+          // o g_hodiny_rozestup. Timhle se ridi mezera mezi hodinou a minutou
+          // -- driv byly na ctvrtine a tri ctvrtinach, coz je rozhazovalo
+          // zbytecne daleko od sebe.
           const int PAS = H - 2 * LISTA;
-          const int Y_HOD = LISTA + PAS / 4;
-          const int Y_MIN = LISTA + 3 * PAS / 4;
+          const int STRED = LISTA + PAS / 2;
+          const int ROZESTUP = ${g_hodiny_rozestup};
+          const int Y_HOD = STRED - ROZESTUP / 2;
+          const int Y_MIN = STRED + ROZESTUP / 2;
           const int Y_LISTA = (LISTA - 1) / 2;          // svisly stred pasu
           const int Y_ZAPATI = H - 1 - Y_LISTA;
 
