@@ -323,6 +323,10 @@ font:
     size: ${g_font_title}
     glyphsets:
       - GF_Latin_Core
+    glyphs:
+      # GF_Latin_Core dolni indexy nema, takze zvlast -- kvuli "CO₂".
+      # Dolni "x" (U+2093) Ubuntu NEMA, proto se NOx pise obycejnym x.
+      - "₂"
 
   - file:
       type: gfonts
@@ -350,6 +354,10 @@ font:
     size: ${g_font_small}
     glyphsets:
       - GF_Latin_Core
+    glyphs:
+      # GF_Latin_Core dolni indexy nema, takze zvlast -- kvuli "CO₂".
+      # Dolni "x" (U+2093) Ubuntu NEMA, proto se NOx pise obycejnym x.
+      - "₂"
 
   - file:
       type: gfonts
