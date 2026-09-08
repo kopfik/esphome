@@ -13,12 +13,16 @@
 #       inverted: false
 #       restore_mode: ALWAYS_OFF
 #
-# Optional vars: inverted (default false), restore_mode (default ALWAYS_OFF).
+# Optional vars: inverted (default false), restore_mode (default ALWAYS_OFF),
+# internal (default false).
 #
 # 'inverted' patří do pin schema, ne do switche -- použij ho, když hardware
 # spíná při LOW. restore_mode ALWAYS_OFF je bezpečný default pro cokoli, co
 # spíná výkon (nabíječ, relé): po bootu je to vždy vypnuté a o zapnutí
 # rozhodne až logika v device YAML.
+#
+# 'internal: true' switch nevystaví do HA. Hodí se, když pin musí držet jeden
+# stav a přepnutí by zařízení rozbilo -- entita v HA by pak byla jen past.
 
 switch:
   - platform: gpio
@@ -28,3 +32,4 @@ switch:
       number: ${pin}
       inverted: ${inverted | default("false")}
     restore_mode: ${restore_mode | default("ALWAYS_OFF")}
+    internal: ${internal | default("false")}

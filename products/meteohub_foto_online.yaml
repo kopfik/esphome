@@ -1,0 +1,120 @@
+## products/meteohub_foto_online.yaml
+#
+# Stranka s fotkou, ktera se STAHUJE ZA BEHU misto aby byla zapecena ve
+# firmware. Adresu rika Home Assistant pres text_sensor, takze galerie se
+# meni bez prekladu a bez flashovani.
+#
+#   image        img_online       jeden buffer, meni se obsah
+#   text_sensor  ha_foto_soubor   nazev souboru z HA
+#   button       "${btn_name}"    preskoc na dalsi
+#   page         page_foto_online_${sufix}
+#   select       polozka "${volba}"
+#
+# ---- Proc jedna stranka a ne stranka na fotku -------------------------------
+# Kazda online_image si drzi vlastni buffer s dekodovanym obrazkem, u 320x480
+# v RGB565 je to 300 kB v PSRAM. Meteohub ma 2 MB a 300 kB uz bere framebuffer
+# displeje, takze vic nez par obrazku naraz nema smysl. Proto je stranka jedna
+# a meni se, co je v ni.
+#
+# ---- Proc se to na meteohubu vyplati ----------------------------------------
+# Zmereno na s3sm-meteohub-solomon (app partition 1 835 008 B):
+#   obrazek zapeceny ve flash          1 517 879 B  82,7 %
+#   + online_image + http_request      1 594 907 B  86,9 %   (+77 kB)
+#   + machinery, obrazek vyhozeny      1 287 679 B  70,2 %
+# Machinery stoji 77 kB, jeden zapeceny obrazek 300 kB. Prvni vymenena fotka
+# to zaplati a kazda dalsi je pak za nula flash. HTTPS stoji 120 B navic
+# (TLS stack uz je v buildu kvuli OTA), takze se kvuli mistu omezovat nemusis.
+#
+# ---- Omezeni, o kterych je dobre vedet --------------------------------------
+#   - JEDEN format na komponentu. `format:` je povinny a plati pro vsechny
+#     fotky v galerii -- nemichej JPEG a PNG.
+#   - PROGRESIVNI JPEG dekoder NEUMI (jpeg_decoder.cpp: "Progressive JPEG
+#     images not supported"). Pri davkove priprave vynut baseline:
+#       mogrify -path hotovo -resize 320x480^ -gravity center -extent 320x480 \
+#               -interlace none -quality 85 *.jpg
+#   - Zmensovat umi (`resize:`), skaluje se pri zachovani pomeru stran
+#     (image_decoder.cpp pocita x_scale_/y_scale_). Presto fotky predzmensuj:
+#     stahovat 4 MB z mobilu kvuli nahledu 320x480 je pres WiFi zbytecne
+#     a dekodovani trva dyl.
+#   - GIF NEJDE. Runtime dekodery jsou jen BMP, JPEG a PNG; animovany GIF umi
+#     jen komponenta `animation:`, a ta je compile-time, tedy zase do flashe.
+#   - Kdyz HA nebezi, ukaze se `placeholder` (zapeceny zalozni obrazek).
+#
+# Vyzaduje products/meteohub_core.yaml a products/meteohub_geo_*.yaml.
+# Zarizeni musi mit `api:` (kvuli tlacitku, ktere vola sluzbu HA) a v `image:`
+# uz NOVY zapis s `platform:` -- stary a novy tvar nejdou michat.
+#
+# Vars:
+#   sufix          zaklad id stranky -> page_foto_online_${sufix}
+#   volba          text polozky v selectu prepinani stranek
+#   ha_foto        entity_id senzoru v HA, ktery drzi NAZEV SOUBORU
+#   zaklad_url     zacatek adresy vcetne lomitka na konci, napr.
+#                  "http://10.20.30.40:8123/local/fotky/"
+#   foto_zaloha    id zapeceneho obrazku, ktery se ukaze nez se stahne prvni
+#                  fotka a kdyz stahovani selze
+#   format         JPEG (default) | PNG | BMP -- jeden pro celou galerii
+#   btn_name       jmeno tlacitka (default "Další foto")
+#   verify_ssl     default false; u verejne adresy s platnym certem dej true
+#   display_id
+
+http_request:
+  timeout: ${http_timeout | default("15s")}
+  verify_ssl: ${verify_ssl | default("false")}
+
+image:
+  - platform: online_image
+    id: img_online
+    # Adresa je povinna uz pri prekladu, ale hned ji prepise text_sensor nize.
+    # `update_interval: never` znamena, ze se samo nic nestahuje -- stahne se
+    # az kdyz prijde nova hodnota z HA nebo se zmackne tlacitko.
+    url: "${zaklad_url}"
+    format: ${format | default("JPEG")}
+    type: RGB565
+    resize: ${g_panel_w}x${g_panel_h}
+    placeholder: ${foto_zaloha}
+    update_interval: never
+    buffer_size: 65536
+    on_download_finished:
+      - component.update: ${display_id | default("displej35")}
+    on_error:
+      - logger.log:
+          level: WARN
+          format: "Fotku se nepodarilo stahnout, zustava zalozni obrazek"
+
+text_sensor:
+  # HA rika, ktery soubor se ma ukazat. Zarizeni si seznam nedrzi -- diky tomu
+  # jde galerie menit bez prekladu firmware.
+  - platform: homeassistant
+    id: ha_foto_soubor
+    entity_id: ${ha_foto}
+    internal: true
+    on_value:
+      - online_image.set_url:
+          id: img_online
+          url: !lambda 'return std::string("${zaklad_url}") + x;'
+
+button:
+  - platform: template
+    name: "${btn_name | default(\"Další foto\")}"
+    id: btn_foto_dalsi
+    on_press:
+      # Prekresli senzor v HA -> ten vybere jinou fotku -> prijde nova hodnota
+      # do text_sensoru vyse -> stahne se. Vyber resi HA, ne zarizeni.
+      - homeassistant.service:
+          service: homeassistant.update_entity
+          data:
+            entity_id: ${ha_foto}
+
+select:
+  - id: !extend display_page
+    options:
+      - "${volba}"
+
+display:
+  - id: !extend ${display_id | default("displej35")}
+    pages:
+      - id: page_foto_online_${sufix}
+        lambda: |-
+          // Dokud neni nic stazeno, kresli se `placeholder` z konfigurace
+          // obrazku vyse -- o to se stara sama komponenta.
+          it.image(0, 0, id(img_online));
