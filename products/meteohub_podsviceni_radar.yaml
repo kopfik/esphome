@@ -1,0 +1,50 @@
+## products/meteohub_podsviceni_radar.yaml
+#
+# Politika podsviceni pro kusy BEZ dotyku (meteohuby): sviti, kdyz je nekdo
+# v mistnosti, a po klidu zhasne.
+#
+#   po startu           rozsviti na plny jas
+#   radar detekuje      rozsviti na plny jas, zrusi odpocet
+#   radar pusti         spusti odpocet, po ${zhasnout_po} zhasne
+#
+# Je to presne to, co drive delal primo meteohub_core.yaml. Vyclenilo se to,
+# protoze dotykovy stul potrebuje politiku uplne jinou -- viz
+# meteohub_podsviceni_dotyk.yaml. Bez jednoho z tech dvou balicku zustane
+# displej po startu tmavy.
+#
+# Skutecna prodleva je delsi nez ${zhasnout_po} -- ld2410c_has_target sam drzi
+# jeste svuj hold time, nez pusti clear.
+#
+# Vyzaduje products/meteohub_core.yaml. Kdyz kus pouziva i
+# meteohub_segment.yaml, musi byt segment AZ ZA timhle balickem: pripojuje se
+# ke scriptu, ktery vznika tady.
+#
+# Vars:
+#   zhasnout_po   doba klidu do zhasnuti (default 3min)
+#   jas           jas pri detekci (default 100%)
+
+esphome:
+  on_boot:
+    priority: -100
+    then:
+      - light.turn_on:
+          id: display_backlight
+          brightness: ${jas | default("100%")}
+
+script:
+  # Zhasne az kdyz je klid; kazdy novy on_release odpocet restartuje.
+  - id: display_backlight_off_delayed
+    mode: restart
+    then:
+      - delay: ${zhasnout_po | default("3min")}
+      - light.turn_off: display_backlight
+
+binary_sensor:
+  - id: !extend radar_presence_akce
+    on_press:
+      - script.stop: display_backlight_off_delayed
+      - light.turn_on:
+          id: display_backlight
+          brightness: ${jas | default("100%")}
+    on_release:
+      - script.execute: display_backlight_off_delayed

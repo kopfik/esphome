@@ -10,8 +10,13 @@
 #   prazdna karta       script karta_prazdna(x, y)  -- pro nevyuzity slot
 #   prepinani stranek   select display_page (PRAZDNY!), dve tlacitka,
 #                       global stranka_index
-#   radar + podsviceni  binary_sensor + script display_backlight_off_delayed
+#   radar               binary_sensor radar_presence_akce (bez akci, viz nize)
 #   obnovovani          interval 1s -> update na celou minutu
+#
+# Politika podsviceni tady taky neni: kazdy kus ji ma jinou (meteohuby podle
+# radaru, dotykovy stul podle toho, jestli je na nem klidova stranka), takze
+# ji dodava meteohub_podsviceni_radar.yaml nebo meteohub_podsviceni_dotyk.yaml.
+# Bez jednoho z nich se displej po startu vubec nerozsviti.
 #
 # Stranky, grafy ani HA senzory tady nejsou. Ty dodavaji meteohub_dashboard.yaml
 # a meteohub_senzor.yaml -- kazdy si svoji stranku pripoji sam pres
@@ -53,14 +58,14 @@ esphome:
   on_boot:
     priority: -100
     then:
-      # Nejdriv vykreslit (podsviceni je jeste zhasle), az potom rozsvitit -
-      # jinak je na displeji zrni z neinicializovaneho bufferu.
+      # Nejdriv vykreslit (podsviceni je jeste zhasle), az potom rozsvitit --
+      # jinak je na displeji zrni z neinicializovaneho bufferu. Rozsviceni
+      # samotne uz tady NENI: dela ho balicek s politikou podsviceni, ktery
+      # se pripoji za tenhle on_boot (meteohub_podsviceni_radar.yaml nebo
+      # meteohub_podsviceni_dotyk.yaml).
       - script.execute: apply_palette
       - delay: 3s
       - component.update: ${display_id | default("displej35")}
-      - light.turn_on:
-          id: display_backlight
-          brightness: 100%
 
 globals:
   # Index barevneho schematu; drzi hodnotu pres reboot, select ho jen prepina.
@@ -163,16 +168,6 @@ script:
           id(color_arch) = Color(PAL[i][0][0], PAL[i][0][1], PAL[i][0][2]);
           id(color_card) = Color(PAL[i][1][0], PAL[i][1][1], PAL[i][1][2]);
 
-  # Zhasne az kdyz je 3 min klid; kazdy novy on_release odpocet restartuje.
-  # Sedmisegmentovku sem netahat -- pripoji si ji meteohub_segment.yaml.
-  # Skutecna prodleva je delsi -- ld2410c_has_target sam drzi jeste svuj hold
-  # time, nez pusti clear.
-  - id: display_backlight_off_delayed
-    mode: restart
-    then:
-      - delay: 3min
-      - light.turn_off: display_backlight
-
   # ---- Spolecny ramecek a zahlavi ----
   # Kresli se ze scriptu, ne v kazde lambde stranky zvlast. Volani z lambdy
   # stranky bezi SYNCHRONNE (SingleScript bez delay), takze to jde do stejneho
@@ -218,17 +213,14 @@ binary_sensor:
   # ld2410c; tady se jen doveluji akce na podsviceni a sedmisegmentovku.
   # !extend na ld2410c_has_target NEJDE -- ten senzor je vnoreny v `has_target:`
   # uvnitr platformy, ne samostatna polozka seznamu. Proto kopie pres `copy`.
+  # Zadne akce tady nejsou schvalne -- co se ma pri detekci stat, urcuje az
+  # balicek s politikou podsviceni (meteohub_podsviceni_radar.yaml), pripadne
+  # meteohub_segment.yaml. Oba si je sem pripoji pres `!extend`. Kus s
+  # dotykovym displejem muze radar nechat bez akci uplne.
   - platform: copy
     source_id: ld2410c_has_target
     id: radar_presence_akce
     internal: true
-    on_press:
-      - script.stop: display_backlight_off_delayed
-      - light.turn_on:
-          id: display_backlight
-          brightness: 100%
-    on_release:
-      - script.execute: display_backlight_off_delayed
 
 select:
   - platform: template

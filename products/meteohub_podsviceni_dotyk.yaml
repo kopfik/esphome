@@ -1,0 +1,55 @@
+## products/meteohub_podsviceni_dotyk.yaml
+#
+# Politika podsviceni pro DOTYKOVY kus. Nesviti podle toho, jestli je nekdo
+# v mistnosti, ale podle toho, jestli se s displejem pracuje:
+#
+#   po startu              klidovy jas (${jas_klid})
+#   odchod z klidove str.  nabehne na ${jas_prace} za ${nabeh}
+#   navrat na klidovou     pomalu stmiva zpet za ${utlum}
+#
+# Radar se tady na podsviceni NEPOUZIVA schvalne -- u stolu je clovek skoro
+# porad a displej by svitil naplno cely den. Balicek meteohub_podsviceni_radar
+# .yaml proto NEPRIDAVAT, poraly by se.
+#
+# Navesene je to na `on_page_change` displeje, ne na dotyk: zabere to i kdyz
+# se stranka prepne sama (odpocet v meteohub_hodiny_touch.yaml) nebo z HA
+# pres select.
+#
+# POZOR na hardware: nektere panely na jas 0 % sviti stejne jako na 1 %,
+# protoze podsviceni ma vlastni napajeni a PWM ho jen tlumi. Proto se tady
+# nikdy nezhasina uplne, jen se jde na klidovy jas -- zhasnout doopravdy
+# znamena spinat celou 5V vetev, coz je vec desky, ne configu.
+#
+# Vyzaduje products/meteohub_core.yaml a stranku z meteohub_hodiny.yaml.
+#
+# Vars:
+#   klidova_page   id klidove stranky (napr. page_hodiny)
+#   jas_klid       jas v klidu (default 1%)
+#   jas_prace      jas pri praci (default 100%)
+#   nabeh          jak rychle nabehne (default 300ms)
+#   utlum          jak dlouho stmiva zpet (default 30s)
+#   display_id
+
+esphome:
+  on_boot:
+    priority: -100
+    then:
+      - light.turn_on:
+          id: display_backlight
+          brightness: ${jas_klid | default("1%")}
+
+display:
+  - id: !extend ${display_id | default("displej35")}
+    on_page_change:
+      - from: ${klidova_page}
+        then:
+          - light.turn_on:
+              id: display_backlight
+              brightness: ${jas_prace | default("100%")}
+              transition_length: ${nabeh | default("300ms")}
+      - to: ${klidova_page}
+        then:
+          - light.turn_on:
+              id: display_backlight
+              brightness: ${jas_klid | default("1%")}
+              transition_length: ${utlum | default("30s")}
