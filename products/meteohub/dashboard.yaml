@@ -1,7 +1,7 @@
-## products/meteohub_dashboard.yaml
+## products/meteohub/dashboard.yaml
 #
 # Jedna stranka dashboardu -- mrizka 2 x 4 karet. Sam nic nemeri: jen zavola
-# osm kreslicich scriptu, ktere dodaly balicky meteohub_senzor.yaml.
+# osm kreslicich scriptu, ktere dodaly balicky senzor.yaml.
 #
 # Sloty se plni po radcich zleva doprava:
 #     slot1  slot2
@@ -12,7 +12,7 @@
 # Nevyplneny slot spadne na karta_prazdna z core (prazdna karta, mrizka drzi
 # tvar). Kdyz mas 20 senzoru, das tri dashboardy: 8 + 8 + 4.
 #
-# Vyzaduje products/meteohub_core.yaml.
+# Vyzaduje products/meteohub/core.yaml.
 #
 # ---- Poradi -----------------------------------------------------------------
 # Balicky se sklada v poradi, v jakem jsou v `packages:`, a `!extend` je
@@ -20,13 +20,13 @@
 # dashboardem, poskladej to takhle:
 #
 #   packages:
-#     core:      meteohub_core.yaml
-#     dash1:     meteohub_dashboard.yaml   (slot1..slot8)
-#     s_temp:    meteohub_senzor.yaml      \
-#     s_hum:     meteohub_senzor.yaml       |  osm senzoru z dash1,
+#     core:      core.yaml
+#     dash1:     dashboard.yaml   (slot1..slot8)
+#     s_temp:    senzor.yaml      \
+#     s_hum:     senzor.yaml       |  osm senzoru z dash1,
 #     ...                                   |  ve stejnem poradi jako sloty
-#     dash2:     meteohub_dashboard.yaml   (dalsich osm)
-#     s_sklep:   meteohub_senzor.yaml      ...
+#     dash2:     dashboard.yaml   (dalsich osm)
+#     s_sklep:   senzor.yaml      ...
 #
 # POZOR: nic tohle poradi nekontroluje. Jmena senzoru pises dvakrat -- jednou
 # v `packages:` (tim urcis poradi stranek) a jednou do slotu dashboardu (tim
@@ -56,7 +56,7 @@ display:
           it.fill(id(color_bg));
           id(chrome)->execute("${titulek}");
 
-          // Geometrie z products/meteohub_geo_*.yaml.
+          // Geometrie z products/meteohub/geo_*.yaml.
           const int MEZ = ${g_mezera};
           const int OX = ${g_obsah_x}, OY = ${g_obsah_y};
           const int CW = ${g_karta_w}, CH = ${g_karta_h};

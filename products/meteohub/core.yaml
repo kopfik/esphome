@@ -1,4 +1,4 @@
-## products/meteohub_core.yaml
+## products/meteohub/core.yaml
 #
 # "Kostra" skladaneho meteohubu. Sama o sobe NIC nekresli -- dodava jen
 # spolecne prostredky, ktere si berou dalsi balicky:
@@ -15,11 +15,11 @@
 #
 # Politika podsviceni tady taky neni: kazdy kus ji ma jinou (meteohuby podle
 # radaru, dotykovy stul podle toho, jestli je na nem klidova stranka), takze
-# ji dodava meteohub_podsviceni_radar.yaml nebo meteohub_podsviceni_dotyk.yaml.
+# ji dodava podsviceni_radar.yaml nebo podsviceni_dotyk.yaml.
 # Bez jednoho z nich se displej po startu vubec nerozsviti.
 #
-# Stranky, grafy ani HA senzory tady nejsou. Ty dodavaji meteohub_dashboard.yaml
-# a meteohub_senzor.yaml -- kazdy si svoji stranku pripoji sam pres
+# Stranky, grafy ani HA senzory tady nejsou. Ty dodavaji dashboard.yaml
+# a senzor.yaml -- kazdy si svoji stranku pripoji sam pres
 # `display: - id: !extend displej35` a svoji polozku do `display_page`.
 #
 # POZOR: puvodni monoliticky products/meteohub.yaml zustava beze zmeny a dal
@@ -28,7 +28,7 @@
 #
 # ---- Geometrie --------------------------------------------------------------
 # Zadne pevne souradnice tady nejsou. Rozmery dodava balicek
-# products/meteohub_geo_<sirka>x<vyska>.yaml jako substituce a lambdy si
+# products/meteohub/geo_<sirka>x<vyska>.yaml jako substituce a lambdy si
 # z nich zbytek dopocitaji. Jiny displej = jiny geo soubor, tenhle se nemeni.
 # Musi byt v `packages:` PRED timhle balickem.
 #
@@ -51,7 +51,7 @@
 #   ld2410c_has_target          components/sensors/ld2410.yaml
 #
 # Sedmisegmentovka (TM1637) tady NENI -- ne kazdy kus ji ma (p4eth-stul-kopfik
-# treba ne). Kdo ji ma, prida balicek meteohub_segment.yaml, ktery si sve akce
+# treba ne). Kdo ji ma, prida balicek segment.yaml, ktery si sve akce
 # pripoji k radaru i k odpocitavaci podsviceni sam.
 
 esphome:
@@ -61,8 +61,8 @@ esphome:
       # Nejdriv vykreslit (podsviceni je jeste zhasle), az potom rozsvitit --
       # jinak je na displeji zrni z neinicializovaneho bufferu. Rozsviceni
       # samotne uz tady NENI: dela ho balicek s politikou podsviceni, ktery
-      # se pripoji za tenhle on_boot (meteohub_podsviceni_radar.yaml nebo
-      # meteohub_podsviceni_dotyk.yaml).
+      # se pripoji za tenhle on_boot (podsviceni_radar.yaml nebo
+      # podsviceni_dotyk.yaml).
       - script.execute: apply_palette
       - delay: 3s
       - component.update: ${display_id | default("displej35")}
@@ -182,7 +182,7 @@ script:
     then:
       - lambda: |-
           auto &it = *id(${display_id | default("displej35")});
-          // Geometrie se pocita z products/meteohub_geo_*.yaml, zadne
+          // Geometrie se pocita z products/meteohub/geo_*.yaml, zadne
           // pevne cislo tady nema co delat.
           const int W = ${g_panel_w}, H = ${g_panel_h};
           const int RAM = ${g_ramecek}, LISTA = ${g_lista_h};
@@ -204,7 +204,7 @@ script:
     then:
       - lambda: |-
           auto &it = *id(${display_id | default("displej35")});
-          // Rozmery z products/meteohub_geo_*.yaml.
+          // Rozmery z products/meteohub/geo_*.yaml.
           const int CW = ${g_karta_w}, CH = ${g_karta_h};
           it.filled_rectangle(x, y, CW, CH, id(color_card));
 
@@ -214,8 +214,8 @@ binary_sensor:
   # !extend na ld2410c_has_target NEJDE -- ten senzor je vnoreny v `has_target:`
   # uvnitr platformy, ne samostatna polozka seznamu. Proto kopie pres `copy`.
   # Zadne akce tady nejsou schvalne -- co se ma pri detekci stat, urcuje az
-  # balicek s politikou podsviceni (meteohub_podsviceni_radar.yaml), pripadne
-  # meteohub_segment.yaml. Oba si je sem pripoji pres `!extend`. Kus s
+  # balicek s politikou podsviceni (podsviceni_radar.yaml), pripadne
+  # segment.yaml. Oba si je sem pripoji pres `!extend`. Kus s
   # dotykovym displejem muze radar nechat bez akci uplne.
   - platform: copy
     source_id: ld2410c_has_target

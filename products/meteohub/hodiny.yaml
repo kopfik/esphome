@@ -1,4 +1,4 @@
-## products/meteohub_hodiny.yaml
+## products/meteohub/hodiny.yaml
 #
 # Klidova stranka: cerne pozadi, velke hodiny ve 24h formatu na dva radky
 # (nahore hodina, dole minuta), dole datum a nahore dve hodnoty.
@@ -15,10 +15,10 @@
 # stranku, takze se tim resi "po bootu je videt tahle".
 #
 # Dotykove chovani (klepnuti -> dashboard, navrat po case necinnosti) dodava
-# meteohub_hodiny_touch.yaml. Bez nej je to obycejna stranka v listovani,
+# hodiny_touch.yaml. Bez nej je to obycejna stranka v listovani,
 # coz se hodi na kusy bez dotyku.
 #
-# Vyzaduje products/meteohub_core.yaml a products/meteohub_geo_*.yaml.
+# Vyzaduje products/meteohub/core.yaml a products/meteohub/geo_*.yaml.
 #
 # Vars:
 #   volba          text polozky v selectu prepinani stranek
@@ -55,7 +55,7 @@ display:
         lambda: |-
           it.fill(id(color_bg));
 
-          // Rozmery z products/meteohub_geo_*.yaml.
+          // Rozmery z products/meteohub/geo_*.yaml.
           const int W = ${g_panel_w}, H = ${g_panel_h};
           const int LISTA = ${g_lista_h};
           const int GX = ${g_graf_x}, GW = ${g_graf_w};

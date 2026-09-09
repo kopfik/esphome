@@ -1,22 +1,22 @@
-## products/meteohub_senzor.yaml
+## products/meteohub/senzor.yaml
 #
 # Bezny pripad: jedna velicina + jeji vlastni stranka se dvema grafy.
 # Je to jen slepenec dvou balicku, nic vlastniho tu neni:
 #
-#   meteohub_velicina.yaml   sensor ha_${prefix} + script karta_${prefix}
-#   meteohub_grafy.yaml      grafy, stranka page_${prefix}, polozka selectu
+#   velicina.yaml   sensor ha_${prefix} + script karta_${prefix}
+#   grafy.yaml      grafy, stranka page_${prefix}, polozka selectu
 #
 # Kdyz ma mit velicina jen kartu a jeji cara ma jit do CIZIHO grafu, includuj
-# misto tohohle rovnou meteohub_velicina.yaml a caru pridej pres
-# meteohub_trasa.yaml.
+# misto tohohle rovnou velicina.yaml a caru pridej pres
+# trasa.yaml.
 #
-# Vyzaduje products/meteohub_core.yaml.
+# Vyzaduje products/meteohub/core.yaml.
 #
 # Inline:
 #   s_temp:
 #     <<: *kopfik_esphome_remote
 #     files:
-#       - path: products/meteohub_senzor.yaml
+#       - path: products/meteohub/senzor.yaml
 #         vars:
 #           prefix: temp
 #           entita: sensor.neco_temperature_sht45
@@ -34,21 +34,21 @@
 #           prahy: "{22, 23, 24, 25, 26, 27, 28, 29}"
 #
 # POZOR: vnorene `!include` se resi RELATIVNE k tomuhle souboru, ne ke koreni
-# konfigurace -- proto `file: meteohub_velicina.yaml` bez `products/`.
+# konfigurace -- proto `file: velicina.yaml` bez `products/`.
 #
 # POZOR 2: kazda promenna se tady preposila jako `klic: ${klic}`, tedy jako CELA
 # hodnota. Na takovou substituci pousti ESPHome ast.literal_eval, takze hodnota,
 # ktera vypada jako Python literal, zmeni typ i zapis -- "1, 2, 3" se stane
 # tuplem a vyrenderuje se jako "(1, 2, 3)". Proto se prahy predavaji ve
-# slozenych zavorkach (viz meteohub_velicina.yaml). Kdyz sem budes pridavat
+# slozenych zavorkach (viz velicina.yaml). Kdyz sem budes pridavat
 # dalsi promennou, over si na vygenerovanem main.cpp, ze prosla nezmenena.
 #
-# Vars jsou sjednocenim obou balicku -- popis viz meteohub_velicina.yaml
-# a meteohub_grafy.yaml.
+# Vars jsou sjednocenim obou balicku -- popis viz velicina.yaml
+# a grafy.yaml.
 
 packages:
   velicina: !include
-    file: meteohub_velicina.yaml
+    file: velicina.yaml
     vars:
       prefix: ${prefix}
       entita: ${entita}
@@ -64,7 +64,7 @@ packages:
       display_id: ${display_id | default("displej35")}
 
   grafy: !include
-    file: meteohub_grafy.yaml
+    file: grafy.yaml
     vars:
       prefix: ${prefix}
       popisek: ${popisek}

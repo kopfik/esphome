@@ -1,25 +1,25 @@
-## products/meteohub_velicina.yaml
+## products/meteohub/velicina.yaml
 #
 # Hodnota z HA + karticka na dashboard. ZADNA stranka, zadny graf -- ty dodava
-# meteohub_grafy.yaml (nebo meteohub_grafy_2.yaml, kdyz maji byt na jedne
+# grafy.yaml (nebo grafy_2.yaml, kdyz maji byt na jedne
 # strance dve veliciny).
 #
 #   sensor   ha_${prefix}            hodnota z HA
-#   script   karta_${prefix}(x, y)   dodava meteohub_karta.yaml
+#   script   karta_${prefix}(x, y)   dodava karta.yaml
 #
 # Nad LOKALNIM senzorem desky (sht41, scd40, bmp581) tohle nepouzivej --
-# na to je rovnou meteohub_karta.yaml s `zdroj:` na to id.
+# na to je rovnou karta.yaml s `zdroj:` na to id.
 #
 # Vetsinou nechces includovat ani tenhle soubor primo -- na bezny pripad
-# "velicina + vlastni stranka s grafy" je meteohub_senzor.yaml.
+# "velicina + vlastni stranka s grafy" je senzor.yaml.
 #
-# Vyzaduje products/meteohub_core.yaml a products/meteohub_geo_*.yaml.
+# Vyzaduje products/meteohub/core.yaml a products/meteohub/geo_*.yaml.
 #
 # POZOR: vnorene `!include` se resi RELATIVNE k tomuhle souboru, ne ke koreni
-# konfigurace -- proto `file: meteohub_karta.yaml` bez `products/`.
+# konfigurace -- proto `file: karta.yaml` bez `products/`.
 #
 # Vars: `entita` (cele entity_id v HA, opsat z HA -- neodvozovat), zbytek se
-# preposila do meteohub_karta.yaml, popis viz tam.
+# preposila do karta.yaml, popis viz tam.
 
 sensor:
   - platform: homeassistant
@@ -29,7 +29,7 @@ sensor:
 
 packages:
   karta: !include
-    file: meteohub_karta.yaml
+    file: karta.yaml
     vars:
       prefix: ${prefix}
       zdroj: ha_${prefix}

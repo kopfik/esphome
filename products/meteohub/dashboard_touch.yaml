@@ -1,14 +1,14 @@
-## products/meteohub_dashboard_touch.yaml
+## products/meteohub/dashboard_touch.yaml
 #
 # Dotykove chovani jednoho dashboardu: klepnuti na karticku otevre stranku
-# s jejimi grafy. Kresleni dashboardu dela meteohub_dashboard.yaml, tenhle
+# s jejimi grafy. Kresleni dashboardu dela dashboard.yaml, tenhle
 # balicek jen pridava trefovani -- proto se pridava VEDLE nej, se stejnym
 # `sufix`.
 #
-# Je to zvlast schvalne: meteohub_dashboard.yaml pouzivaji i kusy bez dotyku
+# Je to zvlast schvalne: dashboard.yaml pouzivaji i kusy bez dotyku
 # a `touchscreen: - id: !extend ...` by na nich spadlo na neexistujici id.
 #
-# Vyzaduje products/meteohub_core_touch.yaml a musi byt v `packages:` AZ ZA
+# Vyzaduje products/meteohub/core_touch.yaml a musi byt v `packages:` AZ ZA
 # nim -- core_touch v `on_touch` nuluje touch_cil a tady se teprve nastavuje.
 # Samotny skok se dela az v `on_release` v core_touch, takze na poradi vuci
 # ostatnim dashboardum uz nezalezi.
@@ -17,7 +17,7 @@
 # na prazdnou kartu nikam neskoci.
 #
 # Vars:
-#   sufix          stejny jako u meteohub_dashboard.yaml -> page_dash_${sufix}
+#   sufix          stejny jako u dashboard.yaml -> page_dash_${sufix}
 #   touch_id       id touchscreen komponenty (povinne)
 #   display_id     id displeje (default displej35)
 #   slot1_page .. slot8_page   id cilovych stranek pro jednotlive sloty,
@@ -32,7 +32,7 @@ touchscreen:
               != id(page_dash_${sufix})) {
             return;
           }
-          // Mrizka se pocita stejne jako v meteohub_dashboard.yaml, ze
+          // Mrizka se pocita stejne jako v dashboard.yaml, ze
           // stejnych substituci -- nesmi se rozejit. Mezera pripada karte
           // pred sebou, at se do toho da trefit prstem.
           const int MEZ = ${g_mezera};

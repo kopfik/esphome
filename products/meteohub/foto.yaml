@@ -1,4 +1,4 @@
-## products/meteohub_foto.yaml
+## products/meteohub/foto.yaml
 #
 # Stranka s jednim obrazkem pres cely panel (320x480). Bez ramecku a zahlavi
 # -- schvalne, obrazek ma vyplnit celou plochu.
@@ -10,7 +10,7 @@
 # 1 835 008 B) se druhy takovy uz nemusi vejit -- pred pridanim dalsiho
 # zkontroluj `Flash:` po compile.
 #
-# Vyzaduje products/meteohub_core.yaml.
+# Vyzaduje products/meteohub/core.yaml.
 #
 # Vars:
 #   foto_id   id obrazku (device: `image:` nad souborem v media/)

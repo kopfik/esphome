@@ -1,4 +1,4 @@
-## products/meteohub_podsviceni_radar.yaml
+## products/meteohub/podsviceni_radar.yaml
 #
 # Politika podsviceni pro kusy BEZ dotyku (meteohuby): sviti, kdyz je nekdo
 # v mistnosti, a po klidu zhasne.
@@ -7,16 +7,16 @@
 #   radar detekuje      rozsviti na plny jas, zrusi odpocet
 #   radar pusti         spusti odpocet, po ${zhasnout_po} zhasne
 #
-# Je to presne to, co drive delal primo meteohub_core.yaml. Vyclenilo se to,
+# Je to presne to, co drive delal primo core.yaml. Vyclenilo se to,
 # protoze dotykovy stul potrebuje politiku uplne jinou -- viz
-# meteohub_podsviceni_dotyk.yaml. Bez jednoho z tech dvou balicku zustane
+# podsviceni_dotyk.yaml. Bez jednoho z tech dvou balicku zustane
 # displej po startu tmavy.
 #
 # Skutecna prodleva je delsi nez ${zhasnout_po} -- ld2410c_has_target sam drzi
 # jeste svuj hold time, nez pusti clear.
 #
-# Vyzaduje products/meteohub_core.yaml. Kdyz kus pouziva i
-# meteohub_segment.yaml, musi byt segment AZ ZA timhle balickem: pripojuje se
+# Vyzaduje products/meteohub/core.yaml. Kdyz kus pouziva i
+# segment.yaml, musi byt segment AZ ZA timhle balickem: pripojuje se
 # ke scriptu, ktery vznika tady.
 #
 # Vars:

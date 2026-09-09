@@ -1,4 +1,4 @@
-## products/meteohub_karta.yaml
+## products/meteohub/karta.yaml
 #
 # Karticka na dashboard nad UZ EXISTUJICIM senzorem. Nedela zadne cteni --
 # jen kresli. Proto se hodi i na LOKALNI senzory desky (sht41, scd40, bmp581),
@@ -6,10 +6,10 @@
 #
 #   script  karta_${prefix}(x, y)
 #
-# Na bezny pripad "hodnota z HA + karticka" je meteohub_velicina.yaml, ktery
+# Na bezny pripad "hodnota z HA + karticka" je velicina.yaml, ktery
 # senzor zalozi a tenhle balicek si zavola sam.
 #
-# Vyzaduje products/meteohub_core.yaml a products/meteohub_geo_*.yaml.
+# Vyzaduje products/meteohub/core.yaml a products/meteohub/geo_*.yaml.
 #
 # Vars:
 #   prefix        zaklad id -> karta_${prefix}
@@ -45,11 +45,11 @@ script:
     then:
       - lambda: |-
           auto &it = *id(${display_id | default("displej35")});
-          // Rozmery z products/meteohub_geo_*.yaml.
+          // Rozmery z products/meteohub/geo_*.yaml.
           const int CW = ${g_karta_w}, CH = ${g_karta_h};
 
           const float v = id(${zdroj}).state;
-          // Prahovou barvu pocita products/meteohub_skala.yaml (viz `packages:`
+          // Prahovou barvu pocita products/meteohub/skala.yaml (viz `packages:`
           // dole) -- stejny vypocet pak muze pouzit i jina stranka, treba
           // zahlavi hodin, aniz by se logika kopirovala.
           id(skala_${prefix})->execute(v);
@@ -76,7 +76,7 @@ packages:
   # POZOR: vnorene `!include` se resi RELATIVNE k tomuhle souboru, ne ke koreni
   # konfigurace -- proto bez `products/`.
   skala: !include
-    file: meteohub_skala.yaml
+    file: skala.yaml
     vars:
       prefix: ${prefix}
       rezim: ${rezim | default("0")}

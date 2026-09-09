@@ -1,4 +1,4 @@
-## products/meteohub_skala.yaml
+## products/meteohub/skala.yaml
 #
 # Prahova barva jedne veliciny. Sama nic nekresli -- jen prevede hodnotu na
 # barvu a ulozi ji do globalu, aby ji mohlo pouzit vic mist naraz:
@@ -13,9 +13,9 @@
 # Volani je synchronni (SingleScript bez delay), takze barva je k dispozici
 # hned na dalsim radku. Uvnitr nesmi pribyt zadny `delay`.
 #
-# Vlastni includovani obvykle nepotrebujes: meteohub_karta.yaml si tenhle
+# Vlastni includovani obvykle nepotrebujes: karta.yaml si tenhle
 # balicek zavola sam, takze ke kazde karticce uz jedna skala existuje a jde
-# ji pouzit i jinde (napr. meteohub_hodiny.yaml barvi hodnoty v zahlavi
+# ji pouzit i jinde (napr. hodiny.yaml barvi hodnoty v zahlavi
 # stejne jako odpovidajici karticka na dashboardu).
 #
 # Skala ma 9 stupnu: green_0, green_1, green_2, green_3, yellow,

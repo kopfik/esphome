@@ -1,4 +1,4 @@
-## products/meteohub_foto_online.yaml
+## products/meteohub/foto_online.yaml
 #
 # Stranka s fotkou, ktera se STAHUJE ZA BEHU misto aby byla zapecena ve
 # firmware. Adresu rika Home Assistant pres text_sensor, takze galerie se
@@ -40,7 +40,7 @@
 #     jen komponenta `animation:`, a ta je compile-time, tedy zase do flashe.
 #   - Kdyz HA nebezi, ukaze se `placeholder` (zapeceny zalozni obrazek).
 #
-# Vyzaduje products/meteohub_core.yaml a products/meteohub_geo_*.yaml.
+# Vyzaduje products/meteohub/core.yaml a products/meteohub/geo_*.yaml.
 # Zarizeni musi mit `api:` (kvuli tlacitku, ktere vola sluzbu HA) a v `image:`
 # uz NOVY zapis s `platform:` -- stary a novy tvar nejdou michat.
 #

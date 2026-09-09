@@ -1,4 +1,4 @@
-## products/meteohub_segment.yaml
+## products/meteohub/segment.yaml
 #
 # Volitelny doplnek pro kusy, ktere maji sedmisegmentovku (TM1637). Prive?uje
 # jeji zapinani a zhasinani k tomu, co uz dela core: pri detekci cloveka se
@@ -10,7 +10,7 @@
 # a hotovemu scriptu. Akce se do `on_press` i do `then:` PRIDAVAJI na konec,
 # nic neprepisuji.
 #
-# Vyzaduje products/meteohub_core.yaml a device musi definovat
+# Vyzaduje products/meteohub/core.yaml a device musi definovat
 # `segmentovy_displej_power` (components/displays/tm1637.yaml).
 #
 # Vars: zadne.

@@ -1,6 +1,6 @@
-## products/meteohub_hodiny_touch.yaml
+## products/meteohub/hodiny_touch.yaml
 #
-# Dotykove chovani klidove stranky z meteohub_hodiny.yaml:
+# Dotykove chovani klidove stranky z hodiny.yaml:
 #
 #   klepnuti na hodiny  -> skok na dashboard
 #   10 minut bez doteku -> zpatky na hodiny
@@ -10,7 +10,7 @@
 # nema nic spolecneho: to hlida radar (pritomnost v mistnosti), tohle hlida
 # dotyk.
 #
-# Vyzaduje products/meteohub_core_touch.yaml a musi byt v `packages:` AZ ZA
+# Vyzaduje products/meteohub/core_touch.yaml a musi byt v `packages:` AZ ZA
 # nim -- core_touch v `on_touch` nuluje touch_cil a tady se teprve nastavuje.
 #
 # Vars:

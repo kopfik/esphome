@@ -1,4 +1,4 @@
-## products/meteohub_svatky.yaml
+## products/meteohub/svatky.yaml
 #
 # Svatky -- karta na dashboard i cela stranka se sedmi dny (tri zpatky,
 # dnesek, tri dopredu).
@@ -12,7 +12,7 @@
 # resource_template na kazdy offset, vsech sedm podle stejneho pravidla,
 # dnesek je _0). Bez nich se vsechno jen vykresli s "--", nic se nerozbije.
 #
-# Vyzaduje products/meteohub_core.yaml.
+# Vyzaduje products/meteohub/core.yaml.
 #
 # Vars:
 #   ha_svatky  prefix entit se svatky (default sensor.svatek)
@@ -59,7 +59,7 @@ script:
     then:
       - lambda: |-
           auto &it = *id(${display_id | default("displej35")});
-          // Rozmery z products/meteohub_geo_*.yaml.
+          // Rozmery z products/meteohub/geo_*.yaml.
           const int CW = ${g_karta_w}, CH = ${g_karta_h};
           const int L = ${g_karta_okraj}, R = ${g_karta_okraj_p};
           const int xr = x + CW - R;
@@ -152,7 +152,7 @@ display:
           // cerna mezera 6 px. Dnesek je vyssi, protoze drzi misto na dva radky
           // POKAZDE -- i kdyz se jmeno vejde na jeden. Jinak by radky kolem
           // poskakovaly podle toho, jak dlouhy je zrovna dnesni svatek.
-          // Rozmery z products/meteohub_geo_*.yaml.
+          // Rozmery z products/meteohub/geo_*.yaml.
           const int MEZ = ${g_mezera};
           const int OX = ${g_obsah_x}, OY = ${g_obsah_y}, OW = ${g_obsah_w};
           const int GX = ${g_graf_x}, GW = ${g_graf_w};

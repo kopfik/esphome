@@ -1,7 +1,7 @@
-## products/meteohub_core_touch.yaml
+## products/meteohub/core_touch.yaml
 #
 # Core pro kusy s DOTYKOVYM displejem. Neni to kopie -- includuje
-# meteohub_core.yaml a jen k nemu pridava to, co se bez dotyku nehodi:
+# core.yaml a jen k nemu pridava to, co se bez dotyku nehodi:
 #
 #   ikony v liste   zatim jen domecek vlevo; sipka zpet, MENU a OK pribydou
 #   obsluha dotyku  domecek -> dashboardy dokola, jinak listovani vlevo/vpravo
@@ -15,7 +15,7 @@
 # Az bude potreba paty knoflik, prida se zapati OBEMA rodinam naraz.
 #
 # ---- Jak je poresene poradi obsluhy dotyku ----------------------------------
-# Skok z karticky rovnou na jeji grafy dela meteohub_dashboard_touch.yaml,
+# Skok z karticky rovnou na jeji grafy dela dashboard_touch.yaml,
 # ktery se pripoji AZ ZA tenhle balicek (poradi v `packages:`). Kdyby se
 # listovalo uz v `on_touch`, dashboard by pak sahal na stranku, ze ktere se
 # mezitim odlistovalo. Proto je to na dve faze:
@@ -28,25 +28,25 @@
 # uz nezalezi. Vedlejsi efekt: odpada zamek proti opakovanemu vystreleni
 # on_touch behem jednoho drzeni, akce se stane jednou pri pusteni.
 #
-# Vyzaduje: vsechno co meteohub_core.yaml, navic `touchscreen:` s id z
+# Vyzaduje: vsechno co core.yaml, navic `touchscreen:` s id z
 # varu touch_id.
 #
 # Vars:
 #   touch_id            id touchscreen komponenty (povinne, napr. touch_4_0)
 #   prvni_dashboard     index prvni stranky, ktera je dashboard (default 0).
 #                       Kdyz je pred dashboardy jeste klidova stranka
-#                       (meteohub_hodiny.yaml), je to 1.
+#                       (hodiny.yaml), je to 1.
 #   pocet_dashboardu    kolik po sobe jdoucich stranek jsou dashboardy (default 1).
 #                       Domecek mezi nimi prepina dokola; z jine stranky
 #                       vraci na prvni. Musi sedet s tim, kolik balicku
-#                       meteohub_dashboard.yaml je v `packages:` a kde
+#                       dashboard.yaml je v `packages:` a kde
 #                       v poradi stranek zacinaji.
 #   display_id, time_id, page_select_name, schema_select_name
-#                       predavaji se rovnou do meteohub_core.yaml
+#                       predavaji se rovnou do core.yaml
 
 packages:
   jadro: !include
-    file: meteohub_core.yaml
+    file: core.yaml
     vars:
       display_id: ${display_id | default("displej35")}
       time_id: ${time_id | default("sntp_time")}

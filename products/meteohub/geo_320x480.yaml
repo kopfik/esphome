@@ -1,4 +1,4 @@
-## products/meteohub_geo_320x480.yaml
+## products/meteohub/geo_320x480.yaml
 #
 # Geometrie panelu 320x480 na vysku (ST7796, ILI9488). Krome barev a fontu
 # je tohle JEDINE misto, kde se rozhoduje, jak je co velke -- kreslici
@@ -6,7 +6,7 @@
 # hrstky rozmeru.
 #
 # Jiny displej = kopie tohohle souboru s jinymi cisly, treba
-# meteohub_geo_480x800.yaml. Kreslici balicky se nemeni.
+# geo_480x800.yaml. Kreslici balicky se nemeni.
 #
 # Zaradit do `packages:` JAKO PRVNI z meteohub balicku -- jsou to obycejne
 # substituce, takze musi byt k dispozici drive, nez se rozbaluji lambdy.

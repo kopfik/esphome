@@ -1,4 +1,4 @@
-## products/meteohub_grafy.yaml
+## products/meteohub/grafy.yaml
 #
 # Stranka se dvema grafy jedne veliciny -- nahore 100 min, dole 25 h.
 # V zahlavi kazdeho panelu je casove okno vlevo a aktualni hodnota vpravo.
@@ -7,11 +7,11 @@
 #   page     page_${prefix}
 #   select   polozka "${volba}"
 #
-# Vyzaduje meteohub_core.yaml a senzor ha_${prefix}
-# (dodava meteohub_velicina.yaml).
+# Vyzaduje core.yaml a senzor ha_${prefix}
+# (dodava velicina.yaml).
 #
 # Na jednu caru. Kdyz ma byt v jednom grafu vic veliciny, pouzij
-# meteohub_grafy_multi.yaml -- ten misto jedne hodnoty kresli legendu.
+# grafy_multi.yaml -- ten misto jedne hodnoty kresli legendu.
 #
 # Vars:
 #   prefix        stejny jako u veliciny -- z nej se odvozuji id
@@ -71,7 +71,7 @@ display:
           it.fill(id(color_bg));
           id(chrome)->execute("${titulek}");
 
-          // Rozmery z products/meteohub_geo_*.yaml, zadne pevne cislo tady.
+          // Rozmery z products/meteohub/geo_*.yaml, zadne pevne cislo tady.
           const int OX = ${g_obsah_x}, OW = ${g_obsah_w};
           const int PH = ${g_gpanel_h};                   // panel jednoho grafu
           const int PY[2] = {${g_gpanel_y1}, ${g_gpanel_y2}};
