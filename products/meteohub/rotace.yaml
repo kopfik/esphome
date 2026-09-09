@@ -1,0 +1,48 @@
+## products/meteohub/rotace.yaml
+#
+# Automaticke prepinani stranek dokola -- "slideshow". Hodi se na fotoramecek
+# a na testovani (clovek necha kus bezet a kouka, jestli se vsechny stranky
+# vykresli spravne).
+#
+#   switch  "${volba_name}"   zapina/vypina rotaci, drzi se pres reboot
+#   interval                  kazdych ${perioda} skoci na dalsi stranku
+#
+# Rucni prepnuti z HA (select "Aktualni stranka", tlacitka Stranka dalsi /
+# predchozi) funguje porad -- rotace jen posune stranku o kus dal, az prijde
+# na radu. Kdyz chces zustat na jedne strance, vypni switch.
+#
+# Index si stejne jako core.yaml pocitame sami (displej umi jen next/prev)
+# a po kazdem posunu ho publikujeme do selectu, aby HA neukazovalo neco
+# jineho, nez je videt na displeji.
+#
+# Vyzaduje products/meteohub/core.yaml.
+#
+# Vars:
+#   perioda      jak casto se prepina (default 10s)
+#   volba_name   jmeno switche v HA (default "Rotace stránek")
+#   po_startu    zapnout po prvnim startu, nez si switch neco ulozi
+#                (default "true")
+#   display_id
+
+switch:
+  - platform: template
+    name: "${volba_name | default(\"Rotace stránek\")}"
+    id: rotace_stranek
+    optimistic: true
+    restore_mode: ${po_startu | default("RESTORE_DEFAULT_ON")}
+
+interval:
+  - interval: ${perioda | default("10s")}
+    then:
+      - if:
+          condition:
+            switch.is_on: rotace_stranek
+          then:
+            - display.page.show_next: ${display_id | default("displej35")}
+            - lambda: |-
+                const int n = (int) id(display_page).traits.get_options().size();
+                if (n <= 0) return;
+                id(stranka_index) = (id(stranka_index) + 1) % n;
+                // Aby select "Aktualni stranka" v HA ukazoval to, co je videt.
+                id(display_page).publish_state((size_t) id(stranka_index));
+            - component.update: ${display_id | default("displej35")}

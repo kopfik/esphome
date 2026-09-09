@@ -1,0 +1,22 @@
+## products/meteohub/bez_radaru.yaml
+#
+# Zaslepka radaru pro kusy, ktere zadny LD2410 nemaji.
+#
+# core.yaml si radar kopiruje natvrdo (`platform: copy` nad
+# `ld2410c_has_target`) -- volitelne to tam byt nemuze, YAML neumi podminku,
+# stejne jako u sedmisegmentovky (viz segment.yaml). Bez zdroje by se takovy
+# kus vubec nepreloziL: "Couldn't find ID 'ld2410c_has_target'".
+#
+# Tenhle balicek proto dodava template binary_sensor stejneho jmena, ktery
+# nic nemeri a nikdy nic nepublikuje -- zustane trvale unknown. Kopie v core
+# tim padem taky nikdy nespusti zadnou akci, coz je presne to, co chceme:
+# politiku podsviceni (podsviceni_radar.yaml) takovy kus stejne nepridava.
+#
+# Zaradit do `packages:` PRED core.yaml.
+#
+# Vars: zadne.
+
+binary_sensor:
+  - platform: template
+    id: ld2410c_has_target
+    internal: true

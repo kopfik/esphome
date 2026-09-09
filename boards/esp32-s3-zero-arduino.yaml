@@ -7,13 +7,18 @@
 #   board: !include boards/esp32-s3-zero-arduino.yaml
 #
 # Requires device substitutions: cpu_freq
+# Optional substitutions: flash_size (default 4MB)
 #
 # Uses the arduino framework variant (vs esp-idf on the other s3 boards).
+#
+# flash_size: klasicky Zero ma 4MB, klony s ESP32-S3R8 8MB. Musi sedet s
+# realnym cipem -- vetsi cislo nez ma deska znamena, ze partition tabulka
+# ukazuje za konec flash a kus se po flashnuti nerozjede.
 
 esp32:
   board: esp32-s3-devkitc-1
 #  variant: esp32s3
-  flash_size: 4MB
+  flash_size: ${flash_size | default("4MB")}
   framework:
     type: arduino
     sdkconfig_options:

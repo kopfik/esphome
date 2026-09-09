@@ -1,0 +1,56 @@
+## products/meteohub/senzor_graf.yaml
+#
+# Jedna velicina + jeji vlastni stranka s JEDNIM velkym grafem.
+# Protejsek senzor.yaml, ktery misto toho dava stranku se dvema panely
+# (100 min + 25 h). Je to jen slepenec dvou balicku, nic vlastniho tu neni:
+#
+#   velicina.yaml   sensor ha_${prefix} + script karta_${prefix}
+#   graf.yaml       graf, stranka page_${prefix}, polozka selectu
+#
+# Prechod ze senzor.yaml sem = zmenit cestu a misto y_grid_100m/y_grid_25h
+# predat jeden `y_grid` (pripadne `okno`, `x_grid`, `popisek_okna`).
+#
+# Vyzaduje products/meteohub/core.yaml a products/meteohub/geo_*.yaml.
+#
+# POZOR: vnorene `!include` se resi RELATIVNE k tomuhle souboru, ne ke koreni
+# konfigurace -- proto `file: velicina.yaml` bez `products/`.
+#
+# POZOR 2: kazda promenna se tady preposila jako `klic: ${klic}`, tedy jako CELA
+# hodnota. Na takovou substituci pousti ESPHome ast.literal_eval, takze hodnota,
+# ktera vypada jako Python literal, zmeni typ i zapis -- "1, 2, 3" se stane
+# tuplem a vyrenderuje se jako "(1, 2, 3)". Proto se prahy predavaji ve
+# slozenych zavorkach (viz velicina.yaml).
+#
+# Vars jsou sjednocenim obou balicku -- popis viz velicina.yaml a graf.yaml.
+
+packages:
+  velicina: !include
+    file: velicina.yaml
+    vars:
+      prefix: ${prefix}
+      entita: ${entita}
+      popisek: ${popisek}
+      ikona: ${ikona}
+      jednotka: ${jednotka}
+      desetiny: ${desetiny | default("0")}
+      rezim: ${rezim | default("0")}
+      prahy: ${prahy | default("{0, 0, 0, 0, 0, 0, 0, 0}")}
+      stred: ${stred | default("0")}
+      krok: ${krok | default("1")}
+      pevna_barva: ${pevna_barva | default("color_yellow")}
+      display_id: ${display_id | default("displej35")}
+
+  graf: !include
+    file: graf.yaml
+    vars:
+      prefix: ${prefix}
+      popisek: ${popisek}
+      titulek: ${titulek}
+      volba: ${volba}
+      format: ${format}
+      barva_grafu: ${barva_grafu}
+      y_grid: ${y_grid}
+      okno: ${okno | default("100min")}
+      x_grid: ${x_grid | default("25min")}
+      popisek_okna: ${popisek_okna | default("100 min")}
+      display_id: ${display_id | default("displej35")}

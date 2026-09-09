@@ -97,5 +97,8 @@ substitutions:
   g_graf_x: "${ g_obsah_x | int + g_graf_okraj | int }"                                # 19
   g_graf_w: "${ g_obsah_w | int - 2 * (g_graf_okraj | int) }"                          # 282
   g_graf_h: "${ g_gpanel_h | int - g_graf_zahlavi | int - g_graf_okraj | int }"        # 164
+  # Vyska grafu, ktery je na strance SAM (graf.yaml / graf_2.yaml) -- bere
+  # cely obsah stranky misto poloviny.
+  g_graf_h1: "${ g_obsah_h | int - g_graf_zahlavi | int - g_graf_okraj | int }"        # 378
 
   g_svatky_h: "${ (g_obsah_h | int - 6 * (g_mezera | int) - g_svatky_dnes_h | int) // 6 }"   # 51

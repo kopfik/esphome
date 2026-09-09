@@ -1,0 +1,104 @@
+## products/meteohub/geo_240x320.yaml
+#
+# Geometrie panelu 240x320 na vysku (ST7789V/ST7789VW, napr. modul GMT020-02
+# 2.0"). Vznikla zmensenim geo_320x480.yaml na 2/3 -- kreslici balicky se
+# nemeni, meni se jen cisla tady.
+#
+# Zaradit do `packages:` JAKO PRVNI z meteohub balicku -- jsou to obycejne
+# substituce, takze musi byt k dispozici drive, nez se rozbaluji lambdy.
+#
+# Soubor ma dve casti: nahore ZAKLADNI rozmery, ktere se u jineho panelu
+# opravdu meni, dole ODVOZENE, ktere si Jinja dopocita sama. Odvozena cisla
+# needituj -- oprav zaklad a prepocitaji se.
+#
+# Kdyz menis cisla, hlidej si dve veci:
+#   - karta musi zustat vyssi nez jednotka_y + vyska font_small, jinak
+#     jednotka pretece ven (pri 64 px konci na 61).
+#   - obsah musi vyjit beze zbytku, jinak zustane krivy pruh dole.
+#
+# POZOR na hustotu informace: pri 2/3 rozmeru jsou karticky 108x64 px a pismo
+# 13-22 px. Osm karet na dashboardu se vejde, ale je to na hranici citelnosti
+# -- na tomhle panelu spis pocitej se 4 kartami (g_radku: 2) nebo s velkymi
+# jednoucelovymi strankami.
+
+substitutions:
+  ## --- ram panelu
+  g_panel_w: "240"
+  g_panel_h: "320"
+  g_ramecek: "3"          # tloustka ramecku kolem dokola
+  g_lista_h: "30"         # vyska zahlavi (a jednou i zapati, az bude)
+  g_mezera: "6"           # cerna mezera: pod ramecek, pod listu, mezi karty
+
+  ## --- mrizka dashboardu
+  g_sloupcu: "2"
+  g_radku: "4"
+
+  ## --- vnitrek karticky (odsazeni od jejiho leveho horniho rohu)
+  g_karta_okraj: "6"        # levy okraj (ikona)
+  g_karta_okraj_p: "8"      # pravy okraj (popisek, hodnota, jednotka)
+  g_karta_popisek_y: "5"
+  g_karta_ikona_y: "17"
+  g_karta_hodnota_y: "22"
+  g_karta_jednotka_y: "48"
+  g_karta_pruh: "2"         # sirka barevneho prouzku u praveho okraje
+
+  ## --- panely s grafy
+  g_graf_okraj: "7"         # okraj grafu uvnitr panelu (vlevo/vpravo/dole)
+  g_graf_zahlavi: "23"      # pas nad grafem na okno a hodnoty
+  g_panel_text_dy: "5"      # odsazeni textu zahlavi od horniho okraje panelu
+  g_graf_popisek_dx: "3"    # popisky min/max uvnitr plochy grafu
+  g_graf_popisek_dy: "2"
+
+  ## --- stranka se svatky
+  g_svatky_dnes_h: "53"     # dnesni panel je vyssi, drzi misto na dva radky
+  g_sv_text_dy: "11"        # text v beznem panelu
+  g_sv_dnes_text_dy: "9"    # prvni radek dnesniho panelu
+  g_sv_dnes_2_dy: "31"      # druhy radek dnesniho panelu
+  g_sv_dnes_1radek_dy: "18" # jmeno na jeden radek -- opticky na stred
+  g_sv_dnes_datum_dy: "20"  # datum, svisly stred dnesniho panelu
+  g_sv_mezera: "7"          # mezera mezi datem a jmenem
+
+  ## --- lista u dotykovych kusu
+  g_lista_ikona_x: "13"      # levy okraj prvni ikony v liste
+  g_lista_hotspot_w: "43"    # sirka dotykove oblasti domecku (vetsi nez ikona,
+                             # at se do ni da trefit prstem)
+
+  ## --- velikosti pisma
+  g_font_title: "17"
+  g_font_label: "19"
+  g_font_value: "22"
+  g_font_small: "13"
+  g_font_name: "21"
+  g_font_icons: "24"        # ikony na kartickach
+  g_font_hodiny: "120"      # velke cislice na strance s hodinami. Pro 240x320
+                            # ma '88' 136 px na sirku a 87 px na vysku.
+  g_hodiny_rozestup: "100"  # vzdalenost stredu radku hodin a minut. Oba jsou
+                            # symetricky kolem stredu volneho pasu, takze tohle
+                            # ridi mezeru mezi nimi: 100 - 87 = 13 px mezery.
+                            # Mensi cislo = blize u sebe.
+  g_font_icons_lista: "19"  # ikony v liste (jen dotykove kusy)
+
+  ## ---------------------------------------------------------------------
+  ## Odvozene. NEEDITOVAT, pocita se to z hodnot vyse.
+  ## Pro 240x320 z toho vychazi cisla v zavorkach.
+  ## ---------------------------------------------------------------------
+  g_obsah_x: "${ g_ramecek | int + g_mezera | int }"                                   # 9
+  g_obsah_y: "${ g_lista_h | int + g_mezera | int }"                                   # 36
+  g_obsah_w: "${ g_panel_w | int - 2 * (g_ramecek | int + g_mezera | int) }"           # 222
+  g_obsah_h: "${ g_panel_h | int - (g_lista_h | int + g_mezera | int) - g_mezera | int - g_ramecek | int }"   # 275
+
+  g_karta_w: "${ (g_obsah_w | int - (g_sloupcu | int - 1) * (g_mezera | int)) // (g_sloupcu | int) }"   # 108
+  g_karta_h: "${ (g_obsah_h | int - (g_radku | int - 1) * (g_mezera | int)) // (g_radku | int) }"       # 64
+
+  g_gpanel_h: "${ (g_obsah_h | int - g_mezera | int) // 2 }"                           # 134
+  g_gpanel_y1: "${ g_obsah_y | int }"                                                  # 36
+  g_gpanel_y2: "${ g_obsah_y | int + (g_obsah_h | int - g_mezera | int) // 2 + g_mezera | int }"   # 176
+
+  g_graf_x: "${ g_obsah_x | int + g_graf_okraj | int }"                                # 16
+  g_graf_w: "${ g_obsah_w | int - 2 * (g_graf_okraj | int) }"                          # 208
+  g_graf_h: "${ g_gpanel_h | int - g_graf_zahlavi | int - g_graf_okraj | int }"        # 104
+  # Vyska grafu, ktery je na strance SAM (graf.yaml / graf_2.yaml) -- bere
+  # cely obsah stranky misto poloviny.
+  g_graf_h1: "${ g_obsah_h | int - g_graf_zahlavi | int - g_graf_okraj | int }"        # 245
+
+  g_svatky_h: "${ (g_obsah_h | int - 6 * (g_mezera | int) - g_svatky_dnes_h | int) // 6 }"   # 31
