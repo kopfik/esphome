@@ -38,6 +38,10 @@ select:
     options:
       - "${volba}"
 
+  - id: !extend uvodni_stranka
+    options:
+      - "${volba}"
+
 font:
   # Jen cislice -- cely GF_Latin_Core by v teto velikosti zral flash zbytecne.
   - file:

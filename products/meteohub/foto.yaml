@@ -22,6 +22,10 @@ select:
     options:
       - "${volba}"
 
+  - id: !extend uvodni_stranka
+    options:
+      - "${volba}"
+
 display:
   - id: !extend ${display_id | default("displej35")}
     pages:

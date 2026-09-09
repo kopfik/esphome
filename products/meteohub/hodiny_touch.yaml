@@ -18,6 +18,10 @@
 #   cil_page       kam skocit po klepnuti na hodiny (napr. page_dash_1)
 #   hodiny_index   index stranky s hodinami v poradi stranek (default 0)
 #   navrat_po      doba necinnosti, po ktere se to vrati (default 10min)
+#   navrat_krome   C++ vyraz nad `p` (aktivni stranka): kdyz plati, misto
+#                  ${navrat_po} se ceka ${navrat_krome_po}. Default false.
+#                  Napr. "p == id(page_foto_online_galerie)"
+#   navrat_krome_po  delsi limit pro takove stranky (default 60min)
 #   display_id
 
 esphome:
@@ -33,6 +37,22 @@ script:
     mode: restart
     then:
       - delay: ${navrat_po | default("10min")}
+      # Z nekterych stranek se neodchazi po deseti minutach: kdyz prepnes na
+      # fotogalerii, prepnul jsi na ni proto, ze ji chces koukat, ne aby ti to
+      # za chvili zhaslo. Nesmi to ale byt nekonecne -- kdyz od stolu odejdes,
+      # displej by svitil naplno cely den. Proto vlastni, delsi limit.
+      #
+      # Nespolehat na to, ze stranku drzi nad vodou vymena fotky: ta zadny
+      # odpocet nerestartuje a pri intervalu delsim nez ${navrat_po} by
+      # to spadlo zpatky na hodiny uprostred prohlizeni.
+      - if:
+          condition:
+            lambda: |-
+              auto *p = id(${display_id | default("displej35")})->get_active_page();
+              (void) p;
+              return ${navrat_krome | default("false")};
+          then:
+            - delay: ${navrat_krome_po | default("60min")}
       - lambda: |-
           auto &d = *id(${display_id | default("displej35")});
           const int n = (int) id(display_page).traits.get_options().size();

@@ -10,6 +10,7 @@
 #   prazdna karta       script karta_prazdna(x, y)  -- pro nevyuzity slot
 #   prepinani stranek   select display_page (PRAZDNY!), dve tlacitka,
 #                       global stranka_index
+#   stranka po startu   select uvodni_stranka (PRAZDNY!), drzi se pres reboot
 #   radar               binary_sensor radar_presence_akce (bez akci, viz nize)
 #   obnovovani          interval 1s -> update na celou minutu
 #
@@ -64,6 +65,23 @@ esphome:
       # se pripoji za tenhle on_boot (podsviceni_radar.yaml nebo
       # podsviceni_dotyk.yaml).
       - script.execute: apply_palette
+      # Skok na stranku ze selectu "Stranka po startu". Musi to byt PRED
+      # prvnim `component.update`, jinak by blikla stranka 0. Kdyz select nic
+      # ulozeneho nema, zustane prvni stranka -- tedy chovani jako driv.
+      - lambda: |-
+          // Kdyz select jeste nic ulozeneho nema, active_index() je prazdny
+          // a nedela se nic -- zustane stranka 0.
+          auto idx = id(uvodni_stranka).active_index();
+          const int n = (int) id(uvodni_stranka).size();
+          if (idx.has_value() && n > 0) {
+            const int cil = (int) *idx;
+            auto &d = *id(${display_id | default("displej35")});
+            int cur = id(stranka_index) % n;
+            while (cur != cil) { d.show_next_page(); cur = (cur + 1) % n; }
+            id(stranka_index) = cil;
+            // Aby select "Aktualni stranka" v HA neukazoval neco jineho.
+            id(display_page).publish_state((size_t) cil);
+          }
       - delay: 3s
       - component.update: ${display_id | default("displej35")}
 
@@ -272,6 +290,19 @@ select:
           }
           id(stranka_index) = cil;
       - component.update: ${display_id | default("displej35")}
+
+  # Take prazdny schvalne a extenduje se uplne stejne jako `display_page`:
+  #   select:
+  #     - id: !extend uvodni_stranka
+  #       options: ["Grafy - Teplota"]
+  # Oba seznamy tak vyjdou totozne a mistem pravdy zustava poradi balicku.
+  # Bez `initial_option` = prvni stranka, tedy to, co to delalo driv.
+  - platform: template
+    name: "${boot_select_name | default(\"Stránka po startu\")}"
+    id: uvodni_stranka
+    optimistic: true
+    restore_value: true
+    options: []
 
 button:
   - platform: template

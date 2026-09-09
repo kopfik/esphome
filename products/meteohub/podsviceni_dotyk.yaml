@@ -32,11 +32,25 @@
 
 esphome:
   on_boot:
+    # Az za core.yaml (stejna priorita, ale je v `packages:` driv), takze
+    # uvodni stranka uz je nastavena. Natvrdo `jas_klid` by nestacilo:
+    # kdyz se nabootuje rovnou do dashboardu, zadna zmena stranky nenastane
+    # a displej by uz nikdy nezjasnil.
     priority: -100
     then:
-      - light.turn_on:
-          id: display_backlight
-          brightness: ${jas_klid | default("1%")}
+      - if:
+          condition:
+            lambda: |-
+              return id(${display_id | default("displej35")})->get_active_page()
+                     == id(${klidova_page});
+          then:
+            - light.turn_on:
+                id: display_backlight
+                brightness: ${jas_klid | default("1%")}
+          else:
+            - light.turn_on:
+                id: display_backlight
+                brightness: ${jas_prace | default("100%")}
 
 display:
   - id: !extend ${display_id | default("displej35")}
