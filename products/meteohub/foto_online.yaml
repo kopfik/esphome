@@ -36,9 +36,25 @@
 #     (image_decoder.cpp pocita x_scale_/y_scale_). Presto fotky predzmensuj:
 #     stahovat 4 MB z mobilu kvuli nahledu 320x480 je pres WiFi zbytecne
 #     a dekodovani trva dyl.
+#   - `resize:` je FIT, ne COVER: skaluje se poradim min(W/sw, H/sh), takze
+#     fotka s jinym pomerem stran nez panel vyjde mensi aspon v jednom
+#     rozmeru a zbytek je cerny. Viz `resize_w`/`resize_h` nize, jak z toho
+#     udelat cover.
 #   - GIF NEJDE. Runtime dekodery jsou jen BMP, JPEG a PNG; animovany GIF umi
 #     jen komponenta `animation:`, a ta je compile-time, tedy zase do flashe.
-#   - Kdyz HA nebezi, ukaze se `placeholder` (zapeceny zalozni obrazek).
+#   - Dokud se nic nestahlo (a po chybe), je stranka PRAZDNA. Zapeceny
+#     zalozni obrazek uz tenhle balicek nema -- `placeholder` u online_image
+#     je `cv.Optional` (runtime_image/__init__.py: cv.use_id(Image_)), takze
+#     bez nej se preklad v pohode obejde a usetri se cely obrazek ve flash
+#     (320x480 v RGB565 je 300 kB).
+#     Kdyz ho na nejakem kusu chces, prida si ho device sam:
+#       image:
+#         - id: !extend img_online
+#           placeholder: img_nejaky
+#     Dashboard placeholder BYT NEMUZE -- musi to byt `image:`, ne stranka.
+#     Kdyz ma byt po startu videt dashboard, nastav ho v selectu
+#     "Stranka po startu" (core.yaml); prazdna galerie se pak ukaze teprve
+#     tehdy, kdyz na ni sam prepnes.
 #
 # Vyzaduje products/meteohub/core.yaml a products/meteohub/geo_*.yaml.
 # Zarizeni musi mit `api:` (kvuli tlacitku, ktere vola sluzbu HA) a v `image:`
@@ -50,9 +66,22 @@
 #   ha_foto        entity_id senzoru v HA, ktery drzi NAZEV SOUBORU
 #   zaklad_url     zacatek adresy vcetne lomitka na konci, napr.
 #                  "http://10.20.30.40:8123/local/fotky/"
-#   foto_zaloha    id zapeceneho obrazku, ktery se ukaze nez se stahne prvni
-#                  fotka a kdyz stahovani selze
 #   format         JPEG (default) | PNG | BMP -- jeden pro celou galerii
+#   resize_w       sirka, na kterou se fotka zmensuje (default sirka panelu)
+#   resize_h       vyska (default vyska panelu)
+#     Defaultem se fotka vejde CELA a pri jinem pomeru stran zbydou cerne
+#     pruhy (FIT). Kdyz chces radeji COVER, tedy vyplnit panel a prebytek
+#     ustrihnout, zvetsi ten rozmer, ktery by zbyl maly -- stranka kresli
+#     na stred, takze se ustrihne symetricky na obou koncich.
+#
+#     Vzorec: panel W x H, zdroj sw x sh.
+#       kdyz sw/sh < W/H  ->  resize_w: W,          resize_h: W*sh/sw
+#       jinak             ->  resize_w: H*sw/sh,    resize_h: H
+#     Priklad: galerie 320x480 (2:3) na panel 240x320 (3:4) -> 240x360,
+#     tedy 20 px pryc nahore i dole misto 13 px cerneho po stranach.
+#
+#     POZOR na PSRAM: buffer je resize_w * resize_h * 2 B, u 240x360 tedy
+#     173 kB misto 154 kB. Na kusu s 2 MB PSRAM to je porad nic.
 #   btn_name       jmeno tlacitka (default "Další foto")
 #   verify_ssl     default false; u verejne adresy s platnym certem dej true
 #   display_id
@@ -70,8 +99,8 @@ image:
     url: "${zaklad_url}"
     format: ${format | default("JPEG")}
     type: RGB565
-    resize: ${g_panel_w}x${g_panel_h}
-    placeholder: ${foto_zaloha}
+    resize: ${ resize_w | default(g_panel_w) }x${ resize_h | default(g_panel_h) }
+    # `placeholder` tady schvalne NENI -- viz komentar o zalozni fotce vyse.
     update_interval: never
     buffer_size: 65536
     on_download_finished:
@@ -119,14 +148,15 @@ display:
     pages:
       - id: page_foto_online_${sufix}
         lambda: |-
-          // Dokud neni nic stazeno, kresli se `placeholder` z konfigurace
-          // obrazku vyse -- o to se stara sama komponenta.
+          // Dokud neni nic stazeno, je stranka cerna -- `placeholder` tenhle
+          // balicek nema (device si ho muze pridat pres !extend, viz nahore).
           //
-          // `resize:` zmensuje na FIT, ne na COVER: kdyz ma fotka jiny pomer
-          // stran nez panel, vyjde mensi aspon v jednom rozmeru. Proto se
-          // kresli na stred a zbytek se vypln cernou -- jinak by fotka
-          // sedela v levem hornim rohu, cerny pruh by byl jen vpravo/dole
-          // a prosvitaly by pixely predchozi stranky.
+          // Kresli se na STRED. To resi oba pripady najednou:
+          //   fotka mensi nez panel (FIT)    -> cerne pruhy symetricky
+          //   fotka vetsi nez panel (COVER)  -> x/y vyjde ZAPORNE a prebytek
+          //                                     se ustrihne na obou koncich
+          // Zaporne souradnice jsou v poradku, draw_pixel_at() si body mimo
+          // plochu zahodi sam.
           // Kdyz fotky pomer panelu maji (galerie 320x480 na 320x480), vyjde
           // x = y = 0 a je to presne jako driv.
           const int x = (${g_panel_w} - (int) id(img_online).get_width()) / 2;
