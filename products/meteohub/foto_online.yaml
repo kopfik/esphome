@@ -121,4 +121,15 @@ display:
         lambda: |-
           // Dokud neni nic stazeno, kresli se `placeholder` z konfigurace
           // obrazku vyse -- o to se stara sama komponenta.
-          it.image(0, 0, id(img_online));
+          //
+          // `resize:` zmensuje na FIT, ne na COVER: kdyz ma fotka jiny pomer
+          // stran nez panel, vyjde mensi aspon v jednom rozmeru. Proto se
+          // kresli na stred a zbytek se vypln cernou -- jinak by fotka
+          // sedela v levem hornim rohu, cerny pruh by byl jen vpravo/dole
+          // a prosvitaly by pixely predchozi stranky.
+          // Kdyz fotky pomer panelu maji (galerie 320x480 na 320x480), vyjde
+          // x = y = 0 a je to presne jako driv.
+          const int x = (${g_panel_w} - (int) id(img_online).get_width()) / 2;
+          const int y = (${g_panel_h} - (int) id(img_online).get_height()) / 2;
+          it.fill(id(color_bg));
+          it.image(x, y, id(img_online));
