@@ -21,13 +21,17 @@
 # ---- Kolik radku, kolik sloupcu ---------------------------------------------
 # Rozvrh si lambda pocita sama z vysky fontu a z toho, co zbylo:
 #   vejdou se vsechny cary pod sebe   jeden sloupec, jedna cara na radek
-#   nevejdou                          dva sloupce (4 cary = 2 radky)
-#   zbyva jeste radek navic           nahoru se pripise casove okno
-# Na 320x480 to vychazi na jeden sloupec a okno, na 240x320 pri ctyrech carach
-# na dva sloupce bez okna. Nic se neoreze, jen se to prerovna.
+#   nevejdou                          dva sloupce (5 car = 3 radky)
+# Nic se neoreze, jen se to prerovna:
+#   320x480  legenda 120 px, radek 21 px -> 5 radku, tedy pet car v sloupci
+#   240x320  legenda  53 px, radek 15 px -> 3 radky, pet car ve dvou sloupcich
 #
-# ---- Treti a ctvrta cara jsou nepovinne -------------------------------------
-# Vyplnenim `zdroj3`/`popisek3` (a 4) cara pribude, vynechanim zmizi
+# Casove okno ("100 min") je VPRAVO V LISTE u nadpisu, ne v legende -- v ni by
+# zabiralo cely radek, ktery se hodi na dalsi caru. Lista ma nadpis
+# vycentrovany, takze po stranach je volno a `chrome` se kvuli tomu nemeni.
+#
+# ---- Treti az pata cara jsou nepovinne --------------------------------------
+# Vyplnenim `zdroj3`/`popisek3` (a 4, 5) cara pribude, vynechanim zmizi
 # z legendy. Trasa v grafu ale existuje vzdycky -- nevyplnena se kresli
 # z `zdroj1` a v barve prvni cary, tedy PRESNE PRES ni, takze neni videt.
 # Stoji to jeden vzorkovaci buffer navic (sirka grafu * float), nic jineho.
@@ -51,7 +55,7 @@
 #                 Zmensenim se legenda zvetsi, zvetsenim naopak.
 #   okno          delka casoveho okna (default 100min)
 #   x_grid        roztec svisle mrizky (default 25min)
-#   popisek_okna  text okna v legende (default "100 min")
+#   popisek_okna  text okna vpravo v liste (default "100 min")
 #   jednotka      spolecna jednotka vsech car (°C, %, hPa); pise se za hodnotu
 #   font_legenda  font legendy (default font_small)
 #
@@ -59,6 +63,7 @@
 #   zdroj2, popisek2, barva2, format2   druha cara   POVINNE
 #   zdroj3, popisek3, barva3, format3   treti cara   nepovinne
 #   zdroj4, popisek4, barva4, format4   ctvrta cara  nepovinne
+#   zdroj5, popisek5, barva5, format5   pata cara    nepovinne
 #     zdroj*    id senzoru (ha_temp)
 #     popisek*  jmeno v legende; PRAZDNY = cara se v legende neukaze
 #     barva*    id barvy cary i jejiho radku v legende. Palety s ni nehybou:
@@ -99,6 +104,12 @@ graph:
         line_thickness: 2
         continuous: true
         color: ${barva4 | default(barva1)}
+      - sensor: ${zdroj5 | default(zdroj1)}
+        name: "${popisek5 | default(\"\")}"
+        line_type: SOLID
+        line_thickness: 2
+        continuous: true
+        color: ${barva5 | default(barva1)}
 
 select:
   - id: !extend display_page
@@ -116,6 +127,12 @@ display:
         lambda: |-
           it.fill(id(color_bg));
           id(chrome)->execute("${titulek}");
+
+          // Casove okno vpravo v liste. Nadpis je vycentrovany, takze si
+          // nepreka; v legende by zabralo cely radek.
+          it.print(${g_panel_w} - ${g_ramecek} - ${g_mezera}, (${g_lista_h} - 1) / 2,
+                   id(font_small), id(color_muted), TextAlign::CENTER_RIGHT,
+                   "${popisek_okna | default(\"100 min\")}");
 
           // Rozmery z products/meteohub/geo_*.yaml, zadne pevne cislo tady.
           const int OX = ${g_obsah_x}, OY = ${g_obsah_y};
@@ -144,35 +161,30 @@ display:
           const int MIST = RADEK > 0 ? LH / RADEK : 0;
 
           // Cary, ktere maji jmeno, jdou do legendy. Poradi = poradi trasy.
-          const char *jmena[4]  = {"${popisek1}", "${popisek2}",
-                                   "${popisek3 | default("")}", "${popisek4 | default("")}"};
-          const char *formaty[4] = {"${format1}", "${format2}",
-                                    "${format3 | default("%.1f")}", "${format4 | default("%.1f")}"};
-          float hodnoty[4] = {id(${zdroj1}).state, id(${zdroj2}).state,
+          const char *jmena[5]  = {"${popisek1}", "${popisek2}",
+                                   "${popisek3 | default("")}", "${popisek4 | default("")}",
+                                   "${popisek5 | default("")}"};
+          const char *formaty[5] = {"${format1}", "${format2}",
+                                    "${format3 | default("%.1f")}", "${format4 | default("%.1f")}",
+                                    "${format5 | default("%.1f")}"};
+          float hodnoty[5] = {id(${zdroj1}).state, id(${zdroj2}).state,
                               id(${zdroj3 | default(zdroj1)}).state,
-                              id(${zdroj4 | default(zdroj1)}).state};
-          Color barvy[4] = {id(${barva1}), id(${barva2}),
-                            id(${barva3 | default(barva1)}), id(${barva4 | default(barva1)})};
+                              id(${zdroj4 | default(zdroj1)}).state,
+                              id(${zdroj5 | default(zdroj1)}).state};
+          Color barvy[5] = {id(${barva1}), id(${barva2}),
+                            id(${barva3 | default(barva1)}), id(${barva4 | default(barva1)}),
+                            id(${barva5 | default(barva1)})};
 
-          int poradi[4];
+          int poradi[5];
           int n = 0;
-          for (int i = 0; i < 4; i++) {
+          for (int i = 0; i < 5; i++) {
             if (jmena[i][0] != '\0') poradi[n++] = i;
           }
 
-          // Vejdou se vsechny pod sebe? Jinak dva sloupce. Kdyz zbyde radek
-          // navic, pripise se nahoru casove okno.
+          // Vejdou se vsechny pod sebe? Jinak dva sloupce.
           const int SLOUPCE = (n <= MIST) ? 1 : 2;
-          const int RADKU = (n + SLOUPCE - 1) / SLOUPCE;
-          const bool UKAZ_OKNO = (RADKU + 1) <= MIST;
           const int CELA_W = GW / SLOUPCE;
-          int y = LY;
-
-          if (UKAZ_OKNO) {
-            it.print(GX, y, f, id(color_arch), TextAlign::TOP_LEFT,
-                     "${popisek_okna | default("100 min")}");
-            y += RADEK;
-          }
+          const int y = LY;
 
           const std::string J = "${jednotka | default("")}";
           for (int k = 0; k < n; k++) {
