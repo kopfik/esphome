@@ -132,7 +132,7 @@ display:
           // nepreka; v legende by zabralo cely radek.
           it.print(${g_panel_w} - ${g_ramecek} - ${g_mezera}, (${g_lista_h} - 1) / 2,
                    id(font_small), id(color_muted), TextAlign::CENTER_RIGHT,
-                   "${popisek_okna | default(\"100 min\")}");
+                   "${popisek_okna | default("100 min")}");
 
           // Rozmery z products/meteohub/geo_*.yaml, zadne pevne cislo tady.
           const int OX = ${g_obsah_x}, OY = ${g_obsah_y};
