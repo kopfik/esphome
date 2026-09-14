@@ -60,8 +60,10 @@ substitutions:
 
   ## --- lista u dotykovych kusu
   g_lista_ikona_x: "13"      # levy okraj prvni ikony v liste
-  g_lista_hotspot_w: "43"    # sirka dotykove oblasti domecku (vetsi nez ikona,
+  g_lista_hotspot_w: "36"    # sirka dotykove oblasti domecku (vetsi nez ikona,
                              # at se do ni da trefit prstem)
+  g_lista_ikona2_x: "40"     # levy okraj druhe ikony (zpet)
+  g_lista_hotspot2_w: "70"   # konec dotykove oblasti zpet (od konce domecku)
 
   ## --- velikosti pisma
   g_font_title: "17"

@@ -3,9 +3,10 @@
 # Core pro kusy s DOTYKOVYM displejem. Neni to kopie -- includuje
 # core.yaml a jen k nemu pridava to, co se bez dotyku nehodi:
 #
-#   ikony v liste   zatim jen domecek vlevo; sipka zpet, MENU a OK pribydou
-#   obsluha dotyku  domecek -> dashboardy dokola, jinak listovani vlevo/vpravo
-#   globaly         touch_cil / touch_x / touch_y (viz nize, proc)
+#   ikony v liste   domecek a sipka zpet vlevo; MENU a OK pribydou
+#   obsluha dotyku  domecek -> dashboardy dokola, zpet -> odkud se skocilo,
+#                   jinak listovani vlevo/vpravo
+#   globaly         touch_cil / touch_x / touch_y (viz nize, proc), historie
 #
 # Ikony jdou do LISTY, ne do zapati. Lista je 320 px siroka a i nejsirsi
 # nadpis (METEOHUB, 142 px) nechava 89 px na kazde strane, tedy misto na dve
@@ -28,6 +29,22 @@
 # uz nezalezi. Vedlejsi efekt: odpada zamek proti opakovanemu vystreleni
 # on_touch behem jednoho drzeni, akce se stane jednou pri pusteni.
 #
+# ---- Tlacitko zpet ----------------------------------------------------------
+# Historie si pamatuje jen SKOKY -- klepnuti na kartu, domecek, klepnuti na
+# hodiny (touch_cil z jinych balicku). Listovani vlevo/vpravo se nezapisuje:
+# z dashboardu na tlak, pak par stranek grafu dal, a zpet vede rovnou na
+# dashboard, ne o stranku vlevo.
+#
+# Stranky PRED prvnim dashboardem (klidova stranka s hodinami) se do historie
+# nezapisuji -- vracet se na hodiny nema smysl. Automaticky navrat na hodiny
+# (hodiny_touch.yaml) historii maze. Kdyz je historie prazdna, je sipka sede
+# a klepnuti na ni nedela nic (ani nelistuje). Uklada se index stranky, ne
+# ukazatel -- stejne jako stranka_index v core.yaml.
+#
+# Nadpis v liste musi zustat uzsi nez misto mezi ikonami: na 320x480 zacina
+# sipka na x = 57 (g_lista_ikona2_x) a konci kolem 85, takze nadpis smi mit
+# nejvys ~140 px (METEOHUB 143 je na hrane, DASHBOARD 160 uz ne).
+#
 # Vyzaduje: vsechno co core.yaml, navic `touchscreen:` s id z
 # varu touch_id.
 #
@@ -43,6 +60,7 @@
 #                       v poradi stranek zacinaji.
 #   display_id, time_id, page_select_name, schema_select_name
 #                       predavaji se rovnou do core.yaml
+#   historie_max        kolik skoku si pamatovat (default 10)
 
 packages:
   jadro: !include
@@ -67,6 +85,10 @@ globals:
     type: int
     restore_value: false
     initial_value: '0'
+  # Indexy stranek, ze kterych se skocilo; posledni je na konci.
+  - id: historie
+    type: std::vector<int>
+    restore_value: false
 
 font:
   # Vlastni, mensi rez ikon: font_icons z core je 36 px na karty, v 43px
@@ -76,6 +98,7 @@ font:
     size: ${g_font_icons_lista}
     glyphs:
       - "\U000F02DC"   # home
+      - "\U000F004D"   # arrow-left (zpet)
 
 script:
   # Dokresli ikony do listy, kterou vykreslilo jadro. `!extend` akce PRIDAVA
@@ -87,6 +110,10 @@ script:
           const int LISTA = ${g_lista_h};
           it.print(${g_lista_ikona_x}, (LISTA - 1) / 2, id(font_icons_lista),
                    id(color_arch), TextAlign::CENTER_LEFT, "\U000F02DC");
+          // Zpet: sede, kdyz neni kam.
+          it.print(${g_lista_ikona2_x}, (LISTA - 1) / 2, id(font_icons_lista),
+                   id(historie).empty() ? id(color_grid) : id(color_arch),
+                   TextAlign::CENTER_LEFT, "\U000F004D");
 
 touchscreen:
   - id: !extend ${touch_id}
@@ -101,6 +128,22 @@ touchscreen:
       - lambda: |-
           auto &d = *id(${display_id | default("displej35")});
           const int n = (int) id(display_page).traits.get_options().size();
+          const int OFF = ${prvni_dashboard | default("0")};
+          const int ND = ${pocet_dashboardu | default("1")};
+          const bool v_liste = id(touch_y) < ${g_lista_h} + ${g_mezera};
+
+          // Skok z `od` na `kam` se zapise do historie (listovani ne).
+          auto zapamatuj = [&](int od, int kam) {
+            if (od == kam || od < OFF) return;
+            auto &h = id(historie);
+            h.push_back(od);
+            if ((int) h.size() > ${historie_max | default("10")}) h.erase(h.begin());
+          };
+          auto jdi_na = [&](int cil) {
+            int cur = id(stranka_index) % n;
+            while (cur != cil) { d.show_next_page(); cur = (cur + 1) % n; }
+            id(stranka_index) = cil;
+          };
 
           if (id(touch_cil) != nullptr) {
             // Dashboard trefil kartu a rekl, kam se ma jit. DisplayPage nema
@@ -112,22 +155,31 @@ touchscreen:
               d.show_next_page();
               kroku++;
             }
-            if (n > 0) id(stranka_index) = (id(stranka_index) + kroku) % n;
+            if (n > 0) {
+              const int od = id(stranka_index) % n;
+              id(stranka_index) = (od + kroku) % n;
+              zapamatuj(od, id(stranka_index));
+            }
             id(touch_cil) = nullptr;
-          } else if (id(touch_y) < ${g_lista_h} + ${g_mezera}
-                     && id(touch_x) < ${g_lista_hotspot_w}) {
+          } else if (v_liste && id(touch_x) < ${g_lista_hotspot_w}) {
             // Domecek v liste. Dashboardy jsou v poradi stranek prvni, takze
             // index mensi nez pocet_dashboardu znamena "stojim na dashboardu".
             // Odtud domecek prepina na DALSI dashboard dokola, odjinud vraci
             // na prvni. Pri jedinem dashboardu se chova jako obycejne "domu".
-            const int OFF = ${prvni_dashboard | default("0")};
-            const int ND = ${pocet_dashboardu | default("1")};
             if (n > 0) {
-              int cur = id(stranka_index) % n;
+              const int cur = id(stranka_index) % n;
               const int cil = (cur >= OFF && cur < OFF + ND)
                               ? OFF + ((cur - OFF + 1) % ND) : OFF;
-              while (cur != cil) { d.show_next_page(); cur = (cur + 1) % n; }
-              id(stranka_index) = cil;
+              zapamatuj(cur, cil);
+              jdi_na(cil);
+            }
+          } else if (v_liste && id(touch_x) < ${g_lista_hotspot2_w}) {
+            // Zpet. Prazdna historie = nic, ani nelistovat.
+            auto &h = id(historie);
+            if (n > 0 && !h.empty()) {
+              const int cil = h.back();
+              h.pop_back();
+              if (cil < n) jdi_na(cil);
             }
           } else if (id(touch_x) < d.get_width() / 2) {
             d.show_prev_page();

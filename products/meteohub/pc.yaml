@@ -7,8 +7,8 @@
 #   page     page_pc_${prefix}
 #   select   polozka "${volba}"
 #
-# Rozvrzeni je mrizka dashboardu (${g_radku} radky po ${g_karta_h} px), jen
-# tlacitka jsou pres celou sirku:
+# Rozvrzeni je mrizka dashboardu (${g_radku} radky po ${g_karta_h} px). Stav je
+# pres celou sirku, tlacitka jen ${sirka_tl} % sirky a na stred:
 #
 #   radek 0   stav PC      zapnuty / vypnuty / zapina se / nedostupny
 #   radek 1   Power
@@ -47,8 +47,8 @@
 # Klepnuti na tlacitko (i sede) nebo kamkoliv pri otevrenem dialogu nastavi
 # touch_cil na tuhle stranku, takze core_touch pri pusteni nelistuje
 # (dokrouzi se na stranku, na ktere uz stoji). Samotna akce je az v
-# `on_release` tady, ktere bezi po tom z core_touch. Lista a stavovy radek
-# se nechytaji -- domecek a listovani funguji dal.
+# `on_release` tady, ktere bezi po tom z core_touch. Lista, stavovy radek
+# a pruhy vedle tlacitek se nechytaji -- domecek a listovani funguji dal.
 #
 # Vyzaduje products/meteohub/core_touch.yaml (musi byt v `packages:` PRED
 # timhle balickem), products/meteohub/geo_*.yaml a `mqtt:` na zarizeni.
@@ -63,6 +63,9 @@
 #   stav         object_id binary senzoru "PC zapnuto" na ovladaci
 #   zapinam_s    jak dlouho po zapnuti cekat na stav ON (default 120)
 #   dialog_s     po kolika sekundach se dialog sam zavre (default 15)
+#   sirka_tl     sirka tlacitek v % sirky obsahu (default 75). Na 320x480
+#                je to 226 px; nejdelsi popisek "zapnout / vypnout" ma
+#                158 px a s ikonou potrebuje asi 225, uzsi uz nedavat.
 #   touch_id     id touchscreen komponenty (povinne)
 #   display_id
 
@@ -176,6 +179,8 @@ display:
           const int OW = ${g_obsah_w}, OH = ${g_obsah_h};
           const int CH = ${g_karta_h};
           const int L = ${g_karta_okraj}, R = ${g_karta_okraj_p};
+          const int BW_TL = OW * ${sirka_tl | default(75)} / 100;
+          const int BX_TL = OX + (OW - BW_TL) / 2;
 
           // Rezim: 0 nedostupny, 1 vypnuty, 2 zapina se, 3 zapnuty.
           const bool ovladac = id(pc_${prefix}_ovladac).has_state()
@@ -218,12 +223,12 @@ display:
             const bool aktivni = rezim == 3 || (rezim == 1 && r == 1);
             const Color ram = aktivni ? id(color_arch) : id(color_grid);
             const Color txt = aktivni ? id(color_white) : id(color_muted);
-            tlacitko(OX, y, OW, CH, ram, txt, nullptr, nullptr);
-            it.print(OX + 3 * L, y + CH / 2, id(font_icons),
+            tlacitko(BX_TL, y, BW_TL, CH, ram, txt, nullptr, nullptr);
+            it.print(BX_TL + L, y + CH / 2, id(font_icons),
                      aktivni ? id(color_arch) : id(color_muted), TextAlign::CENTER_LEFT, IKONA[r]);
-            it.print(OX + OW - R, y + CH / 2 - 2, id(font_label), txt,
+            it.print(BX_TL + BW_TL - R, y + CH / 2 - 2, id(font_label), txt,
                      TextAlign::BOTTOM_RIGHT, NAPIS[r]);
-            it.print(OX + OW - R, y + CH / 2 + 4, id(font_small), id(color_muted),
+            it.print(BX_TL + BW_TL - R, y + CH / 2 + 4, id(font_small), id(color_muted),
                      TextAlign::TOP_RIGHT, POPIS[r]);
           }
 
@@ -277,8 +282,11 @@ touchscreen:
             return;
           }
 
-          // Lista a stavovy radek nechat core_touch (domecek, listovani).
-          if (ty < OY + CH + MEZ || tx < OX || tx >= OX + OW) return;
+          // Lista, stavovy radek a pruhy vedle tlacitek nechat core_touch
+          // (domecek, listovani).
+          const int BW_TL = OW * ${sirka_tl | default(75)} / 100;
+          const int BX_TL = OX + (OW - BW_TL) / 2;
+          if (ty < OY + CH + MEZ || tx < BX_TL || tx >= BX_TL + BW_TL) return;
           const int r = (ty - OY) / (CH + MEZ);
           if (r < 1 || r > 3) return;
           id(pc_${prefix}_tah) = r;

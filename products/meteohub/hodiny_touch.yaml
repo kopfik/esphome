@@ -57,6 +57,9 @@ script:
           auto &d = *id(${display_id | default("displej35")});
           const int n = (int) id(display_page).traits.get_options().size();
           const int cil = ${hodiny_index | default("0")};
+          // Nikdo displej neobsluhuje -- priste se zacina nacisto, sipka
+          // zpet v core_touch.yaml je sede.
+          id(historie).clear();
           if (n > 0) {
             int cur = id(stranka_index) % n;
             while (cur != cil) { d.show_next_page(); cur = (cur + 1) % n; }
