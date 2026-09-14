@@ -27,13 +27,19 @@
 # <topic_prefix>/status s online/offline, oboji retained.
 #
 # ---- Pojistky proti omylu ---------------------------------------------------
-#   stav neznamy / ovladac offline   vsechno sede, nic nejde zmacknout
-#   PC vypnute                       Power zapne hned, Reset a dlouhy stisk sede
-#   PC se zapina                     po zapnuti vsechno sede, dokud stav
-#                                    neprepne na ON (nejdyl ${zapinam_s} s)
-#                                    -- jinak by druhe klepnuti pri bootu PC
-#                                    zase vypnulo
+#   ovladac offline                  vsechno sede, zprava by nikam nedosla
+#   PC vypnute                       Power zapne hned, dlouhy stisk sede
+#   PC se zapina                     po zapnuti Power a dlouhy stisk sede,
+#                                    dokud stav neprepne na ON (nejdyl
+#                                    ${zapinam_s} s) -- jinak by druhe klepnuti
+#                                    pri bootu PC zase vypnulo
 #   PC zapnute                       kazde tlacitko nejdriv dialog ANO / NE
+#
+# RESET jde zmacknout VZDYCKY, kdyz je ovladac online, i kdyz ping rika
+# vypnuto / zapina se -- vzdy s dialogem ANO / NE. PC se obcas zasekne
+# v memory trainingu, na siti se neobjevi a jediny zpusob, jak ho na dalku
+# probrat, je reset (vynuti novy training). Na opravdu vypnutem PC reset
+# nic neudela.
 #
 # Dialog se kresli pres stranku az na konci jeji lambdy. ILI9xxx posila na
 # panel jen zmenene pixely, takze se prekresli jen okno, ne cela stranka.
@@ -220,7 +226,7 @@ display:
           static const char *const POPIS[4] = {"", "zapnout / vypnout", "restart", "vynucené vypnutí"};
           for (int r = 1; r <= 3; r++) {
             const int y = OY + r * (CH + MEZ);
-            const bool aktivni = rezim == 3 || (rezim == 1 && r == 1);
+            const bool aktivni = r == 2 ? ovladac : rezim == 3 || (rezim == 1 && r == 1);
             const Color ram = aktivni ? id(color_arch) : id(color_grid);
             const Color txt = aktivni ? id(color_white) : id(color_muted);
             tlacitko(BX_TL, y, BW_TL, CH, ram, txt, nullptr, nullptr);
@@ -308,13 +314,19 @@ touchscreen:
           const int rezim = (!ovladac || !znamy) ? 0 : zap ? 3 : zapinam ? 2 : 1;
 
           static const char *const TL[4] = {"", "${tl_power}", "${tl_reset}", "${tl_force}"};
+          // Kdy smi tlacitko s dialogem projit. Reset jen potrebuje ovladac,
+          // Power a dlouhy stisk zapnute PC.
+          auto smi = [&](int tl) { return tl == 2 ? ovladac : rezim == 3; };
           const int dlg = id(pc_${prefix}_dialog);
           if (dlg != 0) {
             id(pc_${prefix}_dialog) = 0;
             id(pc_${prefix}_dialog_limit)->stop();
             // Kdyz se mezitim stav zmenil (PC spadlo, ovladac offline),
-            // ANO uz neplati -- otazka byla na zapnute PC.
-            if (t == 10 && rezim == 3) id(pc_${prefix}_stisk)->execute(TL[dlg]);
+            // ANO uz neplati.
+            if (t == 10 && smi(dlg)) id(pc_${prefix}_stisk)->execute(TL[dlg]);
+          } else if (t == 2 && ovladac) {
+            id(pc_${prefix}_dialog) = t;
+            id(pc_${prefix}_dialog_limit)->execute();
           } else if (rezim == 1 && t == 1) {
             id(pc_${prefix}_stisk)->execute(TL[1]);
             const uint32_t m = millis() + ${zapinam_s | default(120)} * 1000UL;
