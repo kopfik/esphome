@@ -1,0 +1,92 @@
+## components/sensors/ping.yaml
+#
+# Inline:
+#   pc_ping: !include { file: components/sensors/ping.yaml, vars: { id: pc_zapnuty, name: "PC zapnuty", ip: 10.0.0.10 } }
+#
+# Block:
+#   pc_ping: !include
+#     file: components/sensors/ping.yaml
+#     vars:
+#       id: pc_zapnuty
+#       name: "PC zapnuty"
+#       ip: 10.0.0.10
+#       interval: 60s
+#       drzet_min: 5
+#
+# Binary sensor "stroj je zapnuty" podle ICMP pingu primo z ESP. Kazdych
+# ${interval} se posle davka pingu; kdyz se aspon jeden vrati, povazuje se
+# stroj za zapnuty dalsich ${drzet_min} minut. Jeden ztraceny ping (WiFi power save,
+# chvilkove zatizeni PC) tak stav nerozhodi.
+#
+# Ping ukazuje "OS bezi a odpovida na siti", ne "PC ma napajeni": pri bootu
+# a vypinani se stav o chvili opozdi a firewall zahazujici ICMP da vecne
+# OFF. Spolehlivy stav napajeni dava az optoclen na power LED -- tenhle
+# balicek je do te doby nahrada se stejnym tvarem (binary_sensor ${id}).
+#
+# 'ip' je personalizovane -> predava se z device YAMLu, nikdy natvrdo sem.
+#
+# Jen ESP-IDF: esp_ping je soucast lwip v IDF (apps/ping/ping_sock.h),
+# hlavicka se pripoji pres `esphome: includes:` jako systemova, takze
+# nepotrebuje zadny lokalni soubor.
+#
+# Vars:
+#   id        id binary sensoru (povinne)
+#   name      jmeno entity v HA / MQTT (povinne)
+#   ip        IPv4 adresa cile (povinne)
+#   interval  jak casto se pinga (default 60s)
+#   drzet_min jak dlouho (v minutach) po posledni odpovedi plati "zapnuto"
+#             (default 5)
+#   pocet     pocet pingu v jedne davce (default 3)
+
+esphome:
+  includes:
+    - "<ping/ping_sock.h>"
+
+globals:
+  # millis() posledni odpovedi. 0 = od startu jeste nic neodpovedelo.
+  # Zapisuje se z ping tasku IDF, cte v loopu -- uint32 je atomicky dost.
+  - id: ${id}_odpoved_ms
+    type: uint32_t
+    restore_value: false
+    initial_value: '0'
+
+interval:
+  - interval: ${interval | default("60s")}
+    startup_delay: 10s
+    then:
+      - lambda: |-
+          esp_ping_config_t cfg = ESP_PING_DEFAULT_CONFIG();
+          cfg.count = ${pocet | default(3)};
+          cfg.interval_ms = 1000;
+          cfg.timeout_ms = 1000;
+          if (!ipaddr_aton("${ip}", &cfg.target_addr)) {
+            ESP_LOGW("ping", "Neplatna IP adresa: ${ip}");
+            return;
+          }
+          esp_ping_callbacks_t cbs = {};
+          // Callbacky bezi v ping tasku IDF. Jsou to lambdy bez capture, takze
+          // jdou predat jako ukazatel na funkci; globaly ESPHome jsou globalni
+          // promenne, capture nepotrebuji. Zadne publish_state odsud -- stav
+          // si precte template senzor nize v hlavni smycce.
+          cbs.on_ping_success = [](esp_ping_handle_t h, void *a) {
+            uint32_t t = millis();
+            id(${id}_odpoved_ms) = t ? t : 1;
+          };
+          cbs.on_ping_end = [](esp_ping_handle_t h, void *a) {
+            esp_ping_delete_session(h);
+          };
+          esp_ping_handle_t h;
+          if (esp_ping_new_session(&cfg, &cbs, &h) == ESP_OK) {
+            esp_ping_start(h);
+          } else {
+            ESP_LOGW("ping", "esp_ping_new_session selhal");
+          }
+
+binary_sensor:
+  - platform: template
+    id: ${id}
+    name: "${name}"
+    device_class: power
+    lambda: |-
+      const uint32_t t = id(${id}_odpoved_ms);
+      return t != 0 && (uint32_t) (millis() - t) < ${drzet_min | default(5)} * 60000UL;
