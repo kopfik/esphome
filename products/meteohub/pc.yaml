@@ -1,0 +1,319 @@
+## products/meteohub/pc.yaml
+#
+# Stranka s ovladanim PC -- tri tlacitka (power, reset, dlouhy stisk power),
+# ktera na dalku mackaji tlacitka na ESP pripojenem k desce PC
+# (s3sm-fone: components/buttons/pc_button.yaml). Jen pro DOTYKOVE kusy.
+#
+#   page     page_pc_${prefix}
+#   select   polozka "${volba}"
+#
+# Rozvrzeni je mrizka dashboardu (${g_radku} radky po ${g_karta_h} px), jen
+# tlacitka jsou pres celou sirku:
+#
+#   radek 0   stav PC      zapnuty / vypnuty / zapina se / nedostupny
+#   radek 1   Power
+#   radek 2   Reset
+#   radek 3   Dlouhy stisk (vynucene vypnuti)
+#
+# ---- Spojeni: primo MQTT, bez Home Assistantu --------------------------------
+# Ovladac PC i tenhle displej jsou na stejnem brokeru. Tlacitko se zmackne
+# zpravou PRESS na command topic ESPHome buttonu, stav se cte z topicu
+# binary senzoru a z availability topicu ovladace. Funguje to i kdyz HA
+# lezi a nepotrebuje "Povolit zarizeni provadet akce HA".
+#
+# Topicy sklada ESPHome jako <topic_prefix>/<typ>/<object_id>/<suffix>
+# (mqtt_component.cpp), object_id je jmeno entity malymi pismeny a s _
+# misto mezer ("FONE Power" -> fone_power). Availability je
+# <topic_prefix>/status s online/offline, oboji retained.
+#
+# ---- Pojistky proti omylu ---------------------------------------------------
+#   stav neznamy / ovladac offline   vsechno sede, nic nejde zmacknout
+#   PC vypnute                       Power zapne hned, Reset a dlouhy stisk sede
+#   PC se zapina                     po zapnuti vsechno sede, dokud stav
+#                                    neprepne na ON (nejdyl ${zapinam_s} s)
+#                                    -- jinak by druhe klepnuti pri bootu PC
+#                                    zase vypnulo
+#   PC zapnute                       kazde tlacitko nejdriv dialog ANO / NE
+#
+# Dialog se kresli pres stranku az na konci jeji lambdy. ILI9xxx posila na
+# panel jen zmenene pixely, takze se prekresli jen okno, ne cela stranka.
+# Dialog je modalni (klepnuti mimo = NE) a sam se zavre po ${dialog_s} s.
+#
+# Pozor na stav z pingu (components/sensors/ping.yaml): drzi ON jeste
+# nekolik minut po vypnuti. Kdyz v te dobe potvrdis Power, PC se znovu
+# ZAPNE. Spolehlivy stav da az optoclen na power LED.
+#
+# ---- Dotyk ------------------------------------------------------------------
+# Klepnuti na tlacitko (i sede) nebo kamkoliv pri otevrenem dialogu nastavi
+# touch_cil na tuhle stranku, takze core_touch pri pusteni nelistuje
+# (dokrouzi se na stranku, na ktere uz stoji). Samotna akce je az v
+# `on_release` tady, ktere bezi po tom z core_touch. Lista a stavovy radek
+# se nechytaji -- domecek a listovani funguji dal.
+#
+# Vyzaduje products/meteohub/core_touch.yaml (musi byt v `packages:` PRED
+# timhle balickem), products/meteohub/geo_*.yaml a `mqtt:` na zarizeni.
+#
+# Vars:
+#   prefix       zaklad id -> page_pc_${prefix} (fone)
+#   titulek      nadpis stranky, KAPITALKAMA
+#   volba        text polozky v selectu prepinani stranek
+#   nazev        jmeno PC v textech ("FONE")
+#   mqtt_prefix  topic_prefix ovladace PC (s3sm-fone)
+#   tl_power, tl_reset, tl_force   object_id tlacitek na ovladaci
+#   stav         object_id binary senzoru "PC zapnuto" na ovladaci
+#   zapinam_s    jak dlouho po zapnuti cekat na stav ON (default 120)
+#   dialog_s     po kolika sekundach se dialog sam zavre (default 15)
+#   touch_id     id touchscreen komponenty (povinne)
+#   display_id
+
+globals:
+  # 0 = dialog zavreny, jinak cislo radku tlacitka, na ktere se pta.
+  - id: pc_${prefix}_dialog
+    type: int
+    restore_value: false
+    initial_value: '0'
+  # Co trefil on_touch: -1 nic, 1..3 tlacitko, 10 ANO, 11 NE / mimo dialog.
+  - id: pc_${prefix}_tah
+    type: int
+    restore_value: false
+    initial_value: '-1'
+  # millis(), do kdy se ceka na naskoceni PC. 0 = neceka se.
+  - id: pc_${prefix}_zapinam_do
+    type: uint32_t
+    restore_value: false
+    initial_value: '0'
+
+text_sensor:
+  - platform: mqtt_subscribe
+    id: pc_${prefix}_stav
+    topic: "${mqtt_prefix}/binary_sensor/${stav}/state"
+    internal: true
+    on_value:
+      - script.execute: pc_${prefix}_prekresli
+  - platform: mqtt_subscribe
+    id: pc_${prefix}_ovladac
+    topic: "${mqtt_prefix}/status"
+    internal: true
+    on_value:
+      - script.execute: pc_${prefix}_prekresli
+
+script:
+  - id: pc_${prefix}_stisk
+    mode: queued
+    parameters:
+      tlacitko: string
+    then:
+      - logger.log:
+          format: "PC ${nazev}: tlacitko %s"
+          args: ['tlacitko.c_str()']
+      - mqtt.publish:
+          topic: !lambda 'return std::string("${mqtt_prefix}/button/") + tlacitko + "/command";'
+          payload: "PRESS"
+          retain: false
+
+  # Prekresli jen kdyz je stranka videt -- stav chodi i kdyz se kouka jinam.
+  - id: pc_${prefix}_prekresli
+    mode: single
+    then:
+      - if:
+          condition:
+            lambda: |-
+              return id(${display_id | default("displej35")})->get_active_page()
+                     == id(page_pc_${prefix});
+          then:
+            - component.update: ${display_id | default("displej35")}
+
+  - id: pc_${prefix}_dialog_limit
+    mode: restart
+    then:
+      - delay: ${dialog_s | default(15)}s
+      - lambda: 'id(pc_${prefix}_dialog) = 0;'
+      - script.execute: pc_${prefix}_prekresli
+
+  - id: pc_${prefix}_zapinam_limit
+    mode: restart
+    then:
+      - delay: ${zapinam_s | default(120)}s
+      - lambda: 'id(pc_${prefix}_zapinam_do) = 0;'
+      - script.execute: pc_${prefix}_prekresli
+
+font:
+  - id: !extend font_icons
+    glyphs:
+      - "\U000F0425"   # power
+      - "\U000F0709"   # restart
+      - "\U000F0D77"   # gesture-tap-hold
+      - "\U000F0379"   # monitor
+      - "\U000F0D90"   # monitor-off
+
+select:
+  - id: !extend display_page
+    options:
+      - "${volba}"
+
+  - id: !extend uvodni_stranka
+    options:
+      - "${volba}"
+
+display:
+  - id: !extend ${display_id | default("displej35")}
+    on_page_change:
+      # Odchod ze stranky (odpocet na hodiny, select z HA) dialog zahodi,
+      # at po navratu nevisi otazka, kterou uz nikdo nepamatuje.
+      - from: page_pc_${prefix}
+        then:
+          - lambda: 'id(pc_${prefix}_dialog) = 0;'
+    pages:
+      - id: page_pc_${prefix}
+        lambda: |-
+          it.fill(id(color_bg));
+          id(chrome)->execute("${titulek}");
+
+          // Geometrie z products/meteohub/geo_*.yaml. Tytez vypocty jsou
+          // v on_touch nize -- nesmi se rozejit.
+          const int MEZ = ${g_mezera};
+          const int OX = ${g_obsah_x}, OY = ${g_obsah_y};
+          const int OW = ${g_obsah_w}, OH = ${g_obsah_h};
+          const int CH = ${g_karta_h};
+          const int L = ${g_karta_okraj}, R = ${g_karta_okraj_p};
+
+          // Rezim: 0 nedostupny, 1 vypnuty, 2 zapina se, 3 zapnuty.
+          const bool ovladac = id(pc_${prefix}_ovladac).has_state()
+                               && id(pc_${prefix}_ovladac).state == "online";
+          const bool zap = id(pc_${prefix}_stav).has_state()
+                           && id(pc_${prefix}_stav).state == "ON";
+          const bool znamy = id(pc_${prefix}_stav).has_state();
+          uint32_t zd = id(pc_${prefix}_zapinam_do);
+          if (zap) id(pc_${prefix}_zapinam_do) = zd = 0;
+          const bool zapinam = zd != 0 && (int32_t) (zd - millis()) > 0;
+          const int rezim = (!ovladac || !znamy) ? 0 : zap ? 3 : zapinam ? 2 : 1;
+
+          // ---- stav ----
+          static const char *const STAV[4] = {"Nedostupný", "Vypnutý", "Zapíná se", "Zapnutý"};
+          Color sc = rezim == 3 ? id(color_green_0) : rezim == 2 ? id(color_yellow)
+                   : rezim == 1 ? id(color_muted) : id(color_red);
+          it.filled_rectangle(OX, OY, OW, CH, id(color_card));
+          it.print(OX + L, OY + ${g_karta_ikona_y}, id(font_icons), sc, TextAlign::TOP_LEFT,
+                   rezim == 3 || rezim == 2 ? "\U000F0379" : "\U000F0D90");
+          it.print(OX + OW - R, OY + ${g_karta_popisek_y}, id(font_small), id(color_muted),
+                   TextAlign::TOP_RIGHT, "${nazev}");
+          it.print(OX + OW - R, OY + ${g_karta_hodnota_y}, id(font_value), sc,
+                   TextAlign::TOP_RIGHT, STAV[rezim]);
+
+          // ---- tlacitka ----
+          auto tlacitko = [&](int x, int y, int w, int h, Color ramecek, Color text,
+                              font::Font *f, const char *popis) {
+            it.filled_rectangle(x, y, w, h, id(color_card));
+            it.rectangle(x, y, w, h, ramecek);
+            it.rectangle(x + 1, y + 1, w - 2, h - 2, ramecek);
+            if (popis != nullptr) {
+              it.print(x + w / 2, y + h / 2, f, text, TextAlign::CENTER, popis);
+            }
+          };
+          static const char *const IKONA[4] = {"", "\U000F0425", "\U000F0709", "\U000F0D77"};
+          static const char *const NAPIS[4] = {"", "Power", "Reset", "Dlouhý stisk"};
+          static const char *const POPIS[4] = {"", "zapnout / vypnout", "restart", "vynucené vypnutí"};
+          for (int r = 1; r <= 3; r++) {
+            const int y = OY + r * (CH + MEZ);
+            const bool aktivni = rezim == 3 || (rezim == 1 && r == 1);
+            const Color ram = aktivni ? id(color_arch) : id(color_grid);
+            const Color txt = aktivni ? id(color_white) : id(color_muted);
+            tlacitko(OX, y, OW, CH, ram, txt, nullptr, nullptr);
+            it.print(OX + 3 * L, y + CH / 2, id(font_icons),
+                     aktivni ? id(color_arch) : id(color_muted), TextAlign::CENTER_LEFT, IKONA[r]);
+            it.print(OX + OW - R, y + CH / 2 - 2, id(font_label), txt,
+                     TextAlign::BOTTOM_RIGHT, NAPIS[r]);
+            it.print(OX + OW - R, y + CH / 2 + 4, id(font_small), id(color_muted),
+                     TextAlign::TOP_RIGHT, POPIS[r]);
+          }
+
+          // ---- dialog ANO / NE ----
+          const int dlg = id(pc_${prefix}_dialog);
+          if (dlg != 0) {
+            const int DX = OX + 2 * MEZ, DW = OW - 4 * MEZ;
+            const int DH = 2 * CH + MEZ, DY = OY + (OH - DH) / 2;
+            const int P = 2 * MEZ, BH = CH * 2 / 3;
+            const int BW = (DW - 3 * P) / 2, BY = DY + DH - P - BH;
+            it.filled_rectangle(DX, DY, DW, DH, id(color_bg));
+            for (int i = 0; i < 3; i++) {
+              it.rectangle(DX + i, DY + i, DW - 2 * i, DH - 2 * i, id(color_arch));
+            }
+            static const char *const OTAZKA[4] = {"", "Vypnout ${nazev}?", "Restartovat ${nazev}?",
+                                                  "Vynutit vypnutí?"};
+            static const char *const POZN[4] = {"", "krátký stisk power", "tlačítko reset",
+                                                "power držet 5 s"};
+            it.print(DX + DW / 2, DY + P + 4, id(font_label), id(color_white),
+                     TextAlign::TOP_CENTER, OTAZKA[dlg]);
+            it.print(DX + DW / 2, DY + P + 44, id(font_small), id(color_muted),
+                     TextAlign::TOP_CENTER, POZN[dlg]);
+            tlacitko(DX + P, BY, BW, BH, id(color_arch), id(color_arch), id(font_value), "NE");
+            tlacitko(DX + 2 * P + BW, BY, BW, BH, id(color_red), id(color_red), id(font_value), "ANO");
+          }
+
+touchscreen:
+  - id: !extend ${touch_id}
+    on_touch:
+      - lambda: |-
+          if (id(${display_id | default("displej35")}).get_active_page()
+              != id(page_pc_${prefix})) {
+            return;
+          }
+          const int MEZ = ${g_mezera};
+          const int OX = ${g_obsah_x}, OY = ${g_obsah_y};
+          const int OW = ${g_obsah_w}, OH = ${g_obsah_h};
+          const int CH = ${g_karta_h};
+          const int tx = touch.x, ty = touch.y;
+
+          if (id(pc_${prefix}_dialog) != 0) {
+            // Modalni: chyta se vsechno, nelistuje se ani domeckem.
+            const int DX = OX + 2 * MEZ, DW = OW - 4 * MEZ;
+            const int DH = 2 * CH + MEZ, DY = OY + (OH - DH) / 2;
+            const int P = 2 * MEZ, BH = CH * 2 / 3;
+            const int BW = (DW - 3 * P) / 2, BY = DY + DH - P - BH;
+            const int AX = DX + 2 * P + BW;
+            const bool ano = tx >= AX && tx < AX + BW && ty >= BY && ty < BY + BH;
+            id(pc_${prefix}_tah) = ano ? 10 : 11;
+            id(touch_cil) = id(page_pc_${prefix});
+            return;
+          }
+
+          // Lista a stavovy radek nechat core_touch (domecek, listovani).
+          if (ty < OY + CH + MEZ || tx < OX || tx >= OX + OW) return;
+          const int r = (ty - OY) / (CH + MEZ);
+          if (r < 1 || r > 3) return;
+          id(pc_${prefix}_tah) = r;
+          id(touch_cil) = id(page_pc_${prefix});
+    on_release:
+      - lambda: |-
+          const int t = id(pc_${prefix}_tah);
+          id(pc_${prefix}_tah) = -1;
+          if (t < 0) return;
+
+          // Stejny rezim jako pri kresleni.
+          const bool ovladac = id(pc_${prefix}_ovladac).has_state()
+                               && id(pc_${prefix}_ovladac).state == "online";
+          const bool zap = id(pc_${prefix}_stav).has_state()
+                           && id(pc_${prefix}_stav).state == "ON";
+          const bool znamy = id(pc_${prefix}_stav).has_state();
+          const uint32_t zd = id(pc_${prefix}_zapinam_do);
+          const bool zapinam = !zap && zd != 0 && (int32_t) (zd - millis()) > 0;
+          const int rezim = (!ovladac || !znamy) ? 0 : zap ? 3 : zapinam ? 2 : 1;
+
+          static const char *const TL[4] = {"", "${tl_power}", "${tl_reset}", "${tl_force}"};
+          const int dlg = id(pc_${prefix}_dialog);
+          if (dlg != 0) {
+            id(pc_${prefix}_dialog) = 0;
+            id(pc_${prefix}_dialog_limit)->stop();
+            // Kdyz se mezitim stav zmenil (PC spadlo, ovladac offline),
+            // ANO uz neplati -- otazka byla na zapnute PC.
+            if (t == 10 && rezim == 3) id(pc_${prefix}_stisk)->execute(TL[dlg]);
+          } else if (rezim == 1 && t == 1) {
+            id(pc_${prefix}_stisk)->execute(TL[1]);
+            const uint32_t m = millis() + ${zapinam_s | default(120)} * 1000UL;
+            id(pc_${prefix}_zapinam_do) = m ? m : 1;
+            id(pc_${prefix}_zapinam_limit)->execute();
+          } else if (rezim == 3) {
+            id(pc_${prefix}_dialog) = t;
+            id(pc_${prefix}_dialog_limit)->execute();
+          }
+      - component.update: ${display_id | default("displej35")}
