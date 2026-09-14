@@ -26,9 +26,9 @@
 #   320x480  legenda 120 px, radek 21 px -> 5 radku, tedy pet car v sloupci
 #   240x320  legenda  53 px, radek 15 px -> 3 radky, pet car ve dvou sloupcich
 #
-# Casove okno ("100 min") je VPRAVO V LISTE u nadpisu, ne v legende -- v ni by
-# zabiralo cely radek, ktery se hodi na dalsi caru. Lista ma nadpis
-# vycentrovany, takze po stranach je volno a `chrome` se kvuli tomu nemeni.
+# Casove okno ("100 min") je V PRAVEM HORNIM ROHU GRAFU, zrcadlove k popisku
+# maxima vlevo. V legende by zabiralo cely radek, ktery se hodi na dalsi
+# caru, a v liste vpravo je u dotykovych kusu ikona menu (core_touch.yaml).
 #
 # ---- Treti az pata cara jsou nepovinne --------------------------------------
 # Vyplnenim `zdroj3`/`popisek3` (a 4, 5) cara pribude, vynechanim zmizi
@@ -55,7 +55,7 @@
 #                 Zmensenim se legenda zvetsi, zvetsenim naopak.
 #   okno          delka casoveho okna (default 100min)
 #   x_grid        roztec svisle mrizky (default 25min)
-#   popisek_okna  text okna vpravo v liste (default "100 min")
+#   popisek_okna  text okna v pravem hornim rohu grafu (default "100 min")
 #   jednotka      spolecna jednotka vsech car (°C, %, hPa); pise se za hodnotu
 #   font_legenda  font legendy (default font_small)
 #
@@ -127,12 +127,6 @@ display:
         lambda: |-
           it.fill(id(color_bg));
           id(chrome)->execute("${titulek}");
-
-          // Casove okno vpravo v liste. Nadpis je vycentrovany, takze si
-          // nepreka; v legende by zabralo cely radek.
-          it.print(${g_panel_w} - ${g_ramecek} - ${g_mezera}, (${g_lista_h} - 1) / 2,
-                   id(font_small), id(color_muted), TextAlign::CENTER_RIGHT,
-                   "${popisek_okna | default("100 min")}");
 
           // Rozmery z products/meteohub/geo_*.yaml, zadne pevne cislo tady.
           const int OX = ${g_obsah_x}, OY = ${g_obsah_y};
@@ -210,6 +204,9 @@ display:
           }
 
           it.graph(GX, GY, id(graf_${prefix}), id(color_grid));
+          // Casove okno v pravem hornim rohu grafu, naproti popisku maxima.
+          it.print(GX + GW - PDX, GY + PDY, id(font_small), id(color_muted),
+                   TextAlign::TOP_RIGHT, "${popisek_okna | default("100 min")}");
           if (!isnan(id(graf_${prefix}).get_graph_limit_max())) {
             it.printf(GX + PDX, GY + PDY, id(font_small), id(color_muted),
                       TextAlign::TOP_LEFT, "%.0f", id(graf_${prefix}).get_graph_limit_max());

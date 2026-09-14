@@ -3,10 +3,11 @@
 # Core pro kusy s DOTYKOVYM displejem. Neni to kopie -- includuje
 # core.yaml a jen k nemu pridava to, co se bez dotyku nehodi:
 #
-#   ikony v liste   domecek a sipka zpet vlevo; MENU a OK pribydou
+#   ikony v liste   domecek a sipka zpet vlevo, menu vpravo (jen s menu.yaml)
 #   obsluha dotyku  domecek -> dashboardy dokola, zpet -> odkud se skocilo,
 #                   jinak listovani vlevo/vpravo
-#   globaly         touch_cil / touch_x / touch_y (viz nize, proc), historie
+#   globaly         touch_cil / touch_x / touch_y (viz nize, proc), historie,
+#                   menu_stranka / menu_pod / menu_pod_index
 #
 # Ikony jdou do LISTY, ne do zapati. Lista je 320 px siroka a i nejsirsi
 # nadpis (METEOHUB, 142 px) nechava 89 px na kazde strane, tedy misto na dve
@@ -44,6 +45,20 @@
 # Nadpis v liste musi zustat uzsi nez misto mezi ikonami: na 320x480 zacina
 # sipka na x = 57 (g_lista_ikona2_x) a konci kolem 85, takze nadpis smi mit
 # nejvys ~140 px (METEOHUB 143 je na hrane, DASHBOARD 160 uz ne).
+#
+# ---- Menu --------------------------------------------------------------------
+# Samotne menu (okno, polozky, dotyk v nem) dodava menu.yaml. Tady je jen to,
+# co musi byt v jadru:
+#   - ikona menu vpravo v liste -- kresli se jen kdyz menu.yaml nastavil
+#     menu_stranka, kusy bez menu ji tedy nemaji a pravy okraj listy listuje
+#   - otevreni: klepnuti na ikonu si zapamatuje stranku pod menu
+#     (menu_pod, menu_pod_index) a skoci na stranku menu. Do historie se
+#     to nezapisuje.
+#   - listovani stranku menu PRESKAKUJE -- menu je v cyklu stranek (jinak by
+#     nesedely indexy ani select), ale dostat se na ni ma jen ikonou.
+#   - skok z menu (touch_cil nastavi menu.yaml) se do historie zapise jako
+#     skok ze stranky POD menu, ne ze stranky menu -- zpet pak vede tam,
+#     kde jsi menu otevrel.
 #
 # Vyzaduje: vsechno co core.yaml, navic `touchscreen:` s id z
 # varu touch_id.
@@ -89,6 +104,21 @@ globals:
   - id: historie
     type: std::vector<int>
     restore_value: false
+  # Stranka menu z menu.yaml; nullptr = kus menu nema.
+  - id: menu_stranka
+    type: display::DisplayPage *
+    restore_value: false
+    initial_value: 'nullptr'
+  # Stranka, nad kterou bylo menu otevrene, a jeji index.
+  # const: tak ho vraci Display::get_active_page().
+  - id: menu_pod
+    type: const display::DisplayPage *
+    restore_value: false
+    initial_value: 'nullptr'
+  - id: menu_pod_index
+    type: int
+    restore_value: false
+    initial_value: '0'
 
 font:
   # Vlastni, mensi rez ikon: font_icons z core je 36 px na karty, v 43px
@@ -99,6 +129,7 @@ font:
     glyphs:
       - "\U000F02DC"   # home
       - "\U000F004D"   # arrow-left (zpet)
+      - "\U000F035C"   # menu
 
 script:
   # Dokresli ikony do listy, kterou vykreslilo jadro. `!extend` akce PRIDAVA
@@ -114,6 +145,11 @@ script:
           it.print(${g_lista_ikona2_x}, (LISTA - 1) / 2, id(font_icons_lista),
                    id(historie).empty() ? id(color_grid) : id(color_arch),
                    TextAlign::CENTER_LEFT, "\U000F004D");
+          // Menu zrcadlove k domecku, jen kdyz ho kus ma.
+          if (id(menu_stranka) != nullptr) {
+            it.print(${g_panel_w} - ${g_lista_ikona_x}, (LISTA - 1) / 2, id(font_icons_lista),
+                     id(color_arch), TextAlign::CENTER_RIGHT, "\U000F035C");
+          }
 
 touchscreen:
   - id: !extend ${touch_id}
@@ -139,6 +175,15 @@ touchscreen:
             h.push_back(od);
             if ((int) h.size() > ${historie_max | default("10")}) h.erase(h.begin());
           };
+          // Dokrouzi se na stranku `p`, vraci pocet kroku.
+          auto dojdi = [&](display::DisplayPage *p) -> int {
+            int kroku = 0;
+            while (d.get_active_page() != p && kroku < n) {
+              d.show_next_page();
+              kroku++;
+            }
+            return kroku;
+          };
           auto jdi_na = [&](int cil) {
             int cur = id(stranka_index) % n;
             while (cur != cil) { d.show_next_page(); cur = (cur + 1) % n; }
@@ -150,15 +195,18 @@ touchscreen:
             // verejne get_next(), takze index cile se necte -- dokrouzime se
             // k nemu pres show_next_page() a kroky si rovnou spocitame.
             // Prekresluje se az pozdejsim component.update, takze je to levne.
-            int kroku = 0;
-            while (d.get_active_page() != id(touch_cil) && kroku < n) {
-              d.show_next_page();
-              kroku++;
-            }
+            const bool z_menu = id(menu_stranka) != nullptr
+                                && d.get_active_page() == id(menu_stranka);
+            const int kroku = dojdi(id(touch_cil));
             if (n > 0) {
               const int od = id(stranka_index) % n;
               id(stranka_index) = (od + kroku) % n;
-              zapamatuj(od, id(stranka_index));
+              // Z menu se pocita skok ze stranky pod nim. Zavreni menu
+              // (cil = stranka pod nim) tak do historie nic neprida, klepnuti
+              // do okna mimo polozky (cil = menu samo) taky ne.
+              if (id(menu_stranka) == nullptr || d.get_active_page() != id(menu_stranka)) {
+                zapamatuj(z_menu ? id(menu_pod_index) : od, id(stranka_index));
+              }
             }
             id(touch_cil) = nullptr;
           } else if (v_liste && id(touch_x) < ${g_lista_hotspot_w}) {
@@ -181,12 +229,29 @@ touchscreen:
               h.pop_back();
               if (cil < n) jdi_na(cil);
             }
+          } else if (v_liste && id(menu_stranka) != nullptr
+                     && id(touch_x) >= ${g_panel_w} - ${g_lista_hotspot_w}) {
+            // Otevrit menu nad aktualni strankou.
+            if (n > 0) {
+              id(menu_pod) = d.get_active_page();
+              id(menu_pod_index) = id(stranka_index) % n;
+              id(stranka_index) = (id(menu_pod_index) + dojdi(id(menu_stranka))) % n;
+            }
           } else if (id(touch_x) < d.get_width() / 2) {
             d.show_prev_page();
             if (n > 0) id(stranka_index) = (id(stranka_index) + n - 1) % n;
+            // Na menu se listovanim nechodi, preskocit.
+            if (id(menu_stranka) != nullptr && d.get_active_page() == id(menu_stranka)) {
+              d.show_prev_page();
+              if (n > 0) id(stranka_index) = (id(stranka_index) + n - 1) % n;
+            }
           } else {
             d.show_next_page();
             if (n > 0) id(stranka_index) = (id(stranka_index) + 1) % n;
+            if (id(menu_stranka) != nullptr && d.get_active_page() == id(menu_stranka)) {
+              d.show_next_page();
+              if (n > 0) id(stranka_index) = (id(stranka_index) + 1) % n;
+            }
           }
       # Prekresli hned. Bez toho se nova stranka objevi az pri nejblizsim
       # pravidelnem update, tedy az za vterinu -- to je ta "lenost".

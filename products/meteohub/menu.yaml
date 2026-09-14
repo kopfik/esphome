@@ -1,0 +1,187 @@
+## products/meteohub/menu.yaml
+#
+# Menu jako OKNO PRES AKTUALNI STRANKU: seznam az sesti odkazu na vybrane
+# stranky. Otevira se jen ikonou menu vpravo v liste (core_touch.yaml).
+# Jen pro DOTYKOVE kusy.
+#
+#   page     page_menu
+#   select   polozka "${volba}"
+#   font     font_icons_menu (ikony polozek)
+#
+# ---- Jak je to "okno" ----------------------------------------------------------
+# ESPHome nema nad strankami zadnou vrstvu, kam by se dalo kreslit. Menu je
+# proto obycejna stranka, ktera si NEJDRIV zavola lambdu stranky pod sebou
+# (DisplayPage::get_writer(), menu_pod z core_touch) a az pres ni nakresli
+# okno. ILI9xxx posila na panel jen zmenene pixely, takze se po otevreni
+# prekresli jen okno a stranka pod nim zustane, jak byla -- vcetne zivych
+# hodnot, protoze se kresli znovu pri kazdem update.
+#
+# Stranka menu JE v cyklu stranek (jinak by nesedely indexy a select), ale
+# listovani ji v core_touch preskakuje. Musi byt v `packages:` az za vsemi
+# ostatnimi strankami -- nejlepe uplne posledni.
+#
+# ---- Dotyk --------------------------------------------------------------------
+# Menu je modalni, chyta kazde klepnuti:
+#   polozka             skok na jeji stranku (do historie jako skok ze
+#                       stranky pod menu, zpet tedy vede tam)
+#   okno mimo polozky   nic, menu zustane
+#   mimo okno           zavrit, zpatky na stranku pod menu
+# Skok samotny dela core_touch v `on_release` pres touch_cil, stejne jako
+# u karet dashboardu.
+#
+# Vyzaduje products/meteohub/core_touch.yaml, products/meteohub/geo_*.yaml.
+#
+# Vars:
+#   titulek            nadpis okna (default "MENU")
+#   volba              text polozky v selectu prepinani stranek (default "Menu")
+#   polozkaN_text      text polozky, N = 1..6. Plnit OD PRVNI BEZ DER -- menu
+#                      konci na prvni prazdne. polozka1 je povinna.
+#   polozkaN_ikona     MDI glyph ("\U000F056E"). Ikony polozek musi byt
+#                      NAVZAJEM RUZNE -- ESPHome jinak hlasi duplicitni glyph.
+#   polozkaN_page      id cilove stranky (page_dash_1)
+#   touch_id           id touchscreen komponenty (povinne)
+#   display_id
+
+esphome:
+  on_boot:
+    # Az je menu_stranka nastavena, core_touch kresli ikonu menu a listovani
+    # preskakuje stranku menu. Driv nez prvni vykresleni (core.yaml ceka 3 s).
+    priority: 600
+    then:
+      - lambda: 'id(menu_stranka) = id(page_menu);'
+
+font:
+  - file: "https://github.com/Templarian/MaterialDesign-Webfont/raw/master/fonts/materialdesignicons-webfont.ttf"
+    id: font_icons_menu
+    size: ${g_font_icons_lista}
+    glyphs:
+      # Jeden retezec = kazdy znak jeden glyph (font/__init__.py rozlozi
+      # retezec na znaky), nevyplnene polozky jsou prazdne.
+      - "${polozka1_ikona}${polozka2_ikona | default('')}${polozka3_ikona | default('')}${polozka4_ikona | default('')}${polozka5_ikona | default('')}${polozka6_ikona | default('')}"
+
+select:
+  - id: !extend display_page
+    options:
+      - "${volba | default('Menu')}"
+
+  - id: !extend uvodni_stranka
+    options:
+      - "${volba | default('Menu')}"
+
+display:
+  - id: !extend ${display_id | default("displej35")}
+    pages:
+      - id: page_menu
+        lambda: |-
+          // Nejdriv stranka pod menu. Kdyz neni (menu vybrane selectem z HA
+          // hned po startu), aspon prazdna stranka s listou.
+          // Na sebe sama se lambda stranky odkazat nesmi (id(page_menu) tady
+          // = "Circular dependency" pri generovani), proto menu_stranka.
+          const display::DisplayPage *pod = id(menu_pod);
+          if (pod != nullptr && pod != id(menu_stranka)) {
+            pod->get_writer()(it);
+          } else {
+            it.fill(id(color_bg));
+            id(chrome)->execute("${titulek | default('MENU')}");
+          }
+
+          // Geometrie z products/meteohub/geo_*.yaml. Tytez vypocty jsou
+          // v on_touch nize -- nesmi se rozejit.
+          const int MEZ = ${g_mezera};
+          const int OX = ${g_obsah_x}, OY = ${g_obsah_y};
+          const int OW = ${g_obsah_w}, OH = ${g_obsah_h};
+          const int CH = ${g_karta_h}, HEAD = ${g_lista_h};
+          const int L = ${g_karta_okraj}, R = ${g_karta_okraj_p};
+
+          const char *const TEXT[6] = {"${polozka1_text}", "${polozka2_text | default('')}",
+                                       "${polozka3_text | default('')}", "${polozka4_text | default('')}",
+                                       "${polozka5_text | default('')}", "${polozka6_text | default('')}"};
+          const char *const IKONA[6] = {"${polozka1_ikona}", "${polozka2_ikona | default('')}",
+                                        "${polozka3_ikona | default('')}", "${polozka4_ikona | default('')}",
+                                        "${polozka5_ikona | default('')}", "${polozka6_ikona | default('')}"};
+          display::DisplayPage *const CIL[6] = {
+            // Nevyplnene ukazuji na prvni polozku -- za `k` se nekresli ani
+            // netrefuji, jde jen o platne id.
+            id(${polozka1_page}), id(${polozka2_page | default(polozka1_page)}),
+            id(${polozka3_page | default(polozka1_page)}), id(${polozka4_page | default(polozka1_page)}),
+            id(${polozka5_page | default(polozka1_page)}), id(${polozka6_page | default(polozka1_page)}),
+          };
+          int k = 0;
+          while (k < 6 && TEXT[k][0] != '\0') k++;
+
+          const int P = 2 * MEZ;
+          const int DX = OX + 2 * MEZ, DW = OW - 4 * MEZ;
+          const int BX = DX + P, BW = DW - 2 * P;
+          const int BH = std::min(CH * 2 / 3, (OH - HEAD - P - (k - 1) * MEZ) / std::max(k, 1));
+          const int DH = HEAD + k * BH + (k - 1) * MEZ + P;
+          const int DY = OY;
+
+          it.filled_rectangle(DX, DY, DW, DH, id(color_bg));
+          for (int i = 0; i < 3; i++) {
+            it.rectangle(DX + i, DY + i, DW - 2 * i, DH - 2 * i, id(color_arch));
+          }
+          it.print(DX + DW / 2, DY + HEAD / 2, id(font_title), id(color_arch),
+                   TextAlign::CENTER, "${titulek | default('MENU')}");
+
+          // Tlacitka stejne jako na strance PC (pc.yaml): podklad karty,
+          // dvojity ramecek v akcentu, ikona vlevo, text vpravo. Polozka
+          // stranky, nad kterou je menu otevrene, ma text v akcentu.
+          for (int r = 0; r < k; r++) {
+            const int y = DY + HEAD + r * (BH + MEZ);
+            const bool ted = CIL[r] == pod;
+            it.filled_rectangle(BX, y, BW, BH, id(color_card));
+            it.rectangle(BX, y, BW, BH, id(color_arch));
+            it.rectangle(BX + 1, y + 1, BW - 2, BH - 2, id(color_arch));
+            it.print(BX + L, y + BH / 2, id(font_icons_menu), id(color_arch),
+                     TextAlign::CENTER_LEFT, IKONA[r]);
+            it.print(BX + BW - R, y + BH / 2, id(font_label),
+                     ted ? id(color_arch) : id(color_white), TextAlign::CENTER_RIGHT, TEXT[r]);
+          }
+
+touchscreen:
+  - id: !extend ${touch_id}
+    on_touch:
+      - lambda: |-
+          if (id(${display_id | default("displej35")}).get_active_page() != id(page_menu)) {
+            return;
+          }
+          const int MEZ = ${g_mezera};
+          const int OX = ${g_obsah_x}, OY = ${g_obsah_y};
+          const int OW = ${g_obsah_w}, OH = ${g_obsah_h};
+          const int CH = ${g_karta_h}, HEAD = ${g_lista_h};
+
+          const char *const TEXT[6] = {"${polozka1_text}", "${polozka2_text | default('')}",
+                                       "${polozka3_text | default('')}", "${polozka4_text | default('')}",
+                                       "${polozka5_text | default('')}", "${polozka6_text | default('')}"};
+          display::DisplayPage *const CIL[6] = {
+            // Nevyplnene ukazuji na prvni polozku -- za `k` se nekresli ani
+            // netrefuji, jde jen o platne id.
+            id(${polozka1_page}), id(${polozka2_page | default(polozka1_page)}),
+            id(${polozka3_page | default(polozka1_page)}), id(${polozka4_page | default(polozka1_page)}),
+            id(${polozka5_page | default(polozka1_page)}), id(${polozka6_page | default(polozka1_page)}),
+          };
+          int k = 0;
+          while (k < 6 && TEXT[k][0] != '\0') k++;
+
+          const int P = 2 * MEZ;
+          const int DX = OX + 2 * MEZ, DW = OW - 4 * MEZ;
+          const int BX = DX + P, BW = DW - 2 * P;
+          const int BH = std::min(CH * 2 / 3, (OH - HEAD - P - (k - 1) * MEZ) / std::max(k, 1));
+          const int DH = HEAD + k * BH + (k - 1) * MEZ + P;
+          const int DY = OY;
+          const int tx = touch.x, ty = touch.y;
+
+          const display::DisplayPage *pod = id(menu_pod);
+          if (pod == nullptr || pod == id(page_menu)) pod = CIL[0];
+
+          if (tx < DX || tx >= DX + DW || ty < DY || ty >= DY + DH) {
+            // Mimo okno = zavrit.
+            // touch_cil neni const, ale stranka se jim jen porovnava a ukazuje.
+            id(touch_cil) = const_cast<display::DisplayPage *>(pod);
+            return;
+          }
+          id(touch_cil) = id(page_menu);
+          const int dy = ty - (DY + HEAD);
+          if (dy < 0 || tx < BX || tx >= BX + BW) return;
+          const int r = dy / (BH + MEZ);
+          if (r < k && dy % (BH + MEZ) < BH) id(touch_cil) = CIL[r];
