@@ -37,7 +37,7 @@
 # nepsat, jinak skonci na konci bez ohledu na to, kde to je napsane.
 #
 # Vars:
-#   sufix          zaklad id stranky -> page_dash_${sufix} (1, 2, sklep, ...)
+#   sufix          zaklad id stranky -> page_dash_${sufix} (1, 2, venku, ...)
 #   titulek        nadpis v zahlavi, KAPITALKAMA
 #   volba          text polozky v selectu prepinani stranek
 #   slot1 .. slot8 id kreslicich scriptu karet (karta_temp, karta_hum, ...);

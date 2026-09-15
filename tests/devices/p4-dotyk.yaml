@@ -58,7 +58,7 @@ packages:
   dash1:
     !include
     file: ../../products/meteohub/dashboard.yaml
-    vars: { display_id: display_4_0, sufix: "1", titulek: "STUL", volba: "Dashboard", slot1: karta_lok_temp, slot2: karta_lok_co2, slot3: karta_temp, slot4: karta_svatek }
+    vars: { display_id: display_4_0, sufix: "1", titulek: "DASHBOARD", volba: "Dashboard", slot1: karta_lok_temp, slot2: karta_lok_co2, slot3: karta_temp, slot4: karta_svatek }
   dash1_touch:
     !include
     file: ../../products/meteohub/dashboard_touch.yaml
@@ -87,7 +87,7 @@ packages:
   g_temp_2:
     !include
     file: ../../products/meteohub/graf_2.yaml
-    vars: { display_id: display_4_0, prefix: teploty_2, titulek: "TEPLOTY", volba: "Graf - Teploty", jednotka: "°C", y_grid: "1.0", zdroj1: ha_temp, popisek1: "Pokoj", barva1: color_white, format1: "%.1f", zdroj2: sht41_temp_raw, popisek2: "Stul", barva2: color_orange_1, format2: "%.1f" }
+    vars: { display_id: display_4_0, prefix: teploty_2, titulek: "TEPLOTY", volba: "Graf - Teploty", jednotka: "°C", y_grid: "1.0", zdroj1: ha_temp, popisek1: "HA", barva1: color_white, format1: "%.1f", zdroj2: sht41_temp_raw, popisek2: "Lokalni", barva2: color_orange_1, format2: "%.1f" }
 
   svatky: !include { file: ../../products/meteohub/svatky.yaml, vars: { display_id: display_4_0, ha_svatky: sensor.svatek, titulek: "SVATKY", volba: "Svatky" } }
 

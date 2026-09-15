@@ -217,8 +217,8 @@ ESPHome platformy, kde to dává smysl.
 ### Displeje a média
 
 - `components/displays/` obsahují **jen HW definici** displeje (model, piny,
-  rozměry, u ILI9488 i zrcadlení). Co se kreslí, přidává device nebo produkt přes
-  `display: - id: !extend <id>`.
+  rozměry, u ILI9488 i zrcadlení); ILI9488 a ST77xx leží v `components/displays/ili9xxx/`.
+  Co se kreslí, přidává device nebo produkt přes `display: - id: !extend <id>`.
 - `ili9488_yellow_board.yaml` je ILI9488 s kalibrační init sekvencí pro
   konkrétní špatnou sérii panelů (mléčné barvy); běžný panel = `ili9488.yaml`.
 - `media/` je placeholder pro **budoucí veřejná / znovupoužitelná** média.
@@ -486,7 +486,8 @@ platforms where it makes sense.
 ### Displays and media
 
 - `components/displays/` hold **only the hardware definition** of a display
-  (model, pins, dimensions, mirroring on ILI9488). What gets drawn is added by the device or
+  (model, pins, dimensions, mirroring on ILI9488); ILI9488 and ST77xx live in
+  `components/displays/ili9xxx/`. What gets drawn is added by the device or
   a product via `display: - id: !extend <id>`.
 - `ili9488_yellow_board.yaml` is an ILI9488 with a calibration init sequence for
   one specific bad panel batch (milky colors); a normal panel = `ili9488.yaml`.

@@ -10,6 +10,10 @@ YAML and include migration steps.
 
 * `products/meteohub/core.yaml`: `ignore_missing_glyphs: true` on the Ubuntu fonts using `GF_Latin_Core`, silencing the "Font Ubuntu is missing 15 glyphs" warning (combining diacritics never drawn; explicitly requested glyphs still fail loudly).
 * `README.md`, `examples/device-with-many-sensors.yaml`: the shared remote anchor now lives in a hidden top-level key (`.kopfik_esphome_remote`) instead of on the `base` package, avoiding ESPHome's "Key 'files' ... was dropped while processing a '<<' merge" warning. Examples pin `ref: v0.1.0`.
+* `components/sensors/ping.yaml`: replaced private LAN IP with RFC 5737 documentation IP (`192.0.2.10`) in header examples.
+* Removed personal device and room names from examples and comments in `components/lights/led_partition.yaml`, `products/meteohub/{core,podsviceni_radar,dashboard}.yaml`, and `tests/devices/p4-dotyk.yaml`.
+* `README.md`: noted that ILI9488 and ST77xx display packages live in `components/displays/ili9xxx/`.
+* `tests/README.md`: corrected note about `core.yaml` include mode (it is included directly by test devices).
 
 ## v0.1.0 — 2026-09-15
 

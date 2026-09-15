@@ -1,7 +1,7 @@
 ## components/sensors/ping.yaml
 #
 # Inline:
-#   pc_ping: !include { file: components/sensors/ping.yaml, vars: { id: pc_zapnuty, name: "PC zapnuty", ip: 10.0.0.10 } }
+#   pc_ping: !include { file: components/sensors/ping.yaml, vars: { id: pc_zapnuty, name: "PC zapnuty", ip: 192.0.2.10 } }
 #
 # Block:
 #   pc_ping: !include
@@ -9,7 +9,7 @@
 #     vars:
 #       id: pc_zapnuty
 #       name: "PC zapnuty"
-#       ip: 10.0.0.10
+#       ip: 192.0.2.10
 #       interval: 60s
 #       drzet_min: 5
 #

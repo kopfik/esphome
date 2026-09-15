@@ -15,7 +15,7 @@
 #   obnovovani          interval 1s -> update na celou minutu
 #
 # Politika podsviceni tady taky neni: kazdy kus ji ma jinou (meteohuby podle
-# radaru, dotykovy stul podle toho, jestli je na nem klidova stranka), takze
+# radaru, dotykovy meteohub podle toho, jestli je na nem klidova stranka), takze
 # ji dodava podsviceni_radar.yaml nebo podsviceni_dotyk.yaml.
 # Bez jednoho z nich se displej po startu vubec nerozsviti.
 #

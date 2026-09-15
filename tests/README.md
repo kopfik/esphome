@@ -68,7 +68,7 @@ Kontrola `config` všech zařízení, trvá pár sekund. Plný překlad (minuty)
 
 Každé pokrývá jinou kombinaci. Dohromady obsahují **každý balíček z repa**
 kromě prázdného `boards/rpipico1w.yaml` (stav 2026-09-15). `graf.yaml`,
-`grafy.yaml`, `skala.yaml` a `core.yaml` se natahují nepřímo přes jiné balíčky.
+`grafy.yaml` a `skala.yaml` se natahují nepřímo přes jiné balíčky.
 
 | Soubor | Deska | Co pokrývá |
 |---|---|---|

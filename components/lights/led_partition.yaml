@@ -1,14 +1,14 @@
 ## components/lights/led_partition.yaml
 #
 # Inline:
-#   segment1: !include { file: components/lights/led_partition.yaml, vars: { id: stul_usek1, name: "Stul - Usek 1", parent_id: led_strip, from: 0, to: 16 } }
+#   segment1: !include { file: components/lights/led_partition.yaml, vars: { id: usek1, name: "Usek 1", parent_id: led_strip, from: 0, to: 16 } }
 #
 # Block:
 #   segment1: !include
 #     file: components/lights/led_partition.yaml
 #     vars:
-#       id: stul_usek1
-#       name: "Stul - Usek 1"
+#       id: usek1
+#       name: "Usek 1"
 #       parent_id: led_strip
 #       from: 0
 #       to: 16

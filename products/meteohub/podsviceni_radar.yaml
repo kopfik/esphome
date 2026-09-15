@@ -8,7 +8,7 @@
 #   radar pusti         spusti odpocet, po ${zhasnout_po} zhasne
 #
 # Je to presne to, co drive delal primo core.yaml. Vyclenilo se to,
-# protoze dotykovy stul potrebuje politiku uplne jinou -- viz
+# protoze dotykovy meteohub potrebuje politiku uplne jinou -- viz
 # podsviceni_dotyk.yaml. Bez jednoho z tech dvou balicku zustane
 # displej po startu tmavy.
 #
