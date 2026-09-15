@@ -4,7 +4,7 @@
 # jeji zapinani a zhasinani k tomu, co uz dela core: pri detekci cloveka se
 # rozsviti spolu s podsvicenim, po 3 minutach klidu spolu s nim zhasne.
 #
-# Core sam o sedmisegmentovce nevi -- p4eth-stul-kopfik ji nema, a nejde ji
+# Core sam o sedmisegmentovce nevi -- dotykovy kus na P4 ji nema, a nejde ji
 # mit "volitelne" primo v nem, protoze YAML neumi podminku. Proto tenhle
 # samostatny balicek, ktery se pres `!extend` pripoji k hotovemu radaru
 # a hotovemu scriptu. Akce se do `on_press` i do `then:` PRIDAVAJI na konec,

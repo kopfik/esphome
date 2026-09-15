@@ -1,7 +1,7 @@
 ## products/meteohub/graf_2.yaml
 #
 # Stranka s JEDNIM velkym grafem, v nem DVE cary -- dve veliciny vedle sebe
-# (napr. teplota uvnitr a v hajzlu). Protejsek grafy_2.yaml, ktery na stejnou
+# (napr. teplota ve dvou mistnostech). Protejsek grafy_2.yaml, ktery na stejnou
 # plochu narve dva panely (100 min + 25 h) pod sebou.
 #
 #   graph    graf_${prefix}   dve trasy
@@ -38,7 +38,7 @@
 #   zdroj1, popisek1, barva1, format1   prvni cara
 #   zdroj2, popisek2, barva2, format2   druha cara
 #     zdroj*    id senzoru (ha_temp)
-#     popisek*  jmeno v zahlavi (Kopfik)
+#     popisek*  jmeno v zahlavi (napr. Obyvak)
 #     barva*    id barvy cary I jejiho popisku v zahlavi. Palety s ni nehybou:
 #               GraphTrace si Color zkopiruje pri setup() (graph.h:118).
 #     format*   KRATKY printf BEZ jednotky ("%.1f"), jednotka se pridava zvlast
@@ -106,7 +106,7 @@ display:
           // barvou sve cary. Vic nez sirka grafu k dispozici neni a sirka
           // hodnot se v case meni, takze se ustupuje po poradi:
           // s jednotkou -> bez jednotky -> jen hodnoty -> zahodit popisek okna.
-          // Nejtesnejsi je tlak: "Kopfik 1013" + "Hajzl 1013" + "100 min".
+          // Nejtesnejsi je tlak: popisky o 6 a 5 znacich + "1013" + "100 min".
           {
             const int X_R = GX + GW, X_L = GX, SIRKA = GW, MEZERA = ${g_sv_mezera};
             font::Font *f = id(font_small);

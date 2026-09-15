@@ -51,7 +51,8 @@ esphome:
       - lambda: 'id(menu_stranka) = id(page_menu);'
 
 font:
-  - file: "https://github.com/Templarian/MaterialDesign-Webfont/raw/master/fonts/materialdesignicons-webfont.ttf"
+  # Verze pinnuta stejne jako v core.yaml (tam je proc) -- URL musi sedet.
+  - file: "https://github.com/Templarian/MaterialDesign-Webfont/raw/v7.4.47/fonts/materialdesignicons-webfont.ttf"
     id: font_icons_menu
     size: ${g_font_icons_lista}
     glyphs:

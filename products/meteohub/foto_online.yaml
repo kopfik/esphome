@@ -17,7 +17,7 @@
 # a meni se, co je v ni.
 #
 # ---- Proc se to na meteohubu vyplati ----------------------------------------
-# Zmereno na s3sm-meteohub-solomon (app partition 1 835 008 B):
+# Zmereno na meteohubu s ESP32-S3 SuperMini (app partition 1 835 008 B):
 #   obrazek zapeceny ve flash          1 517 879 B  82,7 %
 #   + online_image + http_request      1 594 907 B  86,9 %   (+77 kB)
 #   + machinery, obrazek vyhozeny      1 287 679 B  70,2 %
@@ -65,7 +65,7 @@
 #   volba          text polozky v selectu prepinani stranek
 #   ha_foto        entity_id senzoru v HA, ktery drzi NAZEV SOUBORU
 #   zaklad_url     zacatek adresy vcetne lomitka na konci, napr.
-#                  "http://10.20.30.40:8123/local/fotky/"
+#                  "http://homeassistant.local:8123/local/fotky/"
 #   format         JPEG (default) | PNG | BMP -- jeden pro celou galerii
 #   resize_w       sirka, na kterou se fotka zmensuje (default sirka panelu)
 #   resize_h       vyska (default vyska panelu)

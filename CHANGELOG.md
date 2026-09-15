@@ -31,6 +31,10 @@
 
 * `packages/base.yaml`: `wifi_power_saver` is now optional, default `light` (ESPHome's own ESP32/RP2040 default; pass `none` explicitly on ESP8266).
 * `packages/mqtt_publish_json.yaml`, `components/sensors/paj7620.yaml`: `ts` is now real epoch milliseconds from `gettimeofday()` instead of `timestamp * 1000 + millis() % 1000`, whose millisecond part came from uptime and could make `ts` jump backwards between samples. Payload format unchanged.
+* Pinned the Material Design Icons font in meteohub packages to tag `v7.4.47` (the current `master` at pin time) instead of `master`, so builds are reproducible.
+* Stopped tracking `.claude/settings.local.json` (local Claude Code permissions) and added it to `.gitignore`.
+* Removed the `components/displays/.gitkeep` placeholder; the directory has real display packages now.
+* Removed personal names (Wi-Fi SSIDs, household, room and device names, a LAN IP) from comments in `products/meteohub.yaml`, `products/meteohub/{core,segment,foto_online,graf_2,grafy_2}.yaml` and `components/displays/tm1637.yaml`. Comments only, no functional change.
 * Removed personal device names from `products/meteohub/pc.yaml`, `components/buttons/pc_button.yaml` and `components/outputs/gpio_output.yaml` examples.
 * `packages/base.yaml`: API `max_connections` raised to 10 like `packages/base_eth.yaml` (ESPHome default 5 on ESP32 ran out); both configurable via optional `api_max_connections`. Pass `4` on ESP8266.
 * `packages/time.yaml`: timezone configurable via optional `timezone` var, default `Europe/Prague` (previous hard-coded value).

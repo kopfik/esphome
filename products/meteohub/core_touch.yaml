@@ -123,7 +123,8 @@ globals:
 font:
   # Vlastni, mensi rez ikon: font_icons z core je 36 px na karty, v 43px
   # liste by sedel natesno. Stejny TTF, ESPHome si ho stahne jednou.
-  - file: "https://github.com/Templarian/MaterialDesign-Webfont/raw/master/fonts/materialdesignicons-webfont.ttf"
+  # Verze pinnuta stejne jako v core.yaml (tam je proc) -- URL musi sedet.
+  - file: "https://github.com/Templarian/MaterialDesign-Webfont/raw/v7.4.47/fonts/materialdesignicons-webfont.ttf"
     id: font_icons_lista
     size: ${g_font_icons_lista}
     glyphs:

@@ -39,7 +39,7 @@
 #
 # POZOR: v akcich switche se schvalne NEVOLA update(). Template switch se
 # s restore_mode spousti uz behem setup() fáze, driv nez je displej
-# inicializovany (stejny problem jako select on_value u c6sm-rddwrf).
+# inicializovany (stejny problem jako select on_value, na kterem se to nasleplo poprve).
 # set_on() je cisty setter na membru, takze je to bezpecne -- projevi se
 # pri nejblizsim prekresleni (update_interval, default 1s).
 #

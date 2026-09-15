@@ -34,6 +34,15 @@ media.local/*
 __pycache__/
 *.pyc
 
+# --- AI agent local settings ---
+# .claude/settings.local.json je podle konvence Claude Code LOKALNI soubor
+# (osobni povolene prikazy, napr. Bash(docker exec *), Bash(python *)).
+# Ve verejnem repu by tiche rozsiril opravneni komukoli, kdo si repo naklonuje
+# a pusti nad nim Claude Code. Sdilena nastaveni by patrila do
+# .claude/settings.json (bez .local). Pozor: .gitignore neplati na soubory,
+# ktere uz git sleduje -- jednou je potreba 'git rm --cached'.
+.claude/settings.local.json
+
 # --- OS / editor cruft ---
 .DS_Store
 .idea/

@@ -1,7 +1,7 @@
 ## products/meteohub/grafy_2.yaml
 #
 # Stranka se dvema grafy, v kazdem DVE cary -- dve veliciny vedle sebe
-# (napr. teplota uvnitr a v hajzlu). Nahore 100 min, dole 25 h.
+# (napr. teplota ve dvou mistnostech). Nahore 100 min, dole 25 h.
 #
 #   graph    graf_${prefix}_100m / _25h   po dvou trasach
 #   page     page_${prefix}
@@ -33,7 +33,7 @@
 #   zdroj1, popisek1, barva1, format1   prvni cara
 #   zdroj2, popisek2, barva2, format2   druha cara
 #     zdroj*    id senzoru (ha_temp)
-#     popisek*  jmeno v zahlavi (Kopfik)
+#     popisek*  jmeno v zahlavi (napr. Obyvak)
 #     barva*    id barvy cary I jejiho popisku v zahlavi. Palety s ni nehybou:
 #               GraphTrace si Color zkopiruje pri setup() (graph.h:118).
 #     format*   KRATKY printf BEZ jednotky ("%.1f"), jednotka se pridava zvlast
@@ -118,7 +118,7 @@ display:
           // ustupuje po poradi:
           // s jednotkou -> bez jednotky -> jen hodnoty -> zahodit popisek okna.
           // Rozhodnuti je pro oba panely spolecne, viz mereni sirky nize.
-          // Nejtesnejsi je tlak: "Kopfik 1013" + "Hajzl 1013" + "100 min"
+          // Nejtesnejsi je tlak: popisky o 6 a 5 znacich + "1013" + "100 min"
           // je 280 z 282 px, takze na prvni variantu se spolehnout nejde.
           auto zahlavi = [&](int py, const char *okno) {
             const int X_R = GX + GW, X_L = GX, SIRKA = GW, MEZERA = ${g_sv_mezera};

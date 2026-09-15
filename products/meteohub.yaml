@@ -28,7 +28,7 @@
 #                     Suffixy (_temperature_sht45, _co2_scd41, ...) dodavaji balicky
 #                     sht4x / bmp58x_custom / scd4x / sgp4x / opt3001.
 #   ha_tlak           CELE entity_id tlaku, ne suffix. Nesdili prefix s ostatnimi:
-#                     solomon cte syrovy tlak z bmp585, rodice prepocet na hladinu
+#                     jeden kus cte syrovy tlak z bmp585, jiny prepocet na hladinu
 #                     more z jineho senzoru. Proto samostatny var, ne ${ha_senzory}_*.
 #   press_center      stred prahove skaly tlaku v hPa. Vazany na konkretni cidlo
 #                     a nadmorskou vysku, ne na vzhled -- proto parametr.
@@ -1192,7 +1192,9 @@ font:
     glyphsets:
       - GF_Latin_Core
 
-  - file: "https://github.com/Templarian/MaterialDesign-Webfont/raw/master/fonts/materialdesignicons-webfont.ttf"
+  # Verze pinnuta na v7.4.47 stejne jako v products/meteohub/core.yaml
+  # (tam je proc).
+  - file: "https://github.com/Templarian/MaterialDesign-Webfont/raw/v7.4.47/fonts/materialdesignicons-webfont.ttf"
     id: font_icons
     size: 36
     glyphs:
@@ -1206,12 +1208,12 @@ font:
       - "\U000F09D2"   # calendar-heart
 
 
-# Petynka SSID nebroadcastuje, takze musi byt PRVNI v seslepenem 'networks:'
+# Skryta SSID (nebroadcastuje) musi byt PRVNI v seslepenem 'networks:'
 # a mit hidden: true -- jen tak ji ESPHome zkusi pred skenem (faze EXPLICIT_HIDDEN,
 # wifi_component.cpp: `if (!this->sta_.empty() && this->sta_[0].get_hidden())`).
-# Index 0 dodava base.yaml, proto petynka jede pres substituce wifi_ssid/wifi_hidden
-# nahore a milavce se pripoji az sem jako druha.
+# Index 0 dodava base.yaml, proto skryta sit jede pres substituce
+# wifi_ssid/wifi_hidden a druha (viditelna) sit se pripoji az v device YAML.
 #
-# Kdyz to bylo naopak, milavce se zkousela prvni, spadla na 'Probe Request
-# Unsuccessful' a jeji opozdeny disconnect callback ustrelil tri sekundy dlouhy
-# slepy pokus o petynku -> 'Restarting adapter' a dokola.
+# Kdyz to bylo naopak, viditelna sit mimo dosah se zkousela prvni, spadla na
+# 'Probe Request Unsuccessful' a jeji opozdeny disconnect callback ustrelil tri
+# sekundy dlouhy slepy pokus o skrytou sit -> 'Restarting adapter' a dokola.

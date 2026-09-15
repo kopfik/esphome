@@ -24,7 +24,7 @@
 # `display: - id: !extend displej35` a svoji polozku do `display_page`.
 #
 # POZOR: puvodni monoliticky products/meteohub.yaml zustava beze zmeny a dal
-# se pouziva na hotovych kusech (solomon, rodice). Tohle je paralelni vetev,
+# se pouziva na hotovych nasazenych kusech. Tohle je paralelni vetev,
 # neni to nahrada a NEMICHAT je v jednom zarizeni -- kolidovala by id.
 #
 # ---- Geometrie --------------------------------------------------------------
@@ -51,8 +51,8 @@
 #   display_backlight             components/lights/monochromatic.yaml
 #   ld2410c_has_target          components/sensors/ld2410.yaml
 #
-# Sedmisegmentovka (TM1637) tady NENI -- ne kazdy kus ji ma (p4eth-stul-kopfik
-# treba ne). Kdo ji ma, prida balicek segment.yaml, ktery si sve akce
+# Sedmisegmentovka (TM1637) tady NENI -- ne kazdy kus ji ma (dotykovy stolni
+# kus na P4 treba ne). Kdo ji ma, prida balicek segment.yaml, ktery si sve akce
 # pripoji k radaru i k odpocitavaci podsviceni sam.
 
 esphome:
@@ -397,7 +397,15 @@ font:
   #     - id: !extend font_icons
   #       glyphs: ["\U000F1234"]
   # Stejny glyph ale nepridavat dvakrat -- ESPHome hlasi duplicitu.
-  - file: "https://github.com/Templarian/MaterialDesign-Webfont/raw/master/fonts/materialdesignicons-webfont.ttf"
+  #
+  # Font je PINNUTY na tag v7.4.47 (commit 57b567a4), ne na 'master'. S master
+  # by stejny commit tohohle repa za rok mohl vyrobit jiny build: MDI obcas
+  # ikony prejmenuje nebo vyradi a kodovy bod (\U000Fxxxx) pak ukazuje jinam
+  # nebo nikam. v7.4.47 je verze, ktera byla na master v dobe pinnuti
+  # (2026-09-15), takze se vzhled nezmenil. Novejsi verze = zmenit tag ve VSECH
+  # souborech naraz (grep MaterialDesign-Webfont) -- ESPHome stahuje soubor podle
+  # URL, stejna URL = jedno stazeni, ruzne URL = dva ruzne fonty v cache.
+  - file: "https://github.com/Templarian/MaterialDesign-Webfont/raw/v7.4.47/fonts/materialdesignicons-webfont.ttf"
     id: font_icons
     size: ${g_font_icons}
     glyphs:
