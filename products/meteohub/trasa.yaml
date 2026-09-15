@@ -6,9 +6,13 @@
 # `!extend` na grafu seznam tras PRIPOJUJE, takze se to da retezit kolikrat
 # chces. Poradi car = poradi balicku v `packages:`.
 #
-# Predpoklada, ze cilova stranka uz existuje. Aby u vic car bylo poznat, ktera
-# je ktera, ma byt cil postaveny na grafy_multi.yaml (kresli legendu),
-# ne na grafy.yaml (kresli jednu hodnotu vpravo nahore).
+# Predpoklada, ze cilova stranka uz existuje a ma dvojici grafu
+# graf_${cil}_100m / _25h -- tedy grafy.yaml nebo grafy_2.yaml. Zahlavi panelu
+# ale popisuje jen jejich vlastni veliciny (grafy.yaml jednu, grafy_2.yaml dve),
+# cara pridana touhle trasou v nem popsana nebude.
+# Kdyz ma byt u vic car poznat, ktera je ktera, pouzij misto trasy rovnou
+# graf_multi.yaml (az ctyri cary s legendou). Do nej se trasa pridat NEDA --
+# jeho graf se jmenuje graf_${prefix}, bez _100m / _25h.
 #
 # Zdrojova velicina musi existovat -- typicky z velicina.yaml, ktery
 # dela jen senzor a kartu, bez vlastni stranky.
@@ -16,8 +20,8 @@
 # Inline:
 #   # 1) venkovni teplota: jen senzor a karta, zadna vlastni stranka
 #   v_venku:  products/meteohub/velicina.yaml   (prefix: venku, ...)
-#   # 2) stranka teplot s legendou
-#   g_teploty: products/meteohub/grafy_multi.yaml (prefix: temp, ...)
+#   # 2) stranka teplot se dvema panely
+#   g_teploty: products/meteohub/senzor.yaml    (prefix: temp, ...)
 #   # 3) druha cara do te stranky
 #   t_venku:
 #     <<: *kopfik_esphome_remote

@@ -10,8 +10,12 @@
 # Vyzaduje core.yaml a senzor ha_${prefix}
 # (dodava velicina.yaml).
 #
-# Na jednu caru. Kdyz ma byt v jednom grafu vic veliciny, pouzij
-# grafy_multi.yaml -- ten misto jedne hodnoty kresli legendu.
+# Na jednu caru. Kdyz ma byt v jednom grafu vic velicin:
+#   grafy_2.yaml     dve veliciny, stejne dva panely (100 min + 25 h)
+#   graf_2.yaml      dve veliciny, jeden velky graf
+#   graf_multi.yaml  az ctyri cary, ctvercovy graf s legendou
+#   trasa.yaml       prida dalsi caru sem, do uz existujici stranky
+#                    (v zahlavi popsana nebude)
 #
 # Vars:
 #   prefix        stejny jako u veliciny -- z nej se odvozuji id
