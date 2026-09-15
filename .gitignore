@@ -2,7 +2,7 @@
 #
 # Goal: ignore ONLY private, runtime, generated, and build files.
 # Reusable public dirs stay tracked: packages/, boards/, components/,
-# templates/, examples/, media/, external_components/.
+# examples/, media/, external_components/.
 
 # --- Secrets (never commit) ---
 secrets.yaml

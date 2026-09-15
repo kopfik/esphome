@@ -15,6 +15,10 @@ YAML and include migration steps.
 * `README.md`: noted that ILI9488 and ST77xx display packages live in `components/displays/ili9xxx/`.
 * `tests/README.md`: corrected note about `core.yaml` include mode (it is included directly by test devices).
 
+### Removed
+
+* `templates/light.yaml` and the now-empty `templates/`: the file only held YAML anchors (`&base_rmt`, `&base_part`), and anchors do not cross `!include` boundaries, so no device or package could use them.
+
 ## v0.1.0 — 2026-09-15
 
 ### Breaking

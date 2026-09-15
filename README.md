@@ -147,7 +147,6 @@ skrytém klíči** (začíná tečkou), ne u balíčku `base`: jinak by si nesla
 | `components/switches/` | GPIO spínač |
 | `products/` | Hotové celky — [`meteohub`](products/meteohub/README.md) |
 | `external_components/` | Placeholder — vendor/cizí kód se sem nepublikuje |
-| `templates/` | Sdílené YAML kotvy (`light.yaml`) |
 | `examples/` | Anonymizovaný vzorový device YAML |
 | `media/` | Placeholder pro budoucí veřejná / znovupoužitelná média |
 | `media.local/` | Konvence pro lokální/privátní média (zde gitignored) |
@@ -277,7 +276,7 @@ si nesou vlastní licenci a atribuci.
 Public, reusable ESPHome **packages** — shared, parameterized building blocks for
 assembling devices: core packages, board definitions, components (buses, sensors,
 displays, lights, outputs, buttons, switches), ready-made **products**
-(meteohub), templates, and examples.
+(meteohub), and examples.
 
 The repo does **not** contain concrete devices, `secrets.yaml`, real media, or
 vendor display code. Those stay in your own local ESPHome / Home Assistant
@@ -414,7 +413,6 @@ would also carry `base`'s `files:` and ESPHome (2026.x+) warns
 | `components/switches/` | GPIO switch |
 | `products/` | Complete features — [`meteohub`](products/meteohub/README.md) (Czech docs) |
 | `external_components/` | Placeholder — vendor/3rd-party code is not published here |
-| `templates/` | Shared YAML anchors (`light.yaml`) |
 | `examples/` | Anonymized example device YAML |
 | `media/` | Placeholder for future public / reusable media |
 | `media.local/` | Convention for local/private media (gitignored here) |
