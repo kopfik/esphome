@@ -23,9 +23,11 @@
 # a senzor.yaml -- kazdy si svoji stranku pripoji sam pres
 # `display: - id: !extend displej35` a svoji polozku do `display_page`.
 #
-# POZOR: puvodni monoliticky products/meteohub.yaml zustava beze zmeny a dal
-# se pouziva na hotovych nasazenych kusech. Tohle je paralelni vetev,
-# neni to nahrada a NEMICHAT je v jednom zarizeni -- kolidovala by id.
+# POZOR: puvodni monoliticky products/meteohub.yaml je druha, starsi generace.
+# Vznikl drive a tahle skladana vetev vedle nej rostla paralelne; od 2026-09-15
+# uz na monolitu nejede zadne zarizeni (vsechny nasazene kusy jsou prepnute
+# sem). NEMICHAT je v jednom zarizeni -- kolidovala by id.
+# Mapa vsech balicku a jejich poradi: products/meteohub/README.md.
 #
 # ---- Geometrie --------------------------------------------------------------
 # Zadne pevne souradnice tady nejsou. Rozmery dodava balicek

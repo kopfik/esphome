@@ -1,5 +1,10 @@
 ## products/meteohub.yaml
 #
+# LEGACY -- od 2026-09-15 tenhle monolit nepouziva zadne zarizeni. Vsechny
+# nasazene kusy jedou na skladane generaci products/meteohub/*.yaml (mapa:
+# products/meteohub/README.md). Nechava se tu jen pro pripad navratu; nove
+# veci sem nepridavat. Obe generace NEMICHAT v jednom zarizeni (stejna id).
+#
 # Kompletni UI vrstva meteohubu -- vse, co ma na vsech kusech vypadat a chovat
 # se STEJNE: barvy, fonty, palety, grafy, stranky displeje, HA senzory, obsluha
 # radaru a podsviceni. Device YAML uz resi jen zelezo (piny, sbernice) a preda

@@ -1,6 +1,6 @@
 ## products/meteohub/segment.yaml
 #
-# Volitelny doplnek pro kusy, ktere maji sedmisegmentovku (TM1637). Prive?uje
+# Volitelny doplnek pro kusy, ktere maji sedmisegmentovku (TM1637). Privesuje
 # jeji zapinani a zhasinani k tomu, co uz dela core: pri detekci cloveka se
 # rozsviti spolu s podsvicenim, po 3 minutach klidu spolu s nim zhasne.
 #
