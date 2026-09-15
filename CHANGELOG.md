@@ -19,8 +19,16 @@
 * `examples/basic-device.yaml` showing how a private device YAML pulls these packages remotely.
 * Placeholders for `components/displays/`, `external_components/`, `media/`, and `media.local/` (no vendor/personal content published).
 
+### Fixed
+
+* `packages/auto_restart.yaml`: no longer restarts a second time right after booting within the same restart minute (requires uptime > 90 s).
+* `components/sensors/battery_stats.yaml`: battery percentage clamped to 0..100 (full charge reported 104.5 %, low voltage negative values).
+* `packages/mqtt_publish_json.yaml`: `snprintf` instead of `sprintf`, so an absurd sensor value cannot overflow the buffer.
+
 ### Changed
 
+* `packages/base.yaml`: `wifi_power_saver` is now optional, default `light` (ESPHome's own ESP32/RP2040 default; pass `none` explicitly on ESP8266).
+* `packages/time.yaml`: timezone configurable via optional `timezone` var, default `Europe/Prague` (previous hard-coded value).
 * Made the SCD4x forced-calibration target configurable via a new optional `calibration_ppm` var (default 435 ppm), so each device can pass its own value for the calibration button.
 * Exposed the SCD4x forced-calibration target as a HA-adjustable `number` entity (`calibration_ppm_<id>`), so the value can be changed at runtime without recompiling; `calibration_ppm` now only sets the initial value and the setting survives reboots.
 * Imported shared ESPHome project files into Git.

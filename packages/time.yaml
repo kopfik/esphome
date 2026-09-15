@@ -12,9 +12,16 @@
 # Provides time id: sntp_time (used by other packages' timestamps).
 # 'sntp_server' is optional + personalized: pass your NTP server (LAN IP or
 # hostname) from the device YAML; defaults to pool.ntp.org when omitted.
+#
+# 'timezone' is optional, default Europe/Prague (puvodne natvrdo, vsechna
+# zarizeni jsou v CR -- default drzi dosavadni chovani). Format je IANA nazev
+# (Europe/London, America/New_York, ...). Na casovem pasmu zavisi vsechno, co
+# pracuje s mistnim casem: hodiny na displejich, packages/auto_restart.yaml
+# (hodina restartu), svatky v meteohubu. MQTT timestampy (ts) NE -- ty jsou
+# v UTC epoch.
 
 time:
   - platform: sntp
     id: "sntp_time"
     servers: ${sntp_server | default("pool.ntp.org")}
-    timezone: "Europe/Prague"
+    timezone: ${timezone | default("Europe/Prague")}
