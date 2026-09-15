@@ -55,6 +55,9 @@ include migration steps.
 
 ### Changed
 
+* `components/sensors/paj7620.yaml`: documented that the external component only builds with the Arduino framework (uses Arduino `String`); in tests it moved from the esp-idf test device to the Arduino one.
+* `components/sensors/sgp4x.yaml`: `voc` / `nox` renamed to `voc_index` / `nox_index` (ESPHome deprecation, old keys removed in 2027.2.0). Same ids and MQTT topics; header now explains that the sensor is always sampled at 1 Hz and `update_interval` only sets how often the index is published.
+* `components/lights/esp32_rmt_rgb_led.yaml`, `components/lights/ws2812_rmt.yaml`: `rgb_order` / `is_rgbw` now feed ESPHome's new `channel_colors` key (old keys removed in 2027.3.0). The vars stay the same, device YAML needs no change.
 * `README.md` rewritten for the current repository: layers, full layout table, MQTT/telemetry conventions, displays, products, ESP8266 notes, tagging.
 * `packages/mqtt_publish_json.yaml`, `components/sensors/paj7620.yaml`: `ts` is now real epoch milliseconds from `gettimeofday()` instead of `timestamp * 1000 + millis() % 1000`, whose millisecond part came from uptime and could make `ts` jump backwards between samples. Payload format unchanged.
 * Pinned the Material Design Icons font in meteohub packages to tag `v7.4.47` (the current `master` at pin time) instead of `master`, so builds are reproducible.

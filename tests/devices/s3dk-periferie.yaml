@@ -4,9 +4,8 @@
 # (esp-idf) jako "sberna" balicku, ktere nejsou v zadnem jinem testovacim
 # zarizeni: BLE proxy, ping, tlacitko PC na GPIO vystupu, bzucak, LED pasek
 # WS2812 rozdeleny na useky, radary LD2450 a LD2420 (kazdy na svem UARTu),
-# I2C cidla OPT3001, BMP3xx, BMP581 (nativni) a gesta PAJ7620 (externi
-# komponenta z GitHubu -- CI ji pri kazdem behu stahuje) a standardni
-# displej ILI9488.
+# I2C cidla OPT3001, BMP3xx, BMP581 (nativni) a standardni displej ILI9488.
+# (PAJ7620 je v s3z-maly-meteohub.yaml -- prelozi se jen s Arduinem.)
 #
 # Takova kombinace na jedne desce realne neni; jde jen o to, aby se kazdy
 # balicek aspon jednou prelozil. Piny jsou vymyslene, ale bez kolizi.
@@ -51,7 +50,6 @@ packages:
   opt3004: !include { file: ../../components/sensors/opt3001.yaml, vars: { id: opt3004, address: 0x45, update_interval: 2, window_size: 30 } }
   bmp390l: !include { file: ../../components/sensors/bmp3xx_i2c.yaml, vars: { id: bmp390l, address: 0x77, update_interval: 1, window_size: 60, press_offset: 0.0 } }
   bmp581: !include { file: ../../components/sensors/bmp581_i2c.yaml, vars: { id: bmp581, address: 0x47, press_update_interval: 1, press_offset: 0, press_window_size: 60, temp_window_size: 60 } }
-  paj7620: !include { file: ../../components/sensors/paj7620.yaml, vars: { id: gy_paj7620, internal: false } }
 
   # standardni ILI9488 bez kalibrace (dotykovy meteohub pouziva variantu yellow_board)
   spi_bus: !include { file: ../../components/buses/spi.yaml, vars: { id: spi_bus, clk_pin: GPIO12, mosi_pin: GPIO11 } }

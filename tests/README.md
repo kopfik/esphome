@@ -74,9 +74,9 @@ kromě prázdného `boards/rpipico1w.yaml` (stav 2026-09-15). `graf.yaml`,
 |---|---|---|
 | `devices/c6-senzory.yaml` | ESP32-C6, Wi-Fi | senzory na I²C (SHT4x, SCD4x, SGP4x, BMP58x, AHT20, BMP280, BH1750, MAX17048), baterie přes ADC, PWM, spínač, denní restart, skrytá Wi-Fi |
 | `devices/s3-meteohub.yaml` | ESP32-S3 + PSRAM, Wi-Fi | meteohub bez dotyku: ST7796, TM1637, radar LD2410, dashboardy, veličiny, grafy, svátky, online fotka, rotace |
-| `devices/s3z-maly-meteohub.yaml` | ESP32-S3-Zero, **Arduino** | malý meteohub: ST7789V 240×320, bez radaru, obrázek ve firmware, přidaná čára do grafu (trasa) |
+| `devices/s3z-maly-meteohub.yaml` | ESP32-S3-Zero, **Arduino** | malý meteohub: ST7789V 240×320, bez radaru, obrázek ve firmware, přidaná čára do grafu (trasa); gesta PAJ7620 (jen Arduino) |
 | `devices/p4-dotyk.yaml` | ESP32-P4, ethernet | dotykový meteohub: ILI9488 + FT63x6, hodiny, menu, ovládání PC, kartičky nad lokálními čidly |
-| `devices/s3dk-periferie.yaml` | ESP32-S3-DevKitC-1 | „sběrna“ zbytku: BLE proxy, ping, tlačítko PC, bzučák, LED pásek s úseky, LD2450, LD2420, OPT3001, BMP3xx, BMP581, PAJ7620 |
+| `devices/s3dk-periferie.yaml` | ESP32-S3-DevKitC-1 | „sběrna“ zbytku: BLE proxy, ping, tlačítko PC, bzučák, LED pásek s úseky, LD2450, LD2420, OPT3001, BMP3xx, BMP581, ILI9488 |
 | `devices/d1mini.yaml` | ESP8266 | jiná platforma: base, MQTT, TM1637, I²C, 1-Wire (DS18B20) |
 
 Rozdíl proti skutečnému device YAML: balíčky se netahají z gitu

@@ -5,6 +5,8 @@
 # 8 MB flash, octal PSRAM, ST7789V 240x320, zadny radar (bez_radaru.yaml).
 # UI: geometrie 240x320, dashboard, velicina, senzor (dva panely) s pridanou
 # carou (trasa), senzor_graf (jeden velky graf), obrazek ve firmware (foto).
+# Navic gesta PAJ7620 -- externi komponenta jde prelozit jen s Arduinem, proto
+# je tady a ne v s3dk-periferie.yaml (viz hlavicka paj7620.yaml).
 #
 # Obrazek pro foto.yaml je MDI ikona (`file: mdi:...`), aby v repu nemusel
 # lezet binarni soubor -- stranka se jen prelozi, vzhled neni podstatny.
@@ -33,6 +35,8 @@ packages:
   mqtt_publish_json: !include ../../packages/mqtt_publish_json.yaml
   internal_temp: !include ../../components/sensors/internal_temperature.yaml
   restart: !include ../../components/buttons/restart_button.yaml
+  i2c_bus: !include { file: ../../components/buses/i2c.yaml, vars: { id: i2c_bus, sda: GPIO7, scl: GPIO8, scan: true, frequency: 400 } }
+  paj7620: !include { file: ../../components/sensors/paj7620.yaml, vars: { id: gy_paj7620, internal: false } }
 
   spi_bus: !include { file: ../../components/buses/spi.yaml, vars: { id: spi_bus, clk_pin: GPIO1, mosi_pin: GPIO2 } }
   disp: !include { file: ../../components/displays/ili9xxx/st7789v.yaml, vars: { id: displej20, spi_id: spi_bus, cs_pin: GPIO5, dc_pin: GPIO4, reset_pin: GPIO3, width: 240, height: 320, invert_colors: "true", data_rate: 80MHz } }

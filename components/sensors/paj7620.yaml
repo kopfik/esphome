@@ -11,6 +11,15 @@
 #       internal: false
 #
 # Pulls an external_component (github) and uses the topic_prefix substitution + sntp_time in its lambda.
+#
+# POZOR -- JEN FRAMEWORK ARDUINO. Externi komponenta (AdamM68/paj7620-esphome,
+# paj7620.h) sklada gesto do Arduino typu `String`, ktery ve frameworku esp-idf
+# neexistuje. Na esp-idf desce preklad spadne na:
+#   error: 'String' was not declared in this scope; did you mean 'StringRef'?
+# Pouzivat s boards/esp32-s3-zero-arduino.yaml, ne s *-esp-idf.yaml.
+# (Zjisteno v CI 2026-09-15, tests/devices/s3z-maly-meteohub.yaml.)
+# Komponenta se stahuje z GitHubu pri kazdem prekladu -- kdyby ji autor smazal
+# nebo zmenil, rozbije se to bez zmeny v tomhle repu.
 
 external_components:
   - source: github://AdamM68/paj7620-esphome
