@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Breaking
+
+* Removed `packages/sensors.yaml`. It had become an exact copy of `packages/mqtt_publish_json.yaml` after the MCU temperature moved to `components/sensors/internal_temperature.yaml`, and including both failed with `ID mqtt_publish_json redefined`. Migration: in device YAML replace `packages/sensors.yaml` with `packages/mqtt_publish_json.yaml`; add `components/sensors/internal_temperature.yaml` separately if the MCU temperature is wanted.
+
 ### Added
 
 * `components/sensors/max17048.yaml`: LiPo fuel gauge (voltage + SOC) on I2C 0x36, using the ESPHome `max17043` platform whose VCELL conversion is numerically identical for the MAX17048; raw values to MQTT plus averaged copies for HA, sharing the naming convention of `battery_stats.yaml`.

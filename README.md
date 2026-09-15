@@ -101,7 +101,7 @@ definovaný u prvního balíčku — je to běžný YAML, čistě kvůli čiteln
 
 | Cesta | Obsah |
 |---|---|
-| `packages/` | Jádro: `base`, `time`, `mqtt`, `sensors`, `ble_proxy` |
+| `packages/` | Jádro: `base`, `base_eth`, `time`, `mqtt`, `mqtt_publish_json`, `auto_restart`, `ble_proxy` |
 | `boards/` | Definice desek + power-management (ESP32-S3/C6, …) |
 | `components/buses/` | I²C, SPI, UART, 1-Wire sběrnice |
 | `components/sensors/` | Senzorové balíčky (SHT4x, SCD4x, BMP, LD24xx, …) |
@@ -268,7 +268,7 @@ defined on the first package — it is plain YAML, purely for readability.
 
 | Path | Contents |
 |---|---|
-| `packages/` | Core: `base`, `time`, `mqtt`, `sensors`, `ble_proxy` |
+| `packages/` | Core: `base`, `base_eth`, `time`, `mqtt`, `mqtt_publish_json`, `auto_restart`, `ble_proxy` |
 | `boards/` | Board definitions + power management (ESP32-S3/C6, …) |
 | `components/buses/` | I²C, SPI, UART, 1-Wire buses |
 | `components/sensors/` | Sensor packages (SHT4x, SCD4x, BMP, LD24xx, …) |

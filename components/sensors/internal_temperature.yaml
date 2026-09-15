@@ -17,7 +17,7 @@
 # Jen pro ESP32 (S3/C6/P4/...) -- ESP8266 interni teplotni cidlo nema,
 # na d1mini tenhle package nepridavat.
 #
-# Vyzaduje script mqtt_publish_json z packages/sensors.yaml.
+# Vyzaduje script mqtt_publish_json z packages/mqtt_publish_json.yaml.
 #
 # entity_category: "" -- ESPHome ma u platformy internal_temperature natvrdo
 # diagnostic a 'copy' ji ze zdroje dedi (inherit_property_from), takze bez

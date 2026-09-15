@@ -11,9 +11,23 @@
 # Provides script mqtt_publish_json (JSON payload with ms timestamp).
 # Depends on packages/time.yaml (id sntp_time) and an mqtt client.
 #
-# Split out of packages/sensors.yaml so platform-independent consumers (e.g.
-# ESP8266 devices) don't have to pull in the ESP32-only internal_temperature
-# sensor that used to live in the same file.
+# Tohle je JEDINY zdroj scriptu mqtt_publish_json. Vsechny senzorove komponenty
+# (components/sensors/*) ho volaji, takze ho device musi natahnout vzdycky,
+# kdyz ma aspon jeden senzor z tohohle repa.
+#
+# Historie -- proc drive existoval i packages/sensors.yaml se stejnym scriptem:
+# puvodne byl script v packages/sensors.yaml spolu s teplotou jadra MCU
+# (platforma internal_temperature). Ta na ESP8266 (d1mini) neexistuje, takze se
+# script oddelil sem, aby ho slo pouzit i bez ni (commit ea789a9). Pozdeji se
+# i teplota MCU presunula do components/sensors/internal_temperature.yaml a
+# z packages/sensors.yaml zbyla presna kopie tohohle souboru. Kdo natahl oba,
+# dostal 'ID mqtt_publish_json redefined'. Proto byl packages/sensors.yaml
+# smazan.
+#
+# Migrace starsiho device YAML: v packages nahradit
+#   packages/sensors.yaml  ->  packages/mqtt_publish_json.yaml
+# (klic balicku, napr. 'sensors:', muze zustat libovolny, rozhoduje soubor).
+# Kdo chce i teplotu MCU, prida zvlast components/sensors/internal_temperature.yaml.
 
 script:
   - id: mqtt_publish_json

@@ -74,10 +74,10 @@ packages:
           port: !secret mqtt_port
 
   ## --- onboard HW + buses
-  sensors:
+  mqtt_publish_json:
     <<: *kopfik_esphome_remote
     files:
-      - packages/sensors.yaml
+      - packages/mqtt_publish_json.yaml
   i2c_bus:
     <<: *kopfik_esphome_remote
     files:
