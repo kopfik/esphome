@@ -1,13 +1,13 @@
 ## components/outputs/gpio_output.yaml
 #
 # Inline:
-#   pwr_output: !include { file: components/outputs/gpio_output.yaml, vars: { out_id: fone_pwr_out, pin: GPIO13, inverted: false } }
+#   pwr_output: !include { file: components/outputs/gpio_output.yaml, vars: { out_id: pc_pwr_out, pin: GPIO13, inverted: false } }
 #
 # Block:
 #   pwr_output: !include
 #     file: components/outputs/gpio_output.yaml
 #     vars:
-#       out_id: fone_pwr_out
+#       out_id: pc_pwr_out
 #       pin: GPIO13
 #       inverted: false
 #

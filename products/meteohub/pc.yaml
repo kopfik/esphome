@@ -2,7 +2,7 @@
 #
 # Stranka s ovladanim PC -- tri tlacitka (power, reset, dlouhy stisk power),
 # ktera na dalku mackaji tlacitka na ESP pripojenem k desce PC
-# (s3sm-fone: components/buttons/pc_button.yaml). Jen pro DOTYKOVE kusy.
+# (ovladac PC: components/buttons/pc_button.yaml). Jen pro DOTYKOVE kusy.
 #
 #   page     page_pc_${prefix}
 #   select   polozka "${volba}"
@@ -23,8 +23,10 @@
 #
 # Topicy sklada ESPHome jako <topic_prefix>/<typ>/<object_id>/<suffix>
 # (mqtt_component.cpp), object_id je jmeno entity malymi pismeny a s _
-# misto mezer ("FONE Power" -> fone_power). Availability je
-# <topic_prefix>/status s online/offline, oboji retained.
+# misto mezer ("PC Power" -> pc_power). Availability je
+# <topic_prefix>/status s online/offline, oboji retained. <topic_prefix>
+# ovladace je jeho device substituce topic_prefix (packages/mqtt.yaml ji
+# pouziva pro vsechny ESPHome topicy) -- NE jeho controller_name.
 #
 # ---- Pojistky proti omylu ---------------------------------------------------
 #   ovladac offline                  vsechno sede, zprava by nikam nedosla
@@ -60,11 +62,11 @@
 # timhle balickem), products/meteohub/geo_*.yaml a `mqtt:` na zarizeni.
 #
 # Vars:
-#   prefix       zaklad id -> page_pc_${prefix} (fone)
+#   prefix       zaklad id -> page_pc_${prefix} (napr. pc)
 #   titulek      nadpis stranky, KAPITALKAMA
 #   volba        text polozky v selectu prepinani stranek
-#   nazev        jmeno PC v textech ("FONE")
-#   mqtt_prefix  topic_prefix ovladace PC (s3sm-fone)
+#   nazev        jmeno PC v textech (napr. "PC")
+#   mqtt_prefix  topic_prefix ovladace PC (napr. esphome/site/pc-controller)
 #   tl_power, tl_reset, tl_force   object_id tlacitek na ovladaci
 #   stav         object_id binary senzoru "PC zapnuto" na ovladaci
 #   zapinam_s    jak dlouho po zapnuti cekat na stav ON (default 120)

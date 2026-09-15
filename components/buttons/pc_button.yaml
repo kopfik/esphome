@@ -1,7 +1,7 @@
 ## components/buttons/pc_button.yaml
 #
 # Inline:
-#   pwr_button: !include { file: components/buttons/pc_button.yaml, vars: { name: "Power", btn_id: btn_power, out_id: fone_pwr_out, duration: 200ms } }
+#   pwr_button: !include { file: components/buttons/pc_button.yaml, vars: { name: "Power", btn_id: btn_power, out_id: pc_pwr_out, duration: 200ms } }
 #
 # Block:
 #   pwr_button: !include
@@ -9,7 +9,7 @@
 #     vars:
 #       name: "Power"
 #       btn_id: btn_power
-#       out_id: fone_pwr_out
+#       out_id: pc_pwr_out
 #       duration: 200ms
 
 button:
