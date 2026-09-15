@@ -4,6 +4,8 @@
 
 ### Breaking
 
+* `packages/mqtt.yaml`: `topic_prefix` is now the device `${topic_prefix}` substitution (required) instead of ESPHome's default `<controller_name>`. Status (`/status`), logs (`/debug`) and all entity state/command topics move under the same prefix as the JSON values from `mqtt_publish_json`. Migration: update anything subscribing to the old `<controller_name>/...` topics, e.g. `mqtt_prefix` of `products/meteohub/pc.yaml`; clear the stale retained `<controller_name>/status` on the broker.
+* `components/sensors/bmp3xx_i2c.yaml`: removed the stray `l` from MQTT topics (`pressure_${id}l` -> `pressure_${id}`, `temperature_${id}l` -> `temperature_${id}`). Existing InfluxDB series continue under the new name.
 * Removed `packages/sensors.yaml`. It had become an exact copy of `packages/mqtt_publish_json.yaml` after the MCU temperature moved to `components/sensors/internal_temperature.yaml`, and including both failed with `ID mqtt_publish_json redefined`. Migration: in device YAML replace `packages/sensors.yaml` with `packages/mqtt_publish_json.yaml`; add `components/sensors/internal_temperature.yaml` separately if the MCU temperature is wanted.
 
 ### Added
@@ -28,6 +30,7 @@
 ### Changed
 
 * `packages/base.yaml`: `wifi_power_saver` is now optional, default `light` (ESPHome's own ESP32/RP2040 default; pass `none` explicitly on ESP8266).
+* `packages/base.yaml`: API `max_connections` raised to 10 like `packages/base_eth.yaml` (ESPHome default 5 on ESP32 ran out); both configurable via optional `api_max_connections`. Pass `4` on ESP8266.
 * `packages/time.yaml`: timezone configurable via optional `timezone` var, default `Europe/Prague` (previous hard-coded value).
 * Made the SCD4x forced-calibration target configurable via a new optional `calibration_ppm` var (default 435 ppm), so each device can pass its own value for the calibration button.
 * Exposed the SCD4x forced-calibration target as a HA-adjustable `number` entity (`calibration_ppm_<id>`), so the value can be changed at runtime without recompiling; `calibration_ppm` now only sets the initial value and the setting survives reboots.

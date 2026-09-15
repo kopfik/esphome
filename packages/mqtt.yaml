@@ -11,10 +11,42 @@
 #       broker: !secret mqtt_broker
 #       port: 1883
 #
+# Requires device substitutions: topic_prefix
+#
 # 'broker' is personalized -> pass it from the device YAML / secrets, never hard-code it in this package.
+#
+# ---- topic_prefix ------------------------------------------------------------
+# Nastaveny na device substituci ${topic_prefix} -- tu samou, pod kterou
+# packages/mqtt_publish_json.yaml posila vlastni JSON hodnoty senzoru. Vsechno
+# MQTT jednoho zarizeni je tak pod jednim prefixem.
+#
+# Bez tohohle radku ESPHome pouzije jako prefix jmeno zarizeni (CORE.name, tj.
+# controller_name) a vznikaly dva stromy: vlastni JSON pod ${topic_prefix}/...
+# a ESPHome veci pod <controller_name>/...
+#
+# Co vsechno se od prefixu odviji (esphome/components/mqtt/__init__.py a
+# mqtt_component.cpp):
+#   ${topic_prefix}/status                          online / offline, retained
+#                                                   (birth, will, shutdown)
+#   ${topic_prefix}/debug                           logy (log_topic)
+#   ${topic_prefix}/<typ>/<object_id>/state         stav kazde ne-internal entity
+#   ${topic_prefix}/<typ>/<object_id>/command       prikazy (button, switch, ...)
+# object_id = jmeno entity malymi pismeny, mezery -> _ ("PC Power" -> pc_power).
+#
+# Tyhle vychozi topicy se POUZIVAJI: products/meteohub/pc.yaml ovlada PC pres
+# <prefix ovladace>/button/.../command a cte .../status a
+# .../binary_sensor/.../state. Proto se nesmi vypnout (topic_prefix: null by
+# zrusil i je). Jeho var 'mqtt_prefix' = topic_prefix ovladace PC.
+#
+# Migrace (zmena z 2026-09): zarizeni, ktere drive publikovalo pod
+# <controller_name>/..., ted publikuje pod ${topic_prefix}/... . Kdo odebira
+# jeho topicy (meteohub pc.yaml 'mqtt_prefix', Node-RED, ...), musi prefix
+# prepsat. Stary retained <controller_name>/status zustane na brokeru viset
+# s posledni hodnotou -- smazat prazdnou retained zpravou na ten topic.
 
 mqtt:
   id: ${id}
   broker: ${broker}
   port: ${port}
   discovery: false
+  topic_prefix: ${topic_prefix}
