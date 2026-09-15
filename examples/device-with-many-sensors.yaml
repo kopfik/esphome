@@ -8,13 +8,16 @@
 # How to use:
 #   1. Copy this file into your private HA esphome directory and rename it.
 #   2. Keep all real values (Wi-Fi, API key, MQTT) in your local secrets.yaml.
-#   3. While testing, `ref: master` is fine; pin a tag/commit for stable builds.
+#   3. Pin a tag (e.g. v0.1.0) for stable builds; `ref: master` only while testing.
 #
 # Notes on the structure (this is what actually works):
 #   - The shared remote source (url / ref / refresh) is defined ONCE as a YAML
-#     anchor (&kopfik_esphome_remote) on the first package and reused on the
-#     others via `<<: *kopfik_esphome_remote`. This is plain YAML syntax, purely
-#     for readability — each package still resolves to its own remote source.
+#     anchor (&kopfik_esphome_remote) in a hidden top-level key (starts with a
+#     dot, ESPHome ignores it) and reused by every package via
+#     `<<: *kopfik_esphome_remote`. Plain YAML, purely for readability. The
+#     anchor must NOT sit on the first package: it would carry that package's
+#     `files:` along and ESPHome warns "Key 'files' ... was dropped while
+#     processing a '<<' merge".
 #   - `files:` stays per package; `vars:` MUST be nested under the file item
 #     (next to `path:`), NOT directly under the package key.
 #   - The same file can be pulled under different keys with different vars to get
@@ -41,13 +44,15 @@ esphome:
 logger:
   level: INFO
 
+.kopfik_esphome_remote: &kopfik_esphome_remote
+  url: https://github.com/kopfik/esphome
+  ref: v0.1.0            # a tag; `master` only while testing
+  refresh: 1d
+
 packages:
   ## --- base
-  # First entry defines the shared remote source as an anchor; the rest reuse it.
-  base: &kopfik_esphome_remote
-    url: https://github.com/kopfik/esphome
-    ref: master            # while testing; pin a tag/commit for stable builds
-    refresh: 1d
+  base:
+    <<: *kopfik_esphome_remote
     files:
       - packages/base.yaml
   board:

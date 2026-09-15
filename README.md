@@ -85,13 +85,16 @@ esphome:
 logger:
   level: INFO
 
+# sdílený remote zdroj (url/ref/refresh) jednou jako YAML kotva; klíč s tečkou
+# ESPHome ignoruje, balíčky si ho berou přes `<<: *kopfik_esphome_remote`
+.kopfik_esphome_remote: &kopfik_esphome_remote
+  url: https://github.com/kopfik/esphome
+  ref: v0.1.0            # tag; `master` jen při testování
+  refresh: 1d
+
 packages:
-  # sdílený remote zdroj (url/ref/refresh) se nadefinuje jednou jako YAML kotva
-  # a ostatní balíčky ho přebírají přes `<<: *kopfik_esphome_remote`
-  base: &kopfik_esphome_remote
-    url: https://github.com/kopfik/esphome
-    ref: master            # při testování; pro stabilní buildy pinni tag/commit
-    refresh: 1d
+  base:
+    <<: *kopfik_esphome_remote
     files:
       - packages/base.yaml
   time:
@@ -124,7 +127,10 @@ packages:
 ```
 
 `<<: *kopfik_esphome_remote` jen znovupoužije sdílený `url/ref/refresh` blok
-definovaný u prvního balíčku — je to běžný YAML, čistě kvůli čitelnosti.
+— je to běžný YAML, čistě kvůli čitelnosti. Kotva je schválně ve **vlastním
+skrytém klíči** (začíná tečkou), ne u balíčku `base`: jinak by si nesla i jeho
+`files:` a ESPHome (od 2026.x) u každého dalšího balíčku varuje
+`Key 'files' ... was dropped while processing a '<<' merge`.
 
 ### Struktura repozitáře
 
@@ -239,8 +245,8 @@ z `tests/devices/`, která dohromady používají všechny balíčky. Výsledek 
 
 - **`master`** — nejnovější stav, OK na testování.
 - **tag** — pro stabilní, reprodukovatelné buildy, aby ti starý device nezačal
-  tahat aktuální `master`. Zatím žádný není, první bude `v0.1.0`. Taguj jen
-  commit, který má ✅ z automatických testů.
+  tahat aktuální `master`. První je `v0.1.0`. Taguj jen commit, který má ✅
+  z automatických testů.
 - Změny, které vyžadují úpravu device YAML, jsou v [`CHANGELOG.md`](CHANGELOG.md)
   v sekci **Breaking** i s postupem migrace. Před přepnutím zařízení na nový
   tag si ji projdi.
@@ -346,13 +352,16 @@ esphome:
 logger:
   level: INFO
 
+# the shared remote source (url/ref/refresh) as a YAML anchor; ESPHome ignores
+# keys starting with a dot, packages reuse it via `<<: *kopfik_esphome_remote`
+.kopfik_esphome_remote: &kopfik_esphome_remote
+  url: https://github.com/kopfik/esphome
+  ref: v0.1.0            # a tag; `master` only while testing
+  refresh: 1d
+
 packages:
-  # the shared remote source (url/ref/refresh) is defined once as a YAML anchor
-  # and reused by the other packages via `<<: *kopfik_esphome_remote`
-  base: &kopfik_esphome_remote
-    url: https://github.com/kopfik/esphome
-    ref: master            # while testing; pin a tag/commit for stable builds
-    refresh: 1d
+  base:
+    <<: *kopfik_esphome_remote
     files:
       - packages/base.yaml
   time:
@@ -385,7 +394,10 @@ packages:
 ```
 
 `<<: *kopfik_esphome_remote` simply reuses the shared `url/ref/refresh` block
-defined on the first package — it is plain YAML, purely for readability.
+— it is plain YAML, purely for readability. The anchor deliberately lives in its
+**own hidden key** (starting with a dot), not on the `base` package: otherwise it
+would also carry `base`'s `files:` and ESPHome (2026.x+) warns
+`Key 'files' ... was dropped while processing a '<<' merge` for every package.
 
 ### Repository layout
 
@@ -503,8 +515,8 @@ does, what to do on ❌ and how to run it locally (`sh tests/run.sh`):
 
 - **`master`** — latest state, fine for testing.
 - **tag** — for stable, reproducible builds, so an old device does not start
-  pulling the current `master`. None yet; the first one will be `v0.1.0`. Only
-  tag a commit with a ✅ from the automated tests.
+  pulling the current `master`. The first one is `v0.1.0`. Only tag a commit
+  with a ✅ from the automated tests.
 - Changes that require editing device YAML are listed in
   [`CHANGELOG.md`](CHANGELOG.md) under **Breaking**, with migration steps.
   Read it before switching devices to a new tag.

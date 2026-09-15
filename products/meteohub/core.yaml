@@ -340,12 +340,20 @@ interval:
             - component.update: ${display_id | default("displej35")}
 
 font:
+  # ignore_missing_glyphs: true u vsech fontu s glyphsets. GF_Latin_Core obsahuje
+  # i 15 kombinujicich diakritickych znamenek (U+0300..U+030F), ktera Ubuntu nema,
+  # a ESPHome by pri kazdem prekladu vypsal "Font Ubuntu is missing 15 glyphs".
+  # Nikdy se nekresli -- cestina pouziva hotove znaky (a s carkou, c s hackem, ...),
+  # a ty Ubuntu ma. Volba potlaci JEN chybejici znaky ze sad; znak vyzadany
+  # vyslovne v 'glyphs:' (napr. "₂") by pri chybe dal spadl s chybou
+  # (font/__init__.py: check_missing_glyphs se vynecha jen pro glyphsets).
   - file:
       type: gfonts
       family: Ubuntu
       weight: 500
     id: font_title
     size: ${g_font_title}
+    ignore_missing_glyphs: true
     glyphsets:
       - GF_Latin_Core
     glyphs:
@@ -359,6 +367,7 @@ font:
       weight: 400
     id: font_label
     size: ${g_font_label}
+    ignore_missing_glyphs: true
     glyphsets:
       - GF_Latin_Core
 
@@ -368,6 +377,7 @@ font:
       weight: 500
     id: font_value
     size: ${g_font_value}
+    ignore_missing_glyphs: true
     glyphsets:
       - GF_Latin_Core
 
@@ -377,6 +387,7 @@ font:
       weight: 400
     id: font_small
     size: ${g_font_small}
+    ignore_missing_glyphs: true
     glyphsets:
       - GF_Latin_Core
     glyphs:
@@ -390,6 +401,7 @@ font:
       weight: 500
     id: font_name
     size: ${g_font_name}
+    ignore_missing_glyphs: true
     glyphsets:
       - GF_Latin_Core
 

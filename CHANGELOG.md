@@ -1,10 +1,17 @@
 # Changelog
 
-All notable changes to this repository. There is no tagged release yet; the first
-one will be `v0.1.0`. Entries under **Breaking** require editing device YAML and
-include migration steps.
+All notable changes to this repository. Releases are git tags (`v0.1.0`, ...);
+devices pin one via `ref:`. Entries under **Breaking** require editing device
+YAML and include migration steps.
 
 ## Unreleased
+
+### Changed
+
+* `products/meteohub/core.yaml`: `ignore_missing_glyphs: true` on the Ubuntu fonts using `GF_Latin_Core`, silencing the "Font Ubuntu is missing 15 glyphs" warning (combining diacritics never drawn; explicitly requested glyphs still fail loudly).
+* `README.md`, `examples/device-with-many-sensors.yaml`: the shared remote anchor now lives in a hidden top-level key (`.kopfik_esphome_remote`) instead of on the `base` package, avoiding ESPHome's "Key 'files' ... was dropped while processing a '<<' merge" warning. Examples pin `ref: v0.1.0`.
+
+## v0.1.0 — 2026-09-15
 
 ### Breaking
 
@@ -87,7 +94,6 @@ include migration steps.
 
 ### Notes
 
-* This is not a tagged release yet.
 * History before 2026-09-15 was reconstructed from the git log and diffs; many of those commit messages were placeholders (`meteohubing12`, `touchubing4`), so entries are grouped by feature, not by commit.
 * The 2026-09-15 cleanup was compile-tested on real ESP32-P4, ESP32-S3 and ESP8266 devices before the automated tests were added.
 * Still open: `boards/rpipico1w.yaml` is empty; secrets/personalization split and public-template polish.
