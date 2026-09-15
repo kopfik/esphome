@@ -34,11 +34,17 @@ api:
   encryption:
     key: ${encryption_key}
   reboot_timeout: 0s
-  # Default je 5 a to dojde driv, nez by clovek cekal: HA drzi jedno
+  # Default ESPHome je 5 na ESP32 a 4 na ESP8266 / RP2040 (api/__init__.py,
+  # cv.SplitDefault) a to dojde driv, nez by clovek cekal: HA drzi jedno
   # spojeni trvale, kazde 'esphome logs' pres API si vezme dalsi a
   # nekorektne ukoncena relace slot chvili drzi. Kdyz je limit vycerpany,
   # deska odmita i HA ("Max connections (5), rejecting ...") a vsechno,
   # co jede pres API -- vcetne voice_assistant -- tise prestane fungovat.
   # 10 je pohodlna rezerva; vic nema smysl, sockety jsou sdileny pool
   # s MQTT/OTA/mDNS a kazde spojeni si drzi vlastni buffery.
-  max_connections: 10
+  # Je to jen horni limit -- ESPHome podle nej sockety predem nerezervuje
+  # (pocita s 3 klienty), pamet se bere az pri skutecnem spojeni.
+  # POZOR ESP8266 (d1mini): ma jen desitky kB volne RAM, 10 soucasnych API
+  # spojeni by ji mohlo vycerpat. Tam predej api_max_connections: 4
+  # (default ESPHome). Volitelny var api_max_connections, rozsah 1..20.
+  max_connections: ${api_max_connections | default(10)}
