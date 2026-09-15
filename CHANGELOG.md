@@ -30,6 +30,8 @@
 ### Changed
 
 * `packages/base.yaml`: `wifi_power_saver` is now optional, default `light` (ESPHome's own ESP32/RP2040 default; pass `none` explicitly on ESP8266).
+* `packages/mqtt_publish_json.yaml`, `components/sensors/paj7620.yaml`: `ts` is now real epoch milliseconds from `gettimeofday()` instead of `timestamp * 1000 + millis() % 1000`, whose millisecond part came from uptime and could make `ts` jump backwards between samples. Payload format unchanged.
+* Removed personal device names from `products/meteohub/pc.yaml`, `components/buttons/pc_button.yaml` and `components/outputs/gpio_output.yaml` examples.
 * `packages/base.yaml`: API `max_connections` raised to 10 like `packages/base_eth.yaml` (ESPHome default 5 on ESP32 ran out); both configurable via optional `api_max_connections`. Pass `4` on ESP8266.
 * `packages/time.yaml`: timezone configurable via optional `timezone` var, default `Europe/Prague` (previous hard-coded value).
 * Made the SCD4x forced-calibration target configurable via a new optional `calibration_ppm` var (default 435 ppm), so each device can pass its own value for the calibration button.

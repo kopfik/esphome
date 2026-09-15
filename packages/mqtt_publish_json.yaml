@@ -49,7 +49,22 @@ script:
           // znaku a sprintf by prepsal pamet za bufferem. snprintf ji jen orizne.
           char val_buf[20];
           snprintf(val_buf, sizeof(val_buf), "%.*f", decimals, value);
-          int64_t ts_ms = (int64_t)now.timestamp * 1000LL + (int64_t)(millis() % 1000);
+          // ts = skutecny epoch v ms (UTC) ze systemovych hodin.
+          // Drive: now.timestamp * 1000 + millis() % 1000. To michalo dvoje
+          // nezavisle hodiny -- millis() je uptime a jeho sekundova hranice
+          // neni srovnana se sekundou SNTP, takze "milisekundy" nebyly soucasti
+          // skutecneho casu a ts mohl mezi dvema vzorky skocit DOZADU. Influx pak
+          // dostal body mimo poradi a pri shode measurement+tagy+ts hodnotu tise
+          // prepsal. gettimeofday() cte stejne systemove hodiny jako
+          // sntp_time.now() (ten vola time()), jen i se zlomkem sekundy.
+          // Pozn.: pri kazde synchronizaci SNTP se hodiny srovnaji skokem, takze
+          // o par ms dozadu to jde i ted -- ale jen v okamziku synchronizace,
+          // ne nahodne mezi vzorky. Pokud by nejaka platforma zlomek sekundy
+          // ze SNTP nenastavovala, bude tv_usec jen rovnomerne ubihat od
+          // posledni synchronizace -- porad spravny cas, jen bez vyssi presnosti.
+          struct timeval tv;
+          gettimeofday(&tv, nullptr);
+          int64_t ts_ms = (int64_t)tv.tv_sec * 1000LL + (int64_t)(tv.tv_usec / 1000);
 
           char payload[128];
           snprintf(payload, sizeof(payload), "{\"value\":%s,\"ts\":%lld}", val_buf, ts_ms);

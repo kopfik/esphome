@@ -31,7 +31,11 @@ text_sensor:
 
             std::string full_topic = std::string("${topic_prefix}/gesture_${id}");
 
-            int64_t ts_ms = (int64_t)now.timestamp * 1000LL + (int64_t)(millis() % 1000);
+            // ts stejne jako packages/mqtt_publish_json.yaml -- gettimeofday()
+            // misto timestamp * 1000 + millis() % 1000 (tam je vysvetleni proc).
+            struct timeval tv;
+            gettimeofday(&tv, nullptr);
+            int64_t ts_ms = (int64_t)tv.tv_sec * 1000LL + (int64_t)(tv.tv_usec / 1000);
 
             char payload[128];
             snprintf(
