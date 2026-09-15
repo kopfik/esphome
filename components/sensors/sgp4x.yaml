@@ -12,6 +12,21 @@
 #       window_size: 30
 #       temp_compensation_src: sht45_temp_raw
 #       hum_compensation_src: sht45_hum_raw
+#
+# ---- Jak casto se cidlo cte ---------------------------------------------------
+# SGP4x se meri VZDYCKY jednou za sekundu, bez ohledu na update_interval.
+# VOC/NOx index pocita Sensirion algoritmus, ktery potrebuje vzorek presne po
+# 1 s; ESPHome proto ma na mereni vlastni smycku (sgp4x.cpp:
+# set_interval(1000, take_sample)). 'update_interval' urcuje jen, jak casto se
+# spocitany index POSLE dal -- do on_value, tedy do MQTT a do kopie pro HA.
+# Mezi odeslanimi se nic neprumeruje, posle se posledni spocitany index.
+# update_interval: 2 = cidlo jede na 1 Hz, odesila se kazdy druhy vysledek.
+# Po startu ESPHome nic neposila, dokud se algoritmus neustali.
+#
+# 'voc_index' / 'nox_index' (drive 'voc' / 'nox'): ESPHome klice prejmenoval,
+# aby bylo jasne, ze jde o index 0..500, ne o koncentraci. Stare nazvy
+# prestanou fungovat v 2027.2.0 (cv.rename_key v sgp4x/sensor.py). Chovani
+# ani id (${id}_voc_raw, ${id}_nox_raw) ani MQTT topicy se nezmenily.
 
 sensor:
 
@@ -25,13 +40,13 @@ sensor:
       temperature_source: ${temp_compensation_src}
       humidity_source: ${hum_compensation_src}
     update_interval: ${update_interval}s
-    voc:
+    voc_index:
       id: ${id}_voc_raw
       internal: true
       on_value:
         then:
           - script.execute: { id: mqtt_publish_json, sub_topic: "voc_${id}", value: !lambda 'return x;', decimals: 0 }
-    nox:
+    nox_index:
       id: ${id}_nox_raw
       internal: true
       on_value:

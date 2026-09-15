@@ -13,14 +13,21 @@
 #
 # Optional vars (defaults): rgb_order (GRB), chipset (WS2812), rmt_symbols (48), internal (true),
 # is_rgbw (false).
+#
+# 'rgb_order' a 'is_rgbw' zustavaji jako vars, ale ESPHome je slucuje do jednoho
+# klice 'channel_colors' (stare klice prestanou fungovat v 2027.3.0):
+#   rgb_order: GRB                  -> channel_colors: GRB
+#   rgb_order: GRB + is_rgbw: true  -> channel_colors: GRBW   (W na konec)
+# Vyraz nize to sklada stejne jako ESPHome migrace (light.migrate_channel_colors).
+# '| string | lower' je tam proto, ze is_rgbw muze prijit jako bool true i jako
+# text "true" -- oboji musi dat W. Device YAML se menit nemusi.
 
 light:
   - platform: esp32_rmt_led_strip
     id: ${id}
     pin: ${pin}
     num_leds: ${num_leds}
-    rgb_order: ${rgb_order | default("GRB")}
+    channel_colors: ${ (rgb_order | default("GRB")) ~ ("W" if (is_rgbw | default("false") | string | lower) == "true" else "") }
     chipset: ${chipset | default("WS2812")}
     rmt_symbols: ${rmt_symbols | default(48)}
     internal: ${internal | default("true")}
-    is_rgbw: ${is_rgbw | default("false")}

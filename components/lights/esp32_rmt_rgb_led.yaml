@@ -12,14 +12,20 @@
 #       rgb_order: grb
 #
 # Single onboard WS2812; light id is fixed to rgb_led.
+#
+# 'rgb_order' zustava jako var (vsechna device YAML ho predavaji), ale ESPHome
+# ho uz neumi -- od 2026.x se poradi barev pise do 'channel_colors' (stejne
+# hodnoty: GRB, RGB, ...; mala pismena projdou). Stary klic rgb_order prestane
+# fungovat v 2027.3.0 (light.migrate_channel_colors). Balicek proto var
+# rgb_order jen predava do channel_colors -- device YAML se menit nemusi.
 
-light:  
+light:
   - platform: esp32_rmt_led_strip
     id: rgb_led
     name: ${name}
     pin: ${pin}
     num_leds: 1
-    rgb_order: ${rgb_order}
+    channel_colors: ${rgb_order}
     chipset: WS2812
     rmt_symbols: 48
     internal: false
