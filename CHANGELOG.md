@@ -21,7 +21,7 @@ include migration steps.
   * dashboard and cards: `dashboard.yaml`, `dashboard_touch.yaml`, `velicina.yaml`, `karta.yaml`, `skala.yaml` (threshold colors), `svatky.yaml` (name days);
   * graphs: `senzor.yaml`, `senzor_graf.yaml`, `grafy.yaml`, `graf.yaml`, `grafy_2.yaml`, `graf_2.yaml`, `graf_multi.yaml`, `trasa.yaml`;
   * pages: `hodiny.yaml`, `hodiny_touch.yaml`, `foto.yaml`, `foto_online.yaml` (photo fetched from HA at runtime), `pc.yaml` (PC power/reset over MQTT), `menu.yaml`.
-* `products/meteohub.yaml` (Sep 2026): first, monolithic meteohub UI for a 320×480 ST7796 panel. Superseded by the composed packages above and no longer used by any device.
+* `products/meteohub.yaml` (Sep 2026): first, monolithic meteohub UI for a 320×480 ST7796 panel. Superseded by the composed packages above; removed, see Removed.
 * `components/sensors/ping.yaml`: "machine is on" binary sensor from ICMP ping with a hold time.
 * `packages/base.yaml`: optional `wifi_hidden` (hidden SSID, must be network index 0) and `wifi_fast_connect` substitutions.
 * `components/sensors/internal_temperature.yaml`: chip temperature as a separate package (ESP32 only), split out of the former `packages/sensors.yaml`.
@@ -41,6 +41,10 @@ include migration steps.
 * `examples/device-with-many-sensors.yaml` showing how a private device YAML pulls these packages remotely.
 * Placeholders for `external_components/`, `media/`, and `media.local/` (no vendor/personal content published).
 
+### Removed
+
+* `products/meteohub.yaml`, the monolithic first-generation meteohub. No device used it anymore; all moved to the composed `products/meteohub/*.yaml`. The last version is available via `git show d431f27:products/meteohub.yaml`.
+
 ### Fixed
 
 * `packages/auto_restart.yaml`: no longer restarts a second time right after booting within the same restart minute (requires uptime > 90 s).
@@ -51,7 +55,6 @@ include migration steps.
 ### Changed
 
 * `README.md` rewritten for the current repository: layers, full layout table, MQTT/telemetry conventions, displays, products, ESP8266 notes, tagging.
-* `products/meteohub.yaml` marked as legacy; stale comments in `products/meteohub/core.yaml` claiming deployed devices still use it corrected.
 * `packages/mqtt_publish_json.yaml`, `components/sensors/paj7620.yaml`: `ts` is now real epoch milliseconds from `gettimeofday()` instead of `timestamp * 1000 + millis() % 1000`, whose millisecond part came from uptime and could make `ts` jump backwards between samples. Payload format unchanged.
 * Pinned the Material Design Icons font in meteohub packages to tag `v7.4.47` (the current `master` at pin time) instead of `master`, so builds are reproducible.
 * Stopped tracking `.claude/settings.local.json` (local Claude Code permissions) and added it to `.gitignore`.

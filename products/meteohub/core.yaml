@@ -23,10 +23,10 @@
 # a senzor.yaml -- kazdy si svoji stranku pripoji sam pres
 # `display: - id: !extend displej35` a svoji polozku do `display_page`.
 #
-# POZOR: puvodni monoliticky products/meteohub.yaml je druha, starsi generace.
-# Vznikl drive a tahle skladana vetev vedle nej rostla paralelne; od 2026-09-15
-# uz na monolitu nejede zadne zarizeni (vsechny nasazene kusy jsou prepnute
-# sem). NEMICHAT je v jednom zarizeni -- kolidovala by id.
+# Historie: prvni generace meteohubu byl monoliticky products/meteohub.yaml
+# (natvrdo 320x480, bez dotyku). Tahle skladana vetev vedle nej rostla
+# paralelne, vsechna zarizeni se na ni prepnula a monolit byl 2026-09-15
+# smazan. Posledni verze je v git historii: git show d431f27:products/meteohub.yaml
 # Mapa vsech balicku a jejich poradi: products/meteohub/README.md.
 #
 # ---- Geometrie --------------------------------------------------------------

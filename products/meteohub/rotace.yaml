@@ -42,9 +42,6 @@
 # ---- Kam to NEJDE -----------------------------------------------------------
 # Vyzaduje products/meteohub/core.yaml (nebo core_touch.yaml, ktery ho
 # includuje) -- potrebuje `display_page` a global `stranka_index`.
-# Na kus, ktery jede na starem monolitickem products/meteohub.yaml, to
-# NEJDE: ten prepina stranky pres `show_page(id(page_x))` a zadny
-# `stranka_index` nema.
 #
 # Na kusu s hodiny_touch.yaml se rotace pere s jeho navratem na klidovou
 # stranku (`hodiny_navrat`) -- oba sahaji na stejnou stranku, jen kazdy

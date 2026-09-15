@@ -15,19 +15,16 @@ a hlavička rozcházejí, platí hlavička.
 
 ---
 
-## Dvě generace
+## Historie
 
-| | `products/meteohub.yaml` (monolit) | `products/meteohub/*.yaml` (skládaný) |
-|---|---|---|
-| Stav | **legacy — žádné zařízení ho už nepoužívá** (stav 2026-09-15) | aktivní vývoj, všechny nasazené kusy |
-| Displej | natvrdo 320×480 (ST7796) | libovolný, rozměry z `geo_*.yaml` |
-| Dotyk | ne | ano (`*_touch.yaml`) |
-| Stránky | pevná sada | co si device poskládá |
+První generace byl jeden soubor `products/meteohub.yaml` (~1 200 řádků,
+natvrdo 320×480 ST7796, bez dotyku, pevná sada stránek). Skládaná verze v tomhle
+adresáři vedle něj rostla paralelně, všechna zařízení se na ni přepnula
+a monolit byl **2026-09-15 smazán**. Poslední verze zůstává v git historii:
 
-**Nemíchat v jednom zařízení** — obě generace definují stejná `id` (fonty,
-barvy, `display_page`) a ESPHome skončí na `ID redefined`.
-
-Zbytek tohohle souboru popisuje skládanou generaci.
+```
+git show d431f27:products/meteohub.yaml
+```
 
 ---
 
@@ -165,7 +162,7 @@ Dotykové kusy navíc `touchscreen:` s `id` předaným jako var `touch_id`.
 |---|---|
 | Displej po startu nesvítí | chybí `podsviceni_radar.yaml` / `podsviceni_dotyk.yaml` |
 | `Couldn't find ID 'ld2410c_has_target'` | kus bez radaru nemá `bez_radaru.yaml` |
-| `ID ... redefined` | v jednom zařízení je monolit i skládaná generace, nebo dvakrát stejný balíček se stejným `prefix` |
+| `ID ... redefined` | dvakrát stejný balíček se stejným `prefix` |
 | Tlačítka / select skáčou na špatné stránky | pořadí balíčků v `packages:` neodpovídá pořadí stránek |
 | Domeček skáče jinam, než má | `prvni_dashboard` / `pocet_dashboardu` v `core_touch.yaml` nesedí s pozicí dashboardů |
 | Ikona se nevykreslí | glyph není ve fontu — přidat přes `font: - id: !extend font_icons` (viz `core.yaml`) |
@@ -176,6 +173,6 @@ Dotykové kusy navíc `touchscreen:` s `id` předaným jako var `touch_id`.
 ## Font ikon
 
 Material Design Icons se stahují z GitHubu, **pinnuté na tag `v7.4.47`**
-ve všech souborech (`core.yaml`, `core_touch.yaml`, `menu.yaml`, monolit).
+ve všech souborech (`core.yaml`, `core_touch.yaml`, `menu.yaml`).
 Nová verze = změnit tag ve všech naráz, jinak ESPHome stahuje dva různé fonty.
 Proč pin: viz komentář u fontu v `core.yaml`.

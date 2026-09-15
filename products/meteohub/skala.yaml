@@ -62,7 +62,7 @@ script:
           if (REZIM == 1) {
             // Nad stredem se stupen zaokrouhluje dolu, pod nim nahoru --
             // tim skala vychazi na obe strany stejne siroka. Odpovida to
-            // rucne psanym prahum v puvodnim products/meteohub.yaml.
+            // rucne psanym prahum v puvodnim monolitu (products/meteohub.yaml, smazan).
             float d = fabsf(v - STRED) / KROK;
             lvl = (v >= STRED) ? (int) floorf(d) : (int) ceilf(d);
           } else {
