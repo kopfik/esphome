@@ -44,12 +44,15 @@ script:
           // AUTOMATICKÉ SLOŽENÍ TOPICU: prefix + to co pošle senzor
           std::string full_topic = std::string("${topic_prefix}/") + sub_topic;
 
+          // snprintf misto sprintf: "%.*f" vypisuje float bez exponentu, takze
+          // nesmyslne velka hodnota (napr. rozbity senzor vrati 1e30) ma desitky
+          // znaku a sprintf by prepsal pamet za bufferem. snprintf ji jen orizne.
           char val_buf[20];
-          sprintf(val_buf, "%.*f", decimals, value);
+          snprintf(val_buf, sizeof(val_buf), "%.*f", decimals, value);
           int64_t ts_ms = (int64_t)now.timestamp * 1000LL + (int64_t)(millis() % 1000);
 
           char payload[128];
-          sprintf(payload, "{\"value\":%s,\"ts\":%lld}", val_buf, ts_ms);
+          snprintf(payload, sizeof(payload), "{\"value\":%s,\"ts\":%lld}", val_buf, ts_ms);
 
           // Publikujeme na složený topic
           if (mqtt::global_mqtt_client != nullptr) {

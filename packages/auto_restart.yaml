@@ -24,7 +24,20 @@
 # existing time component by id sidesteps package merging entirely.
 #
 # 30s interval so every minute gets checked at least once even if the scheduler
-# drifts; a second press in the same minute is harmless, the first one reboots.
+# drifts.
+#
+# Podminka 'millis() > 90000' (uptime vic nez 90 s) brani DRUHEMU restartu hned
+# po nabehu. Bez ni: restart v 05:17:05, deska nabehne a SNTP chytne cas treba
+# v 05:17:20, prvni kontrola intervalu v ~05:17:35 -> porad minuta 17 ->
+# restart znovu (klidne nekolikrat za tu minutu). Puvodni komentar tvrdil, ze
+# druhe stisknuti je neskodne -- to plati jen v ramci jednoho behu, ne po
+# rebootu. 90 s uptime garantuje, ze od restartu uplynula cela minuta, takze
+# se podminka hour/minute uz nemuze trefit do te same minuty.
+# Vedlejsi efekt: kdyz deska nabehne z jineho duvodu (vypadek proudu) prave
+# v minute restartu, restart se ten den preskoci -- je cerstve nabootovana,
+# takze to nevadi.
+# millis() pretece po ~49 dnech; u zarizeni, ktere se restartuje denne, to
+# nenastane.
 #
 # Stagger 'restart_minute' across devices, so they don't all drop off WiFi/HA
 # in the same second.
@@ -41,6 +54,7 @@ interval:
             lambda: |-
               auto t = id(${time_id | default("sntp_time")}).now();
               return t.is_valid()
+                     && millis() > 90000
                      && t.hour == ${restart_hour | default("5")}
                      && t.minute == ${restart_minute | default("0")};
           then:

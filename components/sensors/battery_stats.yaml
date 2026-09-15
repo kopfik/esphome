@@ -38,9 +38,19 @@ sensor:
     unit_of_measurement: "%"
     device_class: "battery"
     update_interval: ${update_interval}s
+    # Linearni prepocet 3.05 V = 0 %, 4.15 V = 100 %, orezany na 0..100.
+    # Bez orezu to pri plnem nabiti (4.20 V) vracelo 104.5 % a pod 3.05 V
+    # zaporna procenta -- HA s device_class battery to bere jako nesmysl.
+    # Orez je pres 'if', ne std::clamp/std::max: pred prvnim merenim je napeti
+    # NaN a porovnani s NaN je vzdy false, takze NaN projde beze zmeny a
+    # mqtt_publish_json ho zahodi (isnan). std::max(0, NaN) by vratil 0 a do
+    # MQTT by po startu odesel falesny 0 %.
     lambda: |-
       float v = id(${id}_voltage_raw).state;
-      return (v - 3.05) * 100.0 / (4.15 - 3.05);
+      float p = (v - 3.05) * 100.0 / (4.15 - 3.05);
+      if (p > 100.0) p = 100.0;
+      if (p < 0.0) p = 0.0;
+      return p;
 #    lambda: |-
 #      float v = id(${id}_voltage_raw).state;
 #      if (v >= 4.15) return 100.0;
