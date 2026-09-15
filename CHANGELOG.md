@@ -14,6 +14,7 @@ include migration steps.
 
 ### Added
 
+* Automated tests (CI): six anonymized test devices in `tests/devices/` that together include every package, a GitHub Actions workflow (`.github/workflows/esphome.yml`) running `esphome config` and `esphome compile` for each on every push and weekly, `tests/run.sh` for the same check locally, and `tests/README.md` explaining it in plain terms.
 * `products/meteohub/README.md`: map of the composed meteohub packages — layers, required order in `packages:`, fixed ids a device must provide, common errors.
 * `products/meteohub/*.yaml` (Sep 2026): composed, display-size-independent meteohub built from small packages:
   * core: `core.yaml`, `core_touch.yaml`, geometry `geo_320x480.yaml` and `geo_240x320.yaml`, `bez_radaru.yaml` (radar stub);
@@ -85,5 +86,5 @@ include migration steps.
 
 * This is not a tagged release yet.
 * History before 2026-09-15 was reconstructed from the git log and diffs; many of those commit messages were placeholders (`meteohubing12`, `touchubing4`), so entries are grouped by feature, not by commit.
-* Changes after the 2026-09-15 cleanup are not compile-tested as a whole yet; automated config/compile checks are planned.
+* The 2026-09-15 cleanup was compile-tested on real ESP32-P4, ESP32-S3 and ESP8266 devices before the automated tests were added.
 * Still open: `boards/rpipico1w.yaml` is empty; secrets/personalization split and public-template polish.

@@ -1,0 +1,39 @@
+## tests/devices/d1mini.yaml
+#
+# TESTOVACI zarizeni pro CI -- nikdy se neflashuje. ESP8266 (Wemos D1 mini),
+# tedy jina platforma i framework (Arduino) nez vsechno ostatni. Hlida hlavne,
+# ze sdilene balicky nepouzivaji nic, co je jen na ESP32 -- lambda
+# v mqtt_publish_json, API/Wi-Fi volby v base.yaml, TM1637.
+# Hodnoty wifi_power_saver: none a api_max_connections: 4 jsou ty, ktere
+# README doporucuje pro ESP8266.
+#
+# Lokalni `!include ../../...` a vymyslene hodnoty: viz tests/README.md.
+
+substitutions:
+  controller_name: "test-d1mini"
+  topic_prefix: "esphome/test/d1mini"
+  encryption_key: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+  wifi_ssid: "test-ssid"
+  wifi_password: "test-password"
+  wifi_power_saver: none
+  api_max_connections: 4
+
+esphome:
+
+logger:
+  level: INFO
+
+packages:
+  base: !include ../../packages/base.yaml
+  board: !include ../../boards/d1mini.yaml
+  time: !include ../../packages/time.yaml
+  mqtt: !include { file: ../../packages/mqtt.yaml, vars: { id: mqtt_client, broker: mqtt.example.com, port: 1883 } }
+  mqtt_publish_json: !include ../../packages/mqtt_publish_json.yaml
+  restart: !include ../../components/buttons/restart_button.yaml
+
+  segment: !include { file: ../../components/displays/tm1637.yaml, vars: { id: segmentovy_displej, clk_pin: D3, dio_pin: D4, intensity: "0" } }
+  i2c_bus: !include { file: ../../components/buses/i2c.yaml, vars: { id: i2c_bus, sda: D2, scl: D1, scan: true, frequency: 400 } }
+  one_wire_bus: !include { file: ../../components/buses/one_wire.yaml, vars: { pin: D0 } }
+  aht20: !include { file: ../../components/sensors/aht20.yaml, vars: { id: aht20, update_interval: 15, window_size: 4 } }
+  bmp280: !include { file: ../../components/sensors/bmp280.yaml, vars: { id: bmp280, address: 0x77, update_interval: 15, window_size: 4, press_offset: 0.0 } }
+  ds18b20: !include { file: ../../components/sensors/ds18b20.yaml, vars: { id: ds18b20, address: 0x1100000000000028, update_interval: 15, window_size: 4 } }

@@ -1,0 +1,46 @@
+# Automaticka kontrola balicku (CI). Vysvetleni pro lidi: tests/README.md
+#
+# Co to dela: pro kazde testovaci zarizeni v tests/devices/ spusti v dockeru
+# ESPHome -- nejdriv `config` (je konfigurace platna?), pak `compile`
+# (da se opravdu prelozit?). Nic neflashuje, nic nenasazuje.
+#
+# Kdy to bezi:
+#   push          kazdy push na GitHub (Gitea ho sem zrcadli hned po pushi)
+#   schedule      jednou tydne i bez zmeny -- zachyti, kdyz nova verze ESPHome
+#                 rozbije neco, co doted fungovalo (image :latest se meni)
+#   workflow_dispatch  rucne tlacitkem "Run workflow" v zalozce Actions
+#
+# fail-fast: false -- kdyz spadne jedno zarizeni, ostatni dobehnou, takze je
+# videt, jestli je problem jen v jedne kombinaci, nebo vsude.
+
+name: ESPHome
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 5 * * 1"   # pondeli 05:00 UTC
+
+jobs:
+  test:
+    name: ${{ matrix.device }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        device: [c6-senzory, s3-meteohub, s3z-maly-meteohub, p4-dotyk, s3dk-periferie, d1mini]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Stahnout ESPHome
+        run: docker pull ghcr.io/esphome/esphome:latest
+
+      - name: Verze ESPHome
+        run: docker run --rm ghcr.io/esphome/esphome:latest version
+
+      - name: Config (platnost konfigurace)
+        run: docker run --rm -v "$PWD:/config" -w /config ghcr.io/esphome/esphome:latest config tests/devices/${{ matrix.device }}.yaml
+
+      - name: Compile (preklad firmware)
+        run: docker run --rm -v "$PWD:/config" -w /config ghcr.io/esphome/esphome:latest compile tests/devices/${{ matrix.device }}.yaml

@@ -226,13 +226,21 @@ ESPHome platformy, kde to dává smysl.
   Skládá se z desítek malých balíčků v `products/meteohub/`; README tam
   popisuje jejich pořadí a závislosti.
 
+### Automatické testy
+
+Po každém pushi GitHub Actions zkusí přeložit šest testovacích zařízení
+z `tests/devices/`, která dohromady používají všechny balíčky. Výsledek je
+✅ / ❌ u commitu. Co to dělá, co dělat při ❌ a jak to pustit lokálně
+(`sh tests/run.sh`): [`tests/README.md`](tests/README.md).
+
 ### Vývoj / aktualizace
 
 `ref` určuje, co se natáhne:
 
 - **`master`** — nejnovější stav, OK na testování.
 - **tag** — pro stabilní, reprodukovatelné buildy, aby ti starý device nezačal
-  tahat aktuální `master`. Zatím žádný není, první bude `v0.1.0`.
+  tahat aktuální `master`. Zatím žádný není, první bude `v0.1.0`. Taguj jen
+  commit, který má ✅ z automatických testů.
 - Změny, které vyžadují úpravu device YAML, jsou v [`CHANGELOG.md`](CHANGELOG.md)
   v sekci **Breaking** i s postupem migrace. Před přepnutím zařízení na nový
   tag si ji projdi.
@@ -482,13 +490,21 @@ platforms where it makes sense.
   `products/meteohub/`; the README there (Czech) describes their order and
   dependencies.
 
+### Automated tests
+
+On every push GitHub Actions builds six test devices from `tests/devices/`
+which together use every package. The result is a ✅ / ❌ on the commit. What it
+does, what to do on ❌ and how to run it locally (`sh tests/run.sh`):
+[`tests/README.md`](tests/README.md) (Czech, short English summary).
+
 ### Development / updates
 
 `ref` controls what gets pulled:
 
 - **`master`** — latest state, fine for testing.
 - **tag** — for stable, reproducible builds, so an old device does not start
-  pulling the current `master`. None yet; the first one will be `v0.1.0`.
+  pulling the current `master`. None yet; the first one will be `v0.1.0`. Only
+  tag a commit with a ✅ from the automated tests.
 - Changes that require editing device YAML are listed in
   [`CHANGELOG.md`](CHANGELOG.md) under **Breaking**, with migration steps.
   Read it before switching devices to a new tag.

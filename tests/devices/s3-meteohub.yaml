@@ -1,0 +1,101 @@
+## tests/devices/s3-meteohub.yaml
+#
+# TESTOVACI zarizeni pro CI -- nikdy se neflashuje. Meteohub BEZ dotyku, jak
+# ho maji nasazene kusy: ESP32-S3 + PSRAM, ST7796 320x480, TM1637, radar
+# LD2410 pres UART, podsviceni podle radaru. UI: dva dashboardy, veliciny
+# ve vsech trech rezimech skaly (prahy / stred+krok / pevna barva), grafy
+# (senzor, grafy_2, graf_multi), svatky, online fotka a rotace.
+#
+# Entity z HA (sensor.test_*) neexistuji -- pro `esphome config` ani
+# `compile` to nevadi, jen by na desce nemely hodnotu.
+# Lokalni `!include ../../...` a vymyslene hodnoty: viz tests/README.md.
+
+substitutions:
+  controller_name: "test-s3-meteohub"
+  topic_prefix: "esphome/test/s3-meteohub"
+  encryption_key: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+  wifi_ssid: "test-ssid"
+  wifi_password: "test-password"
+  cpu_freq: "240"
+
+esphome:
+
+logger:
+  level: INFO
+
+packages:
+  # --- zaklad a HW
+  base: !include ../../packages/base.yaml
+  board: !include ../../boards/esp32-s3-supermini-esp-idf.yaml
+  pwr_mgmt: !include ../../boards/esp32_powersave.yaml
+  psram: !include { file: ../../boards/esp32-s3_psram.yaml, vars: { mode: quad, speed: 80 } }
+  time: !include ../../packages/time.yaml
+  mqtt: !include { file: ../../packages/mqtt.yaml, vars: { id: mqtt_client, broker: mqtt.example.com, port: 1883 } }
+  mqtt_publish_json: !include ../../packages/mqtt_publish_json.yaml
+  internal_temp: !include ../../components/sensors/internal_temperature.yaml
+  restart: !include ../../components/buttons/restart_button.yaml
+  rgb_led: !include { file: ../../components/lights/esp32_rmt_rgb_led.yaml, vars: { name: "RGB led", pin: GPIO48, rgb_order: grb } }
+
+  spi_bus: !include { file: ../../components/buses/spi.yaml, vars: { id: spi_bus, clk_pin: GPIO13, mosi_pin: GPIO12 } }
+  disp35: !include { file: ../../components/displays/ili9xxx/st7796.yaml, vars: { id: displej35, spi_id: spi_bus, cs_pin: GPIO9, dc_pin: GPIO10, reset_pin: GPIO11, mirror_y: "true", data_rate: 80MHz } }
+  segment: !include { file: ../../components/displays/tm1637.yaml, vars: { id: segmentovy_displej, clk_pin: GPIO6, dio_pin: GPIO7, intensity: "0" } }
+  backlight_output: !include { file: ../../components/outputs/ledc_pwm.yaml, vars: { pin: GPIO8, id: backlight_pwm_output } }
+  display_backlight_light: !include { file: ../../components/lights/monochromatic.yaml, vars: { name: "Podsviceni displeje", output: backlight_pwm_output, id: display_backlight } }
+  uart_bus: !include { file: ../../components/buses/uart.yaml, vars: { id: uart_radar, tx_pin: GPIO43, rx_pin: GPIO44, baud_rate: 256000, rx_buffer_size: 2048, parity: none, stop_bits: 1 } }
+  ld2410c: !include { file: ../../components/sensors/ld2410.yaml, vars: { id: ld2410c, uart_id: uart_radar, window_size: 10 } }
+
+  # --- meteohub (poradi viz products/meteohub/README.md)
+  geo: !include ../../products/meteohub/geo_320x480.yaml
+  core: !include { file: ../../products/meteohub/core.yaml, vars: { page_select_name: "Aktualni stranka" } }
+  podsviceni: !include ../../products/meteohub/podsviceni_radar.yaml
+  segment_ui: !include ../../products/meteohub/segment.yaml
+
+  dash1:
+    !include
+    file: ../../products/meteohub/dashboard.yaml
+    vars: { sufix: "1", titulek: "METEOHUB", volba: "Dashboard", slot1: karta_temp, slot2: karta_hum, slot3: karta_co2, slot4: karta_lux, slot5: karta_venku_temp, slot6: karta_venku_hum, slot7: karta_prazdna, slot8: karta_svatek }
+  dash2:
+    !include
+    file: ../../products/meteohub/dashboard.yaml
+    vars: { sufix: "venku", titulek: "VENKU", volba: "Dashboard - Venku", slot1: karta_venku_temp, slot2: karta_venku_hum }
+
+  # velicina: rezim 0 = prahy, rezim 1 = stred + krok
+  v_temp:
+    !include
+    file: ../../products/meteohub/velicina.yaml
+    vars: { prefix: temp, entita: sensor.test_temperature, popisek: "Teplota", ikona: "\U000F050F", jednotka: "°C", desetiny: "1", rezim: "0", prahy: "{22, 23, 24, 25, 26, 27, 28, 29}" }
+  v_hum:
+    !include
+    file: ../../products/meteohub/velicina.yaml
+    vars: { prefix: hum, entita: sensor.test_humidity, popisek: "Vlhkost", ikona: "\U000F058E", jednotka: "%", desetiny: "0", rezim: "1", stred: "50", krok: "3" }
+  v_venku_temp:
+    !include
+    file: ../../products/meteohub/velicina.yaml
+    vars: { prefix: venku_temp, entita: sensor.test_outdoor_temperature, popisek: "Venku", ikona: "\U000F050F", jednotka: "°C", desetiny: "1", rezim: "0", prahy: "{0, 5, 10, 15, 20, 25, 30, 35}" }
+  v_venku_hum:
+    !include
+    file: ../../products/meteohub/velicina.yaml
+    vars: { prefix: venku_hum, entita: sensor.test_outdoor_humidity, popisek: "Venku", ikona: "\U000F058E", jednotka: "%", desetiny: "0", rezim: "1", stred: "50", krok: "3" }
+
+  # senzor = velicina + stranka se dvema grafy; rezim 2 = pevna barva
+  s_co2:
+    !include
+    file: ../../products/meteohub/senzor.yaml
+    vars: { prefix: co2, entita: sensor.test_co2, popisek: "CO₂", titulek: "CO₂", volba: "Grafy - CO2", ikona: "\U000F07E4", jednotka: "ppm", desetiny: "0", format: "%.0f ppm", barva_grafu: color_green_0, y_grid_100m: "300.0", y_grid_25h: "300.0", rezim: "0", prahy: "{750, 900, 1050, 1200, 1350, 1500, 1650, 1800}" }
+  s_lux:
+    !include
+    file: ../../products/meteohub/senzor.yaml
+    vars: { prefix: lux, entita: sensor.test_lux, popisek: "Svetlo", titulek: "SVETLO", volba: "Grafy - Svetlo", ikona: "\U000F05A8", jednotka: "lx", desetiny: "0", format: "%.0f lx", barva_grafu: color_yellow, y_grid_100m: "100.0", y_grid_25h: "100.0", rezim: "2", pevna_barva: color_yellow }
+
+  g_teploty:
+    !include
+    file: ../../products/meteohub/grafy_2.yaml
+    vars: { prefix: teploty, titulek: "TEPLOTY", volba: "Grafy - Teploty", jednotka: "°C", y_grid_100m: "1.0", y_grid_25h: "2.0", zdroj1: ha_temp, popisek1: "Uvnitr", barva1: color_white, format1: "%.1f", zdroj2: ha_venku_temp, popisek2: "Venku", barva2: color_orange_1, format2: "%.1f" }
+  g_vlhkost:
+    !include
+    file: ../../products/meteohub/graf_multi.yaml
+    vars: { prefix: vlhkost, titulek: "VLHKOST", volba: "Grafy - Vlhkost", jednotka: "%", y_grid: "10.0", zdroj1: ha_hum, popisek1: "Uvnitr", barva1: color_white, format1: "%.0f", zdroj2: ha_venku_hum, popisek2: "Venku", barva2: color_green_1, format2: "%.0f" }
+
+  svatky: !include { file: ../../products/meteohub/svatky.yaml, vars: { ha_svatky: sensor.svatek, titulek: "SVATKY", volba: "Svatky" } }
+  foto_online: !include { file: ../../products/meteohub/foto_online.yaml, vars: { sufix: galerie, volba: "Foto - Galerie", ha_foto: sensor.test_foto, zaklad_url: "http://homeassistant.local:8123/local/fotky/", format: JPEG } }
+  rotace: !include { file: ../../products/meteohub/rotace.yaml, vars: { display_id: displej35, perioda: 15, po_startu: RESTORE_DEFAULT_ON } }

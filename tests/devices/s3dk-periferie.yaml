@@ -1,0 +1,58 @@
+## tests/devices/s3dk-periferie.yaml
+#
+# TESTOVACI zarizeni pro CI -- nikdy se neflashuje. ESP32-S3-DevKitC-1
+# (esp-idf) jako "sberna" balicku, ktere nejsou v zadnem jinem testovacim
+# zarizeni: BLE proxy, ping, tlacitko PC na GPIO vystupu, bzucak, LED pasek
+# WS2812 rozdeleny na useky, radary LD2450 a LD2420 (kazdy na svem UARTu),
+# I2C cidla OPT3001, BMP3xx, BMP581 (nativni) a gesta PAJ7620 (externi
+# komponenta z GitHubu -- CI ji pri kazdem behu stahuje) a standardni
+# displej ILI9488.
+#
+# Takova kombinace na jedne desce realne neni; jde jen o to, aby se kazdy
+# balicek aspon jednou prelozil. Piny jsou vymyslene, ale bez kolizi.
+# Lokalni `!include ../../...` a vymyslene hodnoty: viz tests/README.md.
+
+substitutions:
+  controller_name: "test-s3dk-periferie"
+  topic_prefix: "esphome/test/s3dk-periferie"
+  encryption_key: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+  wifi_ssid: "test-ssid"
+  wifi_password: "test-password"
+  cpu_freq: "240"
+
+esphome:
+
+logger:
+  level: INFO
+
+packages:
+  base: !include ../../packages/base.yaml
+  board: !include ../../boards/esp32-s3-devkit-c1-esp-idf.yaml
+  time: !include ../../packages/time.yaml
+  mqtt: !include { file: ../../packages/mqtt.yaml, vars: { id: mqtt_client, broker: mqtt.example.com, port: 1883 } }
+  mqtt_publish_json: !include ../../packages/mqtt_publish_json.yaml
+  ble_proxy: !include ../../packages/ble_proxy.yaml
+
+  pc_ping: !include { file: ../../components/sensors/ping.yaml, vars: { id: pc_zapnuty, name: "PC zapnuty", ip: 192.0.2.10 } }
+  pwr_output: !include { file: ../../components/outputs/gpio_output.yaml, vars: { out_id: pc_pwr_out, pin: GPIO13 } }
+  pwr_button: !include { file: ../../components/buttons/pc_button.yaml, vars: { name: "Power", btn_id: btn_power, out_id: pc_pwr_out, duration: 200ms } }
+  buzzer: !include { file: ../../components/outputs/buzzer.yaml, vars: { pin: GPIO4 } }
+
+  led_strip: !include { file: ../../components/lights/ws2812_rmt.yaml, vars: { id: led_strip, pin: GPIO7, num_leds: 32 } }
+  usek1: !include { file: ../../components/lights/led_partition.yaml, vars: { id: usek1, name: "Usek 1", parent_id: led_strip, from: 0, to: 15 } }
+  usek2: !include { file: ../../components/lights/led_partition.yaml, vars: { id: usek2, name: "Usek 2", parent_id: led_strip, from: 16, to: 31 } }
+
+  uart_ld2450: !include { file: ../../components/buses/uart.yaml, vars: { id: uart_ld2450, tx_pin: GPIO17, rx_pin: GPIO18, baud_rate: 256000, rx_buffer_size: 2048, parity: none, stop_bits: 1 } }
+  ld2450: !include { file: ../../components/sensors/ld2450.yaml, vars: { id: ld2450, uart_id: uart_ld2450, window_size: 10 } }
+  uart_ld2420: !include { file: ../../components/buses/uart.yaml, vars: { id: uart_ld2420, tx_pin: GPIO15, rx_pin: GPIO16, baud_rate: 115200, rx_buffer_size: 1024, parity: none, stop_bits: 1 } }
+  ld2420: !include { file: ../../components/sensors/ld2420.yaml, vars: { id: ld2420, uart_id: uart_ld2420, window_size: 5 } }
+
+  i2c_bus: !include { file: ../../components/buses/i2c.yaml, vars: { id: i2c_bus, sda: GPIO8, scl: GPIO9, scan: true, frequency: 400 } }
+  opt3004: !include { file: ../../components/sensors/opt3001.yaml, vars: { id: opt3004, address: 0x45, update_interval: 2, window_size: 30 } }
+  bmp390l: !include { file: ../../components/sensors/bmp3xx_i2c.yaml, vars: { id: bmp390l, address: 0x77, update_interval: 1, window_size: 60, press_offset: 0.0 } }
+  bmp581: !include { file: ../../components/sensors/bmp581_i2c.yaml, vars: { id: bmp581, address: 0x47, press_update_interval: 1, press_offset: 0, press_window_size: 60, temp_window_size: 60 } }
+  paj7620: !include { file: ../../components/sensors/paj7620.yaml, vars: { id: gy_paj7620, internal: false } }
+
+  # standardni ILI9488 bez kalibrace (dotykovy meteohub pouziva variantu yellow_board)
+  spi_bus: !include { file: ../../components/buses/spi.yaml, vars: { id: spi_bus, clk_pin: GPIO12, mosi_pin: GPIO11 } }
+  display_ili9488: !include { file: ../../components/displays/ili9xxx/ili9488.yaml, vars: { id: display_ili9488, spi_id: spi_bus, cs_pin: GPIO10, dc_pin: GPIO14, reset_pin: GPIO21 } }

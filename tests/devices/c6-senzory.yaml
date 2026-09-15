@@ -1,0 +1,53 @@
+## tests/devices/c6-senzory.yaml
+#
+# TESTOVACI zarizeni pro CI -- nikdy se neflashuje. Pokryva: ESP32-C6 desku
+# s power managementem, Wi-Fi base, cas, MQTT, script mqtt_publish_json,
+# denni restart a bezne I2C senzory vcetne krizovych odkazu mezi nimi
+# (SCD4x bere tlak z BMP58x, SGP4x bere teplotu a vlhkost z SHT4x).
+#
+# Rozdil proti skutecnemu device YAML: balicky se netahaji z gitu
+# (`url:` + `files:`), ale lokalne pres `!include ../../...` -- CI tak testuje
+# presne ten commit, ve kterem bezi. Vsechny hodnoty (klice, SSID, broker)
+# jsou vymyslene. Viz tests/README.md.
+
+substitutions:
+  controller_name: "test-c6-senzory"
+  topic_prefix: "esphome/test/c6-senzory"
+  # Falesny, ale formalne platny API klic (32 bajtu v base64).
+  encryption_key: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+  wifi_ssid: "test-ssid"
+  wifi_password: "test-password"
+  wifi_hidden: "true"
+  wifi_fast_connect: "true"
+  cpu_freq: "160"
+
+esphome:
+
+logger:
+  level: INFO
+
+packages:
+  base: !include ../../packages/base.yaml
+  board: !include ../../boards/esp32-c6-supermini-esp-idf.yaml
+  pwr_mgmt: !include ../../boards/esp32_powersave.yaml
+  time: !include { file: ../../packages/time.yaml, vars: { sntp_server: pool.ntp.org } }
+  mqtt: !include { file: ../../packages/mqtt.yaml, vars: { id: mqtt_client, broker: mqtt.example.com, port: 1883 } }
+  mqtt_publish_json: !include ../../packages/mqtt_publish_json.yaml
+  restart_btn: !include ../../components/buttons/restart_button.yaml
+  auto_restart: !include { file: ../../packages/auto_restart.yaml, vars: { restart_hour: 5, restart_minute: 17 } }
+
+  rgb_led: !include { file: ../../components/lights/esp32_rmt_rgb_led.yaml, vars: { name: "RGB led", pin: GPIO8, rgb_order: grb } }
+  internal_temp: !include { file: ../../components/sensors/internal_temperature.yaml, vars: { update_interval: 15 } }
+  fan_pwm: !include { file: ../../components/outputs/ledc_pwm.yaml, vars: { id: fan_pwm, pin: GPIO15, frequency: 25000, inverted: true } }
+  charger_sw: !include { file: ../../components/switches/gpio_switch.yaml, vars: { switch_id: charger_enable, name: "Nabijeni", pin: GPIO20 } }
+  battery: !include { file: ../../components/sensors/battery_stats.yaml, vars: { id: battery, adc_pin: GPIO1, attenuation: 12, update_interval: 30, window_size: 2 } }
+
+  i2c_bus: !include { file: ../../components/buses/i2c.yaml, vars: { id: i2c_bus, sda: GPIO19, scl: GPIO18, scan: true, frequency: 400 } }
+  sht45: !include { file: ../../components/sensors/sht4x.yaml, vars: { id: sht45, address: 0x44, update_interval: 1, window_size: 60 } }
+  bmp585: !include { file: ../../components/sensors/bmp58x_custom.yaml, vars: { id: bmp585, address: 0x46, press_offset: 0.0, press_update_interval: 1, temp_update_interval: 1, press_window_size: 60, temp_window_size: 60 } }
+  scd41: !include { file: ../../components/sensors/scd4x.yaml, vars: { id: scd41, address: 0x62, measurement_mode: low_power_periodic, update_interval: 30, press_compensation_src: bmp585_press_raw, window_size: 2 } }
+  sgp41: !include { file: ../../components/sensors/sgp4x.yaml, vars: { id: sgp41, update_interval: 2, window_size: 30, temp_compensation_src: sht45_temp_raw, hum_compensation_src: sht45_hum_raw } }
+  aht20: !include { file: ../../components/sensors/aht20.yaml, vars: { id: aht20, update_interval: 15, window_size: 4 } }
+  bmp280: !include { file: ../../components/sensors/bmp280.yaml, vars: { id: bmp280, address: 0x77, update_interval: 15, window_size: 4, press_offset: 0.0 } }
+  bh1750: !include { file: ../../components/sensors/bh1750.yaml, vars: { id: bh1750, address: 0x23, update_interval: 2, window_size: 30 } }
+  max17048: !include { file: ../../components/sensors/max17048.yaml, vars: { id: bat, update_interval: 30, window_size: 2 } }

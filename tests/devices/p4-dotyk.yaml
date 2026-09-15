@@ -1,0 +1,108 @@
+## tests/devices/p4-dotyk.yaml
+#
+# TESTOVACI zarizeni pro CI -- nikdy se neflashuje. Dotykovy meteohub na
+# ESP32-P4-ETH: ethernet misto Wi-Fi (base_eth), hex PSRAM, ILI9488 "yellow
+# board" pres SPI, dotyk FT63x6 na I2C, lokalni cidla (SHT4x, SCD4x, BMP58x)
+# a radar. UI: core_touch s menu, klidova stranka s hodinami, podsviceni
+# podle dotyku, dashboard s trefovanim karet, karticky nad lokalnimi cidly,
+# ovladani PC pres MQTT, velky graf (senzor_graf, graf_2).
+#
+# Lokalni `!include ../../...` a vymyslene hodnoty: viz tests/README.md.
+
+substitutions:
+  controller_name: "test-p4-dotyk"
+  topic_prefix: "esphome/test/p4-dotyk"
+  encryption_key: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+  cpu_freq: "360"
+
+esphome:
+
+logger:
+  level: INFO
+
+packages:
+  # --- zaklad a HW
+  base: !include ../../packages/base_eth.yaml
+  board: !include ../../boards/esp32-p4-eth-esp-idf.yaml
+  psram: !include { file: ../../boards/esp32-s3_psram.yaml, vars: { mode: hex, speed: 200 } }
+  time: !include ../../packages/time.yaml
+  mqtt: !include { file: ../../packages/mqtt.yaml, vars: { id: mqtt_client, broker: mqtt.example.com, port: 1883 } }
+  mqtt_publish_json: !include ../../packages/mqtt_publish_json.yaml
+  internal_temp: !include ../../components/sensors/internal_temperature.yaml
+
+  i2c_bus: !include { file: ../../components/buses/i2c.yaml, vars: { id: bus_i2c, sda: GPIO7, scl: GPIO8, scan: true, frequency: 400 } }
+  sht41: !include { file: ../../components/sensors/sht4x.yaml, vars: { id: sht41, i2c_id: bus_i2c, address: 0x44, update_interval: 1, window_size: 60 } }
+  bmp581: !include { file: ../../components/sensors/bmp58x_custom.yaml, vars: { id: bmp581, i2c_bus_id: bus_i2c, address: 0x47, press_update_interval: 1, temp_update_interval: 1, press_window_size: 60, temp_window_size: 60, press_offset: 0.0 } }
+  scd40: !include { file: ../../components/sensors/scd4x.yaml, vars: { id: scd40, i2c_id: bus_i2c, address: 0x62, update_interval: 30, window_size: 2, measurement_mode: LOW_POWER_PERIODIC, press_compensation_src: bmp581_press_raw } }
+  uart_bus: !include { file: ../../components/buses/uart.yaml, vars: { id: ld2410_uart, tx_pin: GPIO22, rx_pin: GPIO23, baud_rate: 256000, rx_buffer_size: 2048, parity: none, stop_bits: 1 } }
+  ld2410c: !include { file: ../../components/sensors/ld2410.yaml, vars: { id: ld2410c, uart_id: ld2410_uart, window_size: 10 } }
+
+  spi_display_bus: !include { file: ../../components/buses/spi.yaml, vars: { id: spi_display, clk_pin: GPIO14, mosi_pin: GPIO15 } }
+  display_backlight_output: !include { file: ../../components/outputs/ledc_pwm.yaml, vars: { id: backlight_pwm, pin: GPIO6 } }
+  display_backlight_light: !include { file: ../../components/lights/monochromatic.yaml, vars: { id: display_backlight, name: "Podsviceni displeje", output: backlight_pwm } }
+  display_4_0: !include { file: ../../components/displays/ili9xxx/ili9488_yellow_board.yaml, vars: { id: display_4_0, spi_id: spi_display, cs_pin: GPIO18, dc_pin: GPIO16, reset_pin: GPIO17, width: 320, height: 480, swap_xy: "false", mirror_x: "true", mirror_y: "true", invert_colors: "true", data_rate: 40MHz } }
+
+  # --- meteohub, dotykova vetev (poradi viz products/meteohub/README.md)
+  geo: !include ../../products/meteohub/geo_320x480.yaml
+  core: !include { file: ../../products/meteohub/core_touch.yaml, vars: { display_id: display_4_0, touch_id: touch_4_0, prvni_dashboard: "1", pocet_dashboardu: "1", page_select_name: "Aktualni stranka" } }
+  hodiny:
+    !include
+    file: ../../products/meteohub/hodiny.yaml
+    vars: { display_id: display_4_0, volba: "Hodiny", zdroj_vlevo: sht41_temp_raw, format_vlevo: "%.1f", jednotka_vlevo: "°C", skala_vlevo: lok_temp, zdroj_vpravo: scd40_co2_raw, format_vpravo: "%.0f", jednotka_vpravo: "PPM", skala_vpravo: lok_co2 }
+  podsviceni: !include { file: ../../products/meteohub/podsviceni_dotyk.yaml, vars: { display_id: display_4_0, klidova_page: page_hodiny } }
+  hodiny_touch:
+    !include
+    file: ../../products/meteohub/hodiny_touch.yaml
+    vars: { display_id: display_4_0, touch_id: touch_4_0, cil_page: page_dash_1, hodiny_index: "0", navrat_krome: "p == id(page_pc_test)" }
+
+  dash1:
+    !include
+    file: ../../products/meteohub/dashboard.yaml
+    vars: { display_id: display_4_0, sufix: "1", titulek: "STUL", volba: "Dashboard", slot1: karta_lok_temp, slot2: karta_lok_co2, slot3: karta_temp, slot4: karta_svatek }
+  dash1_touch:
+    !include
+    file: ../../products/meteohub/dashboard_touch.yaml
+    vars: { display_id: display_4_0, touch_id: touch_4_0, sufix: "1", slot1_page: page_temp, slot2_page: page_temp, slot3_page: page_temp, slot4_page: page_svatky }
+
+  pc:
+    !include
+    file: ../../products/meteohub/pc.yaml
+    vars: { display_id: display_4_0, touch_id: touch_4_0, prefix: test, titulek: "PC", volba: "PC", nazev: "PC", mqtt_prefix: "esphome/test/pc-controller", tl_power: pc_power, tl_reset: pc_reset, tl_force: pc_force_off, stav: pc_online }
+
+  # karta = jen kreslici script nad LOKALNIM senzorem (hodiny berou jeji skalu)
+  k_lok_temp:
+    !include
+    file: ../../products/meteohub/karta.yaml
+    vars: { display_id: display_4_0, prefix: lok_temp, zdroj: sht41_temp_raw, popisek: "SHT41", ikona: "\U000F050F", jednotka: "°C", desetiny: "1", rezim: "0", prahy: "{22, 23, 24, 25, 26, 27, 28, 29}" }
+  k_lok_co2:
+    !include
+    file: ../../products/meteohub/karta.yaml
+    vars: { display_id: display_4_0, prefix: lok_co2, zdroj: scd40_co2_raw, popisek: "SCD40", ikona: "\U000F07E4", jednotka: "ppm", desetiny: "0", rezim: "0", prahy: "{750, 900, 1050, 1200, 1350, 1500, 1650, 1800}" }
+
+  # senzor_graf = velicina + stranka s jednim velkym grafem
+  s_temp:
+    !include
+    file: ../../products/meteohub/senzor_graf.yaml
+    vars: { display_id: display_4_0, prefix: temp, entita: sensor.test_temperature, popisek: "Teplota", titulek: "TEPLOTA", volba: "Graf - Teplota", ikona: "\U000F050F", jednotka: "°C", desetiny: "1", format: "%.1f °C", barva_grafu: color_white, y_grid: "1.0", rezim: "0", prahy: "{22, 23, 24, 25, 26, 27, 28, 29}" }
+  g_temp_2:
+    !include
+    file: ../../products/meteohub/graf_2.yaml
+    vars: { display_id: display_4_0, prefix: teploty_2, titulek: "TEPLOTY", volba: "Graf - Teploty", jednotka: "°C", y_grid: "1.0", zdroj1: ha_temp, popisek1: "Pokoj", barva1: color_white, format1: "%.1f", zdroj2: sht41_temp_raw, popisek2: "Stul", barva2: color_orange_1, format2: "%.1f" }
+
+  svatky: !include { file: ../../products/meteohub/svatky.yaml, vars: { display_id: display_4_0, ha_svatky: sensor.svatek, titulek: "SVATKY", volba: "Svatky" } }
+
+  menu:
+    !include
+    file: ../../products/meteohub/menu.yaml
+    vars: { display_id: display_4_0, touch_id: touch_4_0, polozka1_text: "Dashboard", polozka1_ikona: "\U000F056E", polozka1_page: page_dash_1, polozka2_text: "PC", polozka2_ikona: "\U000F0379", polozka2_page: page_pc_test }
+
+touchscreen:
+  - platform: ft63x6
+    id: touch_4_0
+    display: display_4_0
+    interrupt_pin: GPIO5
+    i2c_id: bus_i2c
+    transform:
+      swap_xy: false
+      mirror_x: true
+      mirror_y: true

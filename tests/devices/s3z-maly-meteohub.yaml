@@ -1,0 +1,75 @@
+## tests/devices/s3z-maly-meteohub.yaml
+#
+# TESTOVACI zarizeni pro CI -- nikdy se neflashuje. Maly meteohub:
+# Waveshare ESP32-S3-Zero s frameworkem ARDUINO (ostatni S3 jsou esp-idf),
+# 8 MB flash, octal PSRAM, ST7789V 240x320, zadny radar (bez_radaru.yaml).
+# UI: geometrie 240x320, dashboard, velicina, senzor (dva panely) s pridanou
+# carou (trasa), senzor_graf (jeden velky graf), obrazek ve firmware (foto).
+#
+# Obrazek pro foto.yaml je MDI ikona (`file: mdi:...`), aby v repu nemusel
+# lezet binarni soubor -- stranka se jen prelozi, vzhled neni podstatny.
+# Lokalni `!include ../../...` a vymyslene hodnoty: viz tests/README.md.
+
+substitutions:
+  controller_name: "test-s3z-maly-meteohub"
+  topic_prefix: "esphome/test/s3z-maly-meteohub"
+  encryption_key: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+  wifi_ssid: "test-ssid"
+  wifi_password: "test-password"
+  cpu_freq: "240"
+
+esphome:
+
+logger:
+  level: INFO
+
+packages:
+  # --- zaklad a HW
+  base: !include ../../packages/base.yaml
+  board: !include { file: ../../boards/esp32-s3-zero-arduino.yaml, vars: { flash_size: 8MB } }
+  psram: !include { file: ../../boards/esp32-s3_psram.yaml, vars: { mode: octal, speed: 80 } }
+  time: !include ../../packages/time.yaml
+  mqtt: !include { file: ../../packages/mqtt.yaml, vars: { id: mqtt_client, broker: mqtt.example.com, port: 1883 } }
+  mqtt_publish_json: !include ../../packages/mqtt_publish_json.yaml
+  internal_temp: !include ../../components/sensors/internal_temperature.yaml
+  restart: !include ../../components/buttons/restart_button.yaml
+
+  spi_bus: !include { file: ../../components/buses/spi.yaml, vars: { id: spi_bus, clk_pin: GPIO1, mosi_pin: GPIO2 } }
+  disp: !include { file: ../../components/displays/ili9xxx/st7789v.yaml, vars: { id: displej20, spi_id: spi_bus, cs_pin: GPIO5, dc_pin: GPIO4, reset_pin: GPIO3, width: 240, height: 320, invert_colors: "true", data_rate: 80MHz } }
+  backlight_output: !include { file: ../../components/outputs/ledc_pwm.yaml, vars: { pin: GPIO6, id: backlight_pwm_output } }
+  display_backlight_light: !include { file: ../../components/lights/monochromatic.yaml, vars: { name: "Podsviceni displeje", output: backlight_pwm_output, id: display_backlight } }
+
+  # --- meteohub, maly panel
+  geo: !include ../../products/meteohub/geo_240x320.yaml
+  bez_radaru: !include ../../products/meteohub/bez_radaru.yaml
+  core: !include { file: ../../products/meteohub/core.yaml, vars: { display_id: displej20, page_select_name: "Aktualni stranka" } }
+  podsviceni: !include { file: ../../products/meteohub/podsviceni_radar.yaml, vars: { display_id: displej20 } }
+
+  dash1:
+    !include
+    file: ../../products/meteohub/dashboard.yaml
+    vars: { display_id: displej20, sufix: "1", titulek: "METEOHUB", volba: "Dashboard", slot1: karta_temp, slot2: karta_co2, slot3: karta_venku }
+  v_temp:
+    !include
+    file: ../../products/meteohub/velicina.yaml
+    vars: { display_id: displej20, prefix: temp, entita: sensor.test_temperature, popisek: "Teplota", ikona: "\U000F050F", jednotka: "°C", desetiny: "1", rezim: "0", prahy: "{22, 23, 24, 25, 26, 27, 28, 29}" }
+  s_co2:
+    !include
+    file: ../../products/meteohub/senzor.yaml
+    vars: { display_id: displej20, prefix: co2, entita: sensor.test_co2, popisek: "CO₂", titulek: "CO₂", volba: "Grafy - CO2", ikona: "\U000F07E4", jednotka: "ppm", desetiny: "0", format: "%.0f ppm", barva_grafu: color_green_0, y_grid_100m: "300.0", y_grid_25h: "300.0", rezim: "0", prahy: "{750, 900, 1050, 1200, 1350, 1500, 1650, 1800}" }
+  s_venku:
+    !include
+    file: ../../products/meteohub/senzor_graf.yaml
+    vars: { display_id: displej20, prefix: venku, entita: sensor.test_outdoor_temperature, popisek: "Venku", titulek: "VENKU", volba: "Graf - Venku", ikona: "\U000F050F", jednotka: "°C", desetiny: "1", format: "%.1f °C", barva_grafu: color_white, y_grid: "2.0", rezim: "1", stred: "20", krok: "5" }
+  t_co2_venku:
+    !include
+    file: ../../products/meteohub/trasa.yaml
+    vars: { cil: co2, zdroj: ha_temp, nazev: "Teplota", barva: color_orange_1 }
+  foto: !include { file: ../../products/meteohub/foto.yaml, vars: { display_id: displej20, foto_id: img_test, sufix: test, volba: "Foto" } }
+
+image:
+  - platform: file
+    file: mdi:weather-sunny
+    id: img_test
+    type: BINARY
+    resize: 240x320
