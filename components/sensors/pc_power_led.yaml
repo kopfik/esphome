@@ -1,0 +1,52 @@
+## components/sensors/pc_power_led.yaml
+#
+# Inline:
+#   pc_led: !include { file: components/sensors/pc_power_led.yaml, vars: { id: pc_zapnuty, name: "PC zapnuty", pin: GPIO13 } }
+#
+# Block:
+#   pc_led: !include
+#     file: components/sensors/pc_power_led.yaml
+#     vars:
+#       id: pc_zapnuty
+#       name: "PC zapnuty"
+#       pin: GPIO13
+#       delayed_on: 500ms
+#       delayed_off: 3s
+#
+# Binary sensor "PC ma napajeni" podle power LED zakladni desky pres optoclen
+# (PC817). Strana PC: PLED+ -> rezistor -> anoda (pin 1), PLED- -> katoda
+# (pin 2). Strana ESP: kolektor (pin 4) -> GPIO, emitor (pin 3) -> GND.
+# LED sviti -> tranzistor sepne -> GPIO je LOW, proto default inverted: true.
+#
+# Pull-up je interni (default pullup: true), externi rezistor na 3V3 neni
+# potreba. Nikdy pull-up na 5 V.
+#
+# Filtry: delayed_on spolkne kratke zakmity na kabelu, delayed_off premosti
+# blikani power LED ve sleepu (nektere desky v S3 blikaji ~1 Hz).
+#
+# Nahrazuje components/sensors/ping.yaml se stejnym tvarem (binary_sensor
+# ${id}, device_class power), takze se da vymenit bez zmeny okolni logiky.
+#
+# Vars:
+#   id          id binary sensoru (povinne)
+#   name        jmeno entity v HA / MQTT (povinne)
+#   pin         GPIO s kolektorem optoclenu (povinne)
+#   inverted    default true (LED sviti = LOW)
+#   pullup      interni pull-up, default true
+#   delayed_on  default 500ms
+#   delayed_off default 3s
+
+binary_sensor:
+  - platform: gpio
+    id: ${id}
+    name: "${name}"
+    device_class: power
+    pin:
+      number: ${pin}
+      inverted: ${inverted | default("true")}
+      mode:
+        input: true
+        pullup: ${pullup | default("true")}
+    filters:
+      - delayed_on: ${delayed_on | default("500ms")}
+      - delayed_off: ${delayed_off | default("3s")}

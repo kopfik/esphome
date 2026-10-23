@@ -6,6 +6,10 @@ YAML and include migration steps.
 
 ## Unreleased
 
+### Added
+
+* `components/sensors/pc_power_led.yaml`: GPIO binary sensor reading the PC power LED through an optocoupler (PC817), with internal pull-up, inverted logic and `delayed_on`/`delayed_off` filters for cable noise and sleep blinking. Same shape as `ping.yaml` (`binary_sensor ${id}`, `device_class: power`), so it can replace it in place.
+
 ### Changed
 
 * `products/meteohub/core.yaml`: `ignore_missing_glyphs: true` on the Ubuntu fonts using `GF_Latin_Core`, silencing the "Font Ubuntu is missing 15 glyphs" warning (combining diacritics never drawn; explicitly requested glyphs still fail loudly).
