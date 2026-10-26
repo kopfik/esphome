@@ -14,7 +14,7 @@
 substitutions:
   controller_name: "test-s3dk-periferie"
   topic_prefix: "esphome/test/s3dk-periferie"
-  encryption_key: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+  encryption_key: "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE="
   wifi_ssid: "test-ssid"
   wifi_password: "test-password"
   cpu_freq: "240"

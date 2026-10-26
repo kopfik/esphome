@@ -12,7 +12,7 @@
 substitutions:
   controller_name: "test-p4-dotyk"
   topic_prefix: "esphome/test/p4-dotyk"
-  encryption_key: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+  encryption_key: "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE="
   cpu_freq: "360"
 
 esphome:

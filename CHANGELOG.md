@@ -18,6 +18,7 @@ YAML and include migration steps.
 * Removed personal device and room names from examples and comments in `components/lights/led_partition.yaml`, `products/meteohub/{core,podsviceni_radar,dashboard}.yaml`, and `tests/devices/p4-dotyk.yaml`.
 * `README.md`: noted that ILI9488 and ST77xx display packages live in `components/displays/ili9xxx/`.
 * `tests/README.md`: corrected note about `core.yaml` include mode (it is included directly by test devices).
+* `tests/devices/*.yaml`: dummy API `encryption_key` changed from all-zeros (`AAAA…=`) to `AQEB…=` (32 × 0x01). ESPHome 2026.10.0 rejects the all-zeros key as reserved, which failed the `config` step for every CI device since the weekly run of 2026-09-21. Real devices are unaffected unless they also use an all-zeros key.
 
 ### Removed
 

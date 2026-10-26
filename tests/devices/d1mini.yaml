@@ -12,7 +12,7 @@
 substitutions:
   controller_name: "test-d1mini"
   topic_prefix: "esphome/test/d1mini"
-  encryption_key: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+  encryption_key: "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE="
   wifi_ssid: "test-ssid"
   wifi_password: "test-password"
   wifi_power_saver: none

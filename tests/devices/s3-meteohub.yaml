@@ -13,7 +13,7 @@
 substitutions:
   controller_name: "test-s3-meteohub"
   topic_prefix: "esphome/test/s3-meteohub"
-  encryption_key: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+  encryption_key: "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE="
   wifi_ssid: "test-ssid"
   wifi_password: "test-password"
   cpu_freq: "240"

@@ -14,7 +14,7 @@ substitutions:
   controller_name: "test-c6-senzory"
   topic_prefix: "esphome/test/c6-senzory"
   # Falesny, ale formalne platny API klic (32 bajtu v base64).
-  encryption_key: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+  encryption_key: "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE="
   wifi_ssid: "test-ssid"
   wifi_password: "test-password"
   wifi_hidden: "true"
